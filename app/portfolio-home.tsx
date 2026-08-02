@@ -26,6 +26,7 @@ import {
 } from "react";
 import { projects, siteContent, t, type Project } from "./content";
 import { useLanguage } from "./language";
+import { ThemeToggle } from "./theme";
 
 const ease = [0.25, 0.1, 0.25, 1] as const;
 
@@ -87,7 +88,7 @@ function Header() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, ease }}
     >
-      <Link href="/" className="brand-mark" aria-label="Back to home">
+      <Link href="/" className="brand-mark" aria-label="Liker home">
         <span className="brand-orb" />
         {siteContent.name}
       </Link>
@@ -96,6 +97,7 @@ function Header() {
         <a href="#about">{t(siteContent.nav.about, language)}</a>
         <a href="#experience">{t(siteContent.nav.experience, language)}</a>
         <a href="#contact">{t(siteContent.nav.contact, language)}</a>
+        <ThemeToggle />
         <LanguageToggle />
       </nav>
     </motion.header>
@@ -556,7 +558,7 @@ export function PortfolioHome() {
           </span>
         </div>
         <div className="footer-line">
-          <span>© 2026 YOUR NAME</span>
+          <span>© 2026 {siteContent.name}</span>
           <span>{language === "zh" ? "首版框架 · 所有内容均为演示" : "V1 Framework · All content is demo"}</span>
         </div>
       </footer>

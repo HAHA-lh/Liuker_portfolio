@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import type { CSSProperties } from "react";
 import { siteContent, t, type Project } from "../../content";
 import { useLanguage } from "../../language";
+import { ThemeToggle } from "../../theme";
 
 function LanguageToggle() {
   const { language, setLanguage } = useLanguage();
@@ -41,7 +42,10 @@ export function WorkDetail({ project, nextProject }: { project: Project; nextPro
           <ArrowLeft size={16} /> {language === "zh" ? "返回作品" : "Back to work"}
         </Link>
         <div className="brand-mark"><span className="brand-orb" />{siteContent.name}</div>
-        <LanguageToggle />
+        <div className="detail-actions">
+          <ThemeToggle />
+          <LanguageToggle />
+        </div>
       </nav>
 
       <header className="detail-hero container-wide">

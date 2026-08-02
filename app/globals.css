@@ -6,8 +6,57 @@
   --mist: #d7e2ea;
   --muted: #88929c;
   --line: rgba(215, 226, 234, 0.2);
+  --surface: #111;
+  --surface-soft: rgba(255, 255, 255, 0.025);
+  --text-soft: rgba(215, 226, 234, 0.67);
+  --text-medium: rgba(215, 226, 234, 0.58);
+  --text-muted: rgba(215, 226, 234, 0.45);
+  --text-faint: rgba(215, 226, 234, 0.28);
+  --card-border: rgba(215, 226, 234, 0.42);
+  --card-shadow: rgba(0, 0, 0, 0.42);
+  --glass: rgba(12, 12, 12, 0.22);
+  --inverse-text: #0c0c0c;
+  --inverse-soft: rgba(12, 12, 12, 0.56);
+  --inverse-muted: rgba(12, 12, 12, 0.48);
+  --inverse-faint: rgba(12, 12, 12, 0.42);
+  --inverse-line: rgba(12, 12, 12, 0.17);
+  --inverse-line-strong: rgba(12, 12, 12, 0.25);
+  --gradient-from: #646973;
+  --gradient-to: #d9e5ec;
+  --focus: #fff;
+  --hero-text: #d7e2ea;
+  --orb-border: rgba(215, 226, 234, 0.17);
+  --orb-highlight: rgba(215, 226, 234, 0.24);
   --accent-a: #b600a8;
   --accent-b: #ff6a00;
+}
+
+:root[data-theme="light"] {
+  --ink: #f3f0e9;
+  --paper: #141516;
+  --mist: #161719;
+  --muted: #666b70;
+  --line: rgba(18, 19, 21, 0.18);
+  --surface: #fffdf8;
+  --surface-soft: rgba(12, 12, 12, 0.035);
+  --text-soft: rgba(18, 19, 21, 0.68);
+  --text-medium: rgba(18, 19, 21, 0.6);
+  --text-muted: rgba(18, 19, 21, 0.5);
+  --text-faint: rgba(18, 19, 21, 0.26);
+  --card-border: rgba(18, 19, 21, 0.22);
+  --card-shadow: rgba(30, 24, 18, 0.14);
+  --glass: rgba(255, 253, 248, 0.66);
+  --inverse-text: #f3f0e9;
+  --inverse-soft: rgba(243, 240, 233, 0.64);
+  --inverse-muted: rgba(243, 240, 233, 0.52);
+  --inverse-faint: rgba(243, 240, 233, 0.42);
+  --inverse-line: rgba(243, 240, 233, 0.16);
+  --inverse-line-strong: rgba(243, 240, 233, 0.26);
+  --gradient-from: #202226;
+  --gradient-to: #777d84;
+  --focus: #111;
+  --orb-border: rgba(18, 19, 21, 0.12);
+  --orb-highlight: rgba(18, 19, 21, 0.1);
 }
 
 * {
@@ -19,6 +68,7 @@
 html {
   scroll-behavior: smooth;
   background: var(--ink);
+  transition: background-color 300ms ease;
 }
 
 body {
@@ -28,6 +78,7 @@ body {
   color: var(--mist);
   font-family: "Kanit", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-weight: 300;
+  transition: background-color 300ms ease, color 300ms ease;
 }
 
 body.modal-open {
@@ -53,7 +104,7 @@ a {
 
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--focus);
   outline-offset: 4px;
 }
 
@@ -65,10 +116,11 @@ a:focus-visible {
 .site-shell {
   overflow-x: clip;
   background: var(--ink);
+  transition: background-color 300ms ease, color 300ms ease;
 }
 
 .gradient-text {
-  background: linear-gradient(180deg, #646973 0%, #d9e5ec 100%);
+  background: linear-gradient(180deg, var(--gradient-from) 0%, var(--gradient-to) 100%);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
@@ -125,7 +177,7 @@ a:focus-visible {
 
 .ghost-button {
   border: 1px solid var(--line);
-  background: rgba(12, 12, 12, 0.22);
+  background: var(--glass);
   color: var(--mist);
   backdrop-filter: blur(12px);
 }
@@ -150,6 +202,7 @@ a:focus-visible {
   align-items: center;
   justify-content: space-between;
   padding-top: 1.35rem;
+  color: var(--hero-text);
 }
 
 .brand-mark {
@@ -209,6 +262,115 @@ a:focus-visible {
 .language-toggle button.active {
   background: var(--mist);
   color: var(--ink);
+}
+
+.top-nav .language-toggle {
+  border-color: rgba(215, 226, 234, 0.2);
+}
+
+.top-nav .language-toggle button {
+  color: #88929c;
+}
+
+.top-nav .language-toggle button.active {
+  background: #d7e2ea;
+  color: #0c0c0c;
+}
+
+.theme-toggle {
+  position: relative;
+  display: inline-block;
+  width: 2.7rem;
+  height: 2.7rem;
+  flex: none;
+}
+
+.theme-toggle::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: #fff;
+  content: "";
+  opacity: 0.16;
+  transform: translate(-50%, -50%);
+}
+
+.theme-toggle input {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.theme-toggle-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 50%;
+  background: #eaeaea;
+  box-shadow:
+    0 10px 18px -6px rgba(0, 0, 0, 0.55),
+    inset 0 -3px 4px -1px rgba(0, 0, 0, 0.2),
+    0 -6px 10px -2px rgba(255, 255, 255, 0.55),
+    inset 0 3px 4px -1px rgba(255, 255, 255, 0.8);
+  transform: translate(-50%, -50%);
+  transition: all 300ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.theme-toggle-label {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(0, 0, 0, 0.88);
+  pointer-events: none;
+  transition: color 300ms ease-out, transform 300ms ease-out;
+}
+
+.theme-toggle input:active ~ .theme-toggle-button {
+  filter: blur(0.4px);
+  box-shadow:
+    0 7px 16px -6px rgba(0, 0, 0, 0.45),
+    inset 0 -6px 18px 1px rgba(255, 255, 255, 0.86),
+    inset 0 6px 16px 0 rgba(0, 0, 0, 0.28);
+}
+
+.theme-toggle input:active ~ .theme-toggle-label {
+  color: rgba(0, 0, 0, 0.5);
+  transform: scale(0.9);
+}
+
+.theme-toggle input:checked ~ .theme-toggle-button {
+  background: #242629;
+  filter: blur(0.25px);
+  box-shadow:
+    0 8px 18px -5px rgba(0, 0, 0, 0.72),
+    inset 0 -6px 16px -1px rgba(0, 0, 0, 0.8),
+    0 -5px 10px -3px rgba(255, 255, 255, 0.34),
+    inset 0 6px 14px 0 rgba(255, 255, 255, 0.12);
+}
+
+.theme-toggle input:checked ~ .theme-toggle-label {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.theme-toggle input:focus-visible ~ .theme-toggle-button {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.top-nav .theme-toggle input:focus-visible ~ .theme-toggle-button {
+  outline-color: #fff;
 }
 
 .hero {
@@ -273,6 +435,7 @@ a:focus-visible {
   padding-top: clamp(6rem, 10vh, 8rem);
   padding-bottom: 2rem;
   pointer-events: none;
+  color: var(--hero-text);
   will-change: transform, opacity;
 }
 
@@ -294,6 +457,12 @@ a:focus-visible {
   text-align: center;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.hero-title.gradient-text {
+  background: linear-gradient(180deg, #646973 0%, #d9e5ec 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
 }
 
 .project-visual::after,
@@ -408,6 +577,7 @@ a:focus-visible {
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  color: var(--hero-text);
 }
 
 .section-heading {
@@ -450,10 +620,10 @@ a:focus-visible {
   min-height: 620px;
   margin-bottom: clamp(11rem, 34vh, 25rem);
   overflow: hidden;
-  border: 1px solid rgba(215, 226, 234, 0.42);
+  border: 1px solid var(--card-border);
   border-radius: clamp(2rem, 5vw, 4.5rem);
-  background: #111;
-  box-shadow: 0 -10px 50px rgba(0, 0, 0, 0.42);
+  background: var(--surface);
+  box-shadow: 0 -10px 50px var(--card-shadow);
   grid-template-columns: 0.82fr 1.18fr;
   transform-origin: top center;
   will-change: transform;
@@ -472,7 +642,7 @@ a:focus-visible {
 }
 
 .project-index {
-  color: rgba(215, 226, 234, 0.28);
+  color: var(--text-faint);
   font-size: clamp(4.5rem, 10vw, 9rem);
   font-weight: 900;
   line-height: 0.75;
@@ -491,7 +661,7 @@ a:focus-visible {
 
 .project-description {
   max-width: 30rem;
-  color: rgba(215, 226, 234, 0.64);
+  color: var(--text-soft);
   font-size: clamp(0.92rem, 1.2vw, 1.1rem);
   line-height: 1.6;
 }
@@ -507,7 +677,7 @@ a:focus-visible {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 0.45rem 0.72rem;
-  color: rgba(215, 226, 234, 0.75);
+  color: var(--text-medium);
   font-size: 0.66rem;
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -554,6 +724,7 @@ a:focus-visible {
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  color: var(--hero-text);
   backdrop-filter: blur(10px);
 }
 
@@ -568,9 +739,9 @@ a:focus-visible {
 
 .about-orb {
   position: absolute;
-  border: 1px solid rgba(215, 226, 234, 0.17);
+  border: 1px solid var(--orb-border);
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(215, 226, 234, 0.24), rgba(182, 0, 168, 0.08) 45%, transparent 70%);
+  background: radial-gradient(circle at 30% 30%, var(--orb-highlight), rgba(182, 0, 168, 0.08) 45%, transparent 70%);
 }
 
 .about-orb.one {
@@ -611,17 +782,17 @@ a:focus-visible {
   overflow: hidden;
   border-radius: clamp(2.7rem, 6vw, 6rem) clamp(2.7rem, 6vw, 6rem) 0 0;
   background: var(--paper);
-  color: var(--ink);
+  color: var(--inverse-text);
   padding-block: clamp(5rem, 11vw, 10rem);
 }
 
 .experience-section .eyebrow::before {
-  background: var(--ink);
+  background: var(--inverse-text);
 }
 
 .experience-heading {
   margin-bottom: clamp(4rem, 9vw, 8rem);
-  color: var(--ink);
+  color: var(--inverse-text);
 }
 
 .experience-grid {
@@ -640,13 +811,13 @@ a:focus-visible {
 
 .timeline-item {
   display: grid;
-  border-top: 1px solid rgba(12, 12, 12, 0.17);
+  border-top: 1px solid var(--inverse-line);
   padding-block: 1.35rem;
   grid-template-columns: 6rem 1fr;
 }
 
 .timeline-year {
-  color: rgba(12, 12, 12, 0.48);
+  color: var(--inverse-muted);
   font-size: 0.8rem;
 }
 
@@ -658,7 +829,7 @@ a:focus-visible {
 
 .timeline-note {
   margin-top: 0.55rem;
-  color: rgba(12, 12, 12, 0.56);
+  color: var(--inverse-soft);
   font-size: 0.9rem;
   line-height: 1.5;
 }
@@ -670,7 +841,7 @@ a:focus-visible {
 }
 
 .skill-pill {
-  border: 1px solid rgba(12, 12, 12, 0.25);
+  border: 1px solid var(--inverse-line-strong);
   border-radius: 999px;
   padding: 0.65rem 0.9rem;
   font-size: 0.82rem;
@@ -685,7 +856,7 @@ a:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid rgba(12, 12, 12, 0.17);
+  border-top: 1px solid var(--inverse-line);
   padding-block: 1.25rem;
   font-size: clamp(1.05rem, 1.8vw, 1.45rem);
   font-weight: 500;
@@ -693,7 +864,7 @@ a:focus-visible {
 }
 
 .capability-row span:last-child {
-  color: rgba(12, 12, 12, 0.42);
+  color: var(--inverse-faint);
   font-size: 0.72rem;
   letter-spacing: 0.12em;
 }
@@ -726,7 +897,7 @@ a:focus-visible {
 
 .contact-note {
   max-width: 28rem;
-  color: rgba(215, 226, 234, 0.58);
+  color: var(--text-medium);
   font-size: 0.88rem;
   line-height: 1.55;
 }
@@ -735,7 +906,7 @@ a:focus-visible {
   display: flex;
   justify-content: space-between;
   margin-top: 5rem;
-  color: rgba(215, 226, 234, 0.36);
+  color: var(--text-faint);
   font-size: 0.65rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -760,6 +931,18 @@ a:focus-visible {
   border-radius: clamp(1.5rem, 4vw, 3.5rem);
   background: #111;
   box-shadow: 0 30px 120px rgba(0, 0, 0, 0.65);
+  color: #d7e2ea;
+}
+
+.modal-panel .meta-pill {
+  border-color: rgba(215, 226, 234, 0.2);
+  color: rgba(215, 226, 234, 0.72);
+}
+
+.modal-panel .ghost-button {
+  border-color: rgba(215, 226, 234, 0.2);
+  background: rgba(12, 12, 12, 0.22);
+  color: #d7e2ea;
 }
 
 .modal-video {
@@ -810,6 +993,7 @@ a:focus-visible {
 .detail-page {
   min-height: 100svh;
   background: var(--ink);
+  transition: background-color 300ms ease, color 300ms ease;
 }
 
 .detail-nav {
@@ -817,6 +1001,12 @@ a:focus-visible {
   align-items: center;
   justify-content: space-between;
   padding-block: 1.35rem 2rem;
+}
+
+.detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
 }
 
 .back-link {
@@ -858,7 +1048,7 @@ a:focus-visible {
 
 .detail-summary p {
   max-width: 40rem;
-  color: rgba(215, 226, 234, 0.67);
+  color: var(--text-soft);
   font-size: clamp(1.05rem, 1.7vw, 1.45rem);
   line-height: 1.55;
 }
@@ -877,7 +1067,7 @@ a:focus-visible {
 .fact-label {
   display: block;
   margin-bottom: 0.35rem;
-  color: rgba(215, 226, 234, 0.38);
+  color: var(--text-muted);
   font-size: 0.62rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -936,12 +1126,12 @@ a:focus-visible {
   min-height: 15rem;
   border: 1px solid var(--line);
   border-radius: 1.5rem;
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--surface-soft);
   padding: 1.4rem;
 }
 
 .process-number {
-  color: rgba(215, 226, 234, 0.28);
+  color: var(--text-faint);
   font-size: 2.7rem;
   font-weight: 800;
 }
@@ -955,7 +1145,7 @@ a:focus-visible {
 
 .process-note {
   margin-top: 0.65rem;
-  color: rgba(215, 226, 234, 0.53);
+  color: var(--text-medium);
   font-size: 0.9rem;
   line-height: 1.5;
 }
@@ -988,7 +1178,7 @@ a:focus-visible {
 }
 
 .next-label {
-  color: rgba(215, 226, 234, 0.45);
+  color: var(--text-muted);
   font-size: 0.68rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -1016,7 +1206,7 @@ a:focus-visible {
 }
 
 .not-found-code {
-  color: rgba(215, 226, 234, 0.18);
+  color: var(--text-faint);
   font-size: clamp(8rem, 30vw, 24rem);
   font-weight: 900;
   line-height: 0.7;

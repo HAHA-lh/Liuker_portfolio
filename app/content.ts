@@ -40,7 +40,7 @@ const media = {
 };
 
 export const siteContent = {
-  name: "YOUR NAME",
+  name: "Liker",
   role: { zh: "视频创作者 / 动态设计师", en: "VIDEO CREATOR / MOTION DESIGNER" },
   heroIntro: {
     zh: "用影像、节奏与设计，把想法变成让人记住的画面。",
