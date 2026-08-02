@@ -24,7 +24,16 @@
   --gradient-from: #646973;
   --gradient-to: #d9e5ec;
   --focus: #fff;
+  --hero-bg: #050505;
   --hero-text: #d7e2ea;
+  --hero-muted: #88929c;
+  --hero-line: rgba(215, 226, 234, 0.42);
+  --hero-line-soft: rgba(215, 226, 234, 0.2);
+  --hero-track: rgba(215, 226, 234, 0.24);
+  --hero-gradient-from: #646973;
+  --hero-gradient-to: #d9e5ec;
+  --hero-active-bg: #d7e2ea;
+  --hero-active-text: #0c0c0c;
   --orb-border: rgba(215, 226, 234, 0.17);
   --orb-highlight: rgba(215, 226, 234, 0.24);
   --accent-a: #b600a8;
@@ -55,6 +64,16 @@
   --gradient-from: #202226;
   --gradient-to: #777d84;
   --focus: #111;
+  --hero-bg: #f3f0e9;
+  --hero-text: #161719;
+  --hero-muted: #5f6469;
+  --hero-line: rgba(18, 19, 21, 0.34);
+  --hero-line-soft: rgba(18, 19, 21, 0.18);
+  --hero-track: rgba(18, 19, 21, 0.24);
+  --hero-gradient-from: #17181a;
+  --hero-gradient-to: #666b70;
+  --hero-active-bg: #161719;
+  --hero-active-text: #f3f0e9;
   --orb-border: rgba(18, 19, 21, 0.12);
   --orb-highlight: rgba(18, 19, 21, 0.1);
 }
@@ -265,16 +284,16 @@ a:focus-visible {
 }
 
 .top-nav .language-toggle {
-  border-color: rgba(215, 226, 234, 0.2);
+  border-color: var(--hero-line-soft);
 }
 
 .top-nav .language-toggle button {
-  color: #88929c;
+  color: var(--hero-muted);
 }
 
 .top-nav .language-toggle button.active {
-  background: #d7e2ea;
-  color: #0c0c0c;
+  background: var(--hero-active-bg);
+  color: var(--hero-active-text);
 }
 
 .theme-toggle {
@@ -370,7 +389,7 @@ a:focus-visible {
 }
 
 .top-nav .theme-toggle input:focus-visible ~ .theme-toggle-button {
-  outline-color: #fff;
+  outline-color: var(--hero-text);
 }
 
 .hero {
@@ -386,7 +405,8 @@ a:focus-visible {
   width: 100%;
   height: 100svh;
   overflow: hidden;
-  background: #050505;
+  background: var(--hero-bg);
+  transition: background-color 300ms ease;
 }
 
 .hero-media {
@@ -396,7 +416,8 @@ a:focus-visible {
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: #050505;
+  background: var(--hero-bg);
+  transition: background-color 300ms ease;
 }
 
 .hero-media-frame {
@@ -414,6 +435,7 @@ a:focus-visible {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: filter 300ms ease;
 }
 
 .hero-scrim {
@@ -423,6 +445,17 @@ a:focus-visible {
     linear-gradient(180deg, rgba(5, 5, 5, 0.4) 0%, transparent 28%, rgba(5, 5, 5, 0.14) 55%, rgba(5, 5, 5, 0.86) 100%),
     radial-gradient(circle at 50% 45%, transparent 30%, rgba(5, 5, 5, 0.34) 100%);
   pointer-events: none;
+  transition: background 300ms ease;
+}
+
+:root[data-theme="light"] .hero-media-frame video {
+  filter: brightness(1.16) contrast(0.86) saturate(0.78);
+}
+
+:root[data-theme="light"] .hero-scrim {
+  background:
+    linear-gradient(180deg, rgba(243, 240, 233, 0.68) 0%, rgba(243, 240, 233, 0.18) 30%, rgba(243, 240, 233, 0.2) 55%, rgba(243, 240, 233, 0.9) 100%),
+    radial-gradient(circle at 50% 45%, transparent 28%, rgba(243, 240, 233, 0.3) 100%);
 }
 
 .hero-overlay {
@@ -460,7 +493,7 @@ a:focus-visible {
 }
 
 .hero-title.gradient-text {
-  background: linear-gradient(180deg, #646973 0%, #d9e5ec 100%);
+  background: linear-gradient(180deg, var(--hero-gradient-from) 0%, var(--hero-gradient-to) 100%);
   background-clip: text;
   -webkit-background-clip: text;
 }
@@ -513,7 +546,7 @@ a:focus-visible {
   aspect-ratio: 1;
   place-items: center;
   transform: rotate(9deg);
-  border: 1px solid rgba(215, 226, 234, 0.42);
+  border: 1px solid var(--hero-line);
   border-radius: 50%;
   font-size: 0.65rem;
   font-weight: 600;
@@ -530,7 +563,7 @@ a:focus-visible {
   width: 2px;
   height: clamp(5rem, 12vh, 8rem);
   overflow: hidden;
-  background: rgba(215, 226, 234, 0.24);
+  background: var(--hero-track);
 }
 
 .hero-scroll-track span {
@@ -577,7 +610,7 @@ a:focus-visible {
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--hero-text);
+  color: #d7e2ea;
 }
 
 .section-heading {
@@ -724,7 +757,7 @@ a:focus-visible {
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--hero-text);
+  color: #d7e2ea;
   backdrop-filter: blur(10px);
 }
 
