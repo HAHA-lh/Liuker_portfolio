@@ -231,13 +231,24 @@ a:focus-visible {
   position: absolute;
   z-index: 0;
   inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #050505;
+}
+
+.hero-media-frame {
+  position: relative;
+  width: min(100vw, calc(100svh * 16 / 9));
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: linear-gradient(135deg, #160c22, #6c2868 45%, #ef7b40);
+  box-shadow: 0 0 120px rgba(182, 0, 168, 0.18);
   transform-origin: center center;
   will-change: transform;
 }
 
-.hero-media video {
+.hero-media-frame video {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -426,18 +437,27 @@ a:focus-visible {
   text-transform: uppercase;
 }
 
-.project-stack {
+.project-deck-scroll {
   position: relative;
-  padding-bottom: 14vh;
+  height: 430svh;
+}
+
+.project-deck-stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: clip;
   isolation: isolate;
 }
 
 .project-card {
-  position: sticky;
+  position: absolute;
+  top: clamp(5.1rem, 9vh, 7.5rem);
+  right: 0;
+  left: 0;
   display: grid;
   height: min(76svh, 790px);
   min-height: 620px;
-  margin-bottom: clamp(11rem, 34vh, 25rem);
   overflow: hidden;
   border: 1px solid rgba(215, 226, 234, 0.42);
   border-radius: clamp(2rem, 5vw, 4.5rem);
@@ -448,8 +468,23 @@ a:focus-visible {
   will-change: transform;
 }
 
-.project-card:last-child {
-  margin-bottom: 0;
+.project-deck-progress {
+  position: absolute;
+  z-index: 20;
+  right: 0;
+  bottom: 1.2rem;
+  left: 0;
+  height: 2px;
+  overflow: hidden;
+  background: rgba(215, 226, 234, 0.16);
+}
+
+.project-deck-progress span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+  transform-origin: left center;
 }
 
 .project-info {
