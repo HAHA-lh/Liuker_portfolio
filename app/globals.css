@@ -437,27 +437,18 @@ a:focus-visible {
   text-transform: uppercase;
 }
 
-.project-deck-scroll {
+.project-stack {
   position: relative;
-  height: 430svh;
-}
-
-.project-deck-stage {
-  position: sticky;
-  top: 0;
-  height: 100svh;
-  overflow: clip;
+  padding-bottom: 14vh;
   isolation: isolate;
 }
 
 .project-card {
-  position: absolute;
-  top: clamp(5.1rem, 9vh, 7.5rem);
-  right: 0;
-  left: 0;
+  position: sticky;
   display: grid;
   height: min(76svh, 790px);
   min-height: 620px;
+  margin-bottom: clamp(11rem, 34vh, 25rem);
   overflow: hidden;
   border: 1px solid rgba(215, 226, 234, 0.42);
   border-radius: clamp(2rem, 5vw, 4.5rem);
@@ -468,23 +459,8 @@ a:focus-visible {
   will-change: transform;
 }
 
-.project-deck-progress {
-  position: absolute;
-  z-index: 20;
-  right: 0;
-  bottom: 1.2rem;
-  left: 0;
-  height: 2px;
-  overflow: hidden;
-  background: rgba(215, 226, 234, 0.16);
-}
-
-.project-deck-progress span {
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
-  transform-origin: left center;
+.project-card:last-child {
+  margin-bottom: 0;
 }
 
 .project-info {

@@ -362,62 +362,26 @@ function ScrollHero({ open }: { open: (project: Project) => void }) {
   );
 }
 
-function DeckCard({
+function StackCard({
   project,
   index,
   total,
   open,
-  progress,
 }: {
   project: Project;
   index: number;
   total: number;
   open: (project: Project) => void;
-  progress: MotionValue<number>;
 }) {
   const { language } = useLanguage();
-  const isBase = index === 0;
-  const exitOrder = total - 1 - index;
-  const start = isBase ? 0.78 : 0.05 + exitOrder * 0.21;
-  const end = isBase ? 0.98 : Math.min(start + 0.18, 0.92);
-  const initialY = `${index * 14}px`;
-  const exitX = exitOrder % 2 === 0 ? "-5vw" : "5vw";
-  const y = useTransform(
-    progress,
-    [0, start, end, 1],
-    isBase
-      ? [initialY, initialY, "0px", "0px"]
-      : [initialY, initialY, "-112vh", "-118vh"],
-  );
-  const x = useTransform(
-    progress,
-    [0, start, end, 1],
-    isBase ? ["0vw", "0vw", "0vw", "0vw"] : ["0vw", "0vw", exitX, exitX],
-  );
-  const rotate = useTransform(
-    progress,
-    [0, start, end, 1],
-    isBase ? [0, 0, 0, 0] : [0, 0, exitOrder % 2 === 0 ? -3 : 3, 3],
-  );
-  const opacity = useTransform(
-    progress,
-    [0, start, end, 1],
-    isBase ? [1, 1, 1, 1] : [1, 1, 0.12, 0],
-  );
-  const scale = useTransform(
-    progress,
-    [0, 1],
-    [1 - (total - 1 - index) * 0.018, isBase ? 1 : 1.02],
-  );
+  const scale = 1 - (total - 1 - index) * 0.018;
+
   return (
       <motion.article
         className="project-card"
         style={{
-          x,
-          y,
-          rotate,
-          opacity,
           scale,
+          top: `calc(4.8rem + ${index * 1.35}rem)`,
           zIndex: index + 1,
         }}
       >
@@ -453,40 +417,6 @@ function DeckCard({
           </span>
         </div>
       </motion.article>
-  );
-}
-
-function ProjectDeck({
-  items,
-  open,
-}: {
-  items: Project[];
-  open: (project: Project) => void;
-}) {
-  const deckRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: deckRef,
-    offset: ["start start", "end end"],
-  });
-
-  return (
-    <div ref={deckRef} className="project-deck-scroll">
-      <div className="project-deck-stage">
-        <div className="project-deck-progress" aria-hidden="true">
-          <motion.span style={{ scaleX: scrollYProgress }} />
-        </div>
-        {items.map((project, index) => (
-          <DeckCard
-            key={project.slug}
-            project={project}
-            index={index}
-            total={items.length}
-            open={open}
-            progress={scrollYProgress}
-          />
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -547,7 +477,17 @@ export function PortfolioHome() {
           </FadeIn>
           <span className="section-count">05 / 06 · Demo</span>
         </div>
-        <ProjectDeck items={featured} open={setActiveProject} />
+        <div className="project-stack">
+          {featured.map((project, index) => (
+            <StackCard
+              key={project.slug}
+              project={project}
+              index={index}
+              total={featured.length}
+              open={setActiveProject}
+            />
+          ))}
+        </div>
       </section>
 
       <section id="about" className="about-section container-wide">
