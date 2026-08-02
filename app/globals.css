@@ -213,31 +213,65 @@ a:focus-visible {
 
 .hero {
   position: relative;
-  display: flex;
-  min-height: 100svh;
-  flex-direction: column;
-  justify-content: space-between;
-  overflow: hidden;
-  padding-top: 5rem;
+  height: 220svh;
+  overflow: clip;
   isolation: isolate;
 }
 
-.hero-glow {
+.hero-stage {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100svh;
+  overflow: hidden;
+  background: #050505;
+}
+
+.hero-media {
   position: absolute;
-  z-index: -2;
-  top: 38%;
-  left: 50%;
-  width: min(76vw, 1100px);
-  aspect-ratio: 1.9;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(182, 0, 168, 0.2), transparent 65%);
-  filter: blur(20px);
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, #160c22, #6c2868 45%, #ef7b40);
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.hero-media video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(5, 5, 5, 0.4) 0%, transparent 28%, rgba(5, 5, 5, 0.14) 55%, rgba(5, 5, 5, 0.86) 100%),
+    radial-gradient(circle at 50% 45%, transparent 30%, rgba(5, 5, 5, 0.34) 100%);
+  pointer-events: none;
+}
+
+.hero-overlay {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-top: clamp(6rem, 10vh, 8rem);
+  padding-bottom: 2rem;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.hero-overlay a,
+.hero-overlay button {
+  pointer-events: auto;
 }
 
 .hero-title-wrap {
   overflow: hidden;
-  padding-top: clamp(2.6rem, 9vh, 7rem);
 }
 
 .hero-title {
@@ -251,22 +285,6 @@ a:focus-visible {
   white-space: nowrap;
 }
 
-.hero-reel {
-  position: absolute;
-  z-index: -1;
-  top: 48%;
-  left: 50%;
-  width: clamp(260px, 36vw, 610px);
-  aspect-ratio: 0.94;
-  transform: translate(-50%, -42%) rotate(-2deg);
-  overflow: hidden;
-  border: 1px solid rgba(215, 226, 234, 0.28);
-  border-radius: clamp(1.7rem, 4vw, 4rem);
-  background: linear-gradient(145deg, #241026 0%, #321145 42%, #b24c22 100%);
-  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.55);
-}
-
-.hero-reel::after,
 .project-visual::after,
 .marquee-tile::after {
   position: absolute;
@@ -276,7 +294,6 @@ a:focus-visible {
   pointer-events: none;
 }
 
-.hero-reel video,
 .preview-video {
   width: 100%;
   height: 100%;
@@ -290,7 +307,6 @@ a:focus-visible {
   align-items: flex-end;
   justify-content: space-between;
   gap: 2rem;
-  padding-bottom: 2rem;
 }
 
 .hero-intro {
@@ -310,7 +326,7 @@ a:focus-visible {
 .demo-stamp {
   position: absolute;
   z-index: 4;
-  top: 41%;
+  top: 48%;
   right: clamp(1.15rem, 4vw, 4rem);
   display: grid;
   width: 5.2rem;
@@ -324,6 +340,25 @@ a:focus-visible {
   letter-spacing: 0.15em;
   text-align: center;
   text-transform: uppercase;
+}
+
+.hero-scroll-track {
+  position: absolute;
+  z-index: 6;
+  right: clamp(1rem, 2.2vw, 2.5rem);
+  bottom: 2rem;
+  width: 2px;
+  height: clamp(5rem, 12vh, 8rem);
+  overflow: hidden;
+  background: rgba(215, 226, 234, 0.24);
+}
+
+.hero-scroll-track span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, var(--accent-a), var(--accent-b));
+  transform-origin: top center;
 }
 
 .marquee-section {
@@ -391,17 +426,18 @@ a:focus-visible {
   text-transform: uppercase;
 }
 
-.project-stack-item {
+.project-stack {
   position: relative;
-  height: 88vh;
-  min-height: 620px;
+  padding-bottom: 14vh;
+  isolation: isolate;
 }
 
 .project-card {
   position: sticky;
-  top: 5.5rem;
   display: grid;
-  min-height: min(72vh, 760px);
+  height: min(76svh, 790px);
+  min-height: 620px;
+  margin-bottom: clamp(11rem, 34vh, 25rem);
   overflow: hidden;
   border: 1px solid rgba(215, 226, 234, 0.42);
   border-radius: clamp(2rem, 5vw, 4.5rem);
@@ -409,6 +445,11 @@ a:focus-visible {
   box-shadow: 0 -10px 50px rgba(0, 0, 0, 0.42);
   grid-template-columns: 0.82fr 1.18fr;
   transform-origin: top center;
+  will-change: transform;
+}
+
+.project-card:last-child {
+  margin-bottom: 0;
 }
 
 .project-info {
@@ -976,6 +1017,8 @@ a:focus-visible {
   }
 
   .project-card {
+    height: auto;
+    min-height: 750px;
     grid-template-columns: 1fr;
   }
 
@@ -986,11 +1029,6 @@ a:focus-visible {
   .project-visual {
     min-height: 360px;
     order: -1;
-  }
-
-  .project-stack-item {
-    height: 105vh;
-    min-height: 780px;
   }
 
   .experience-grid,
@@ -1013,21 +1051,23 @@ a:focus-visible {
 }
 
 @media (max-width: 640px) {
+  .hero {
+    height: 190svh;
+  }
+
   .hero-title {
     font-size: 18vw;
   }
 
-  .hero-title-wrap {
-    padding-top: 5rem;
-  }
-
-  .hero-reel {
-    top: 50%;
-    width: 73vw;
+  .hero-overlay {
+    padding-top: 6.2rem;
+    padding-bottom: 1.25rem;
   }
 
   .demo-stamp {
-    top: 34%;
+    top: 42%;
+    right: 1.15rem;
+    width: 4.4rem;
   }
 
   .hero-bottom,
@@ -1049,12 +1089,9 @@ a:focus-visible {
     max-width: 15rem;
   }
 
-  .project-stack-item {
-    height: 112vh;
-  }
-
   .project-card {
-    top: 4.7rem;
+    min-height: 760px;
+    margin-bottom: 28vh;
   }
 
   .project-visual {

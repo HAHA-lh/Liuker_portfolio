@@ -11,6 +11,7 @@ import {
 import {
   AnimatePresence,
   motion,
+  useMotionValueEvent,
   useReducedMotion,
   useScroll,
   useTransform,
@@ -263,6 +264,102 @@ function Marquee() {
   );
 }
 
+function ScrollHero({ open }: { open: (project: Project) => void }) {
+  const { language } = useLanguage();
+  const sectionRef = useRef<HTMLElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const durationRef = useRef(0);
+  const reduced = useReducedMotion();
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end end"],
+  });
+  const videoScale = useTransform(scrollYProgress, [0, 1], [1, 1.12]);
+  const overlayOpacity = useTransform(
+    scrollYProgress,
+    [0, 0.18, 0.72, 0.95],
+    [1, 1, 0.5, 0],
+  );
+  const overlayY = useTransform(scrollYProgress, [0, 1], [0, -90]);
+  const progressScale = useTransform(scrollYProgress, [0, 1], [0.04, 1]);
+
+  useMotionValueEvent(scrollYProgress, "change", (progress) => {
+    const video = videoRef.current;
+    if (reduced || !video || !durationRef.current) return;
+    const end = Math.max(0, durationRef.current - 0.05);
+    video.currentTime = Math.min(end, progress * end);
+  });
+
+  const registerDuration = () => {
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(video.duration)) return;
+    durationRef.current = video.duration;
+    video.currentTime = 0.01;
+  };
+
+  return (
+    <section ref={sectionRef} className="hero" aria-label="Scroll-controlled showreel">
+      <div className="hero-stage">
+        <motion.div className="hero-media" style={{ scale: reduced ? 1 : videoScale }}>
+          <video
+            ref={videoRef}
+            src={projects[0].heroVideo}
+            poster={projects[0].poster || undefined}
+            muted
+            playsInline
+            preload="auto"
+            onLoadedMetadata={registerDuration}
+            aria-label="Scroll-controlled demo showreel"
+          />
+          <div className="hero-scrim" />
+        </motion.div>
+
+        <motion.div
+          className="hero-overlay container-wide"
+          style={{ opacity: reduced ? 1 : overlayOpacity, y: reduced ? 0 : overlayY }}
+        >
+          <motion.div
+            className="hero-title-wrap"
+            initial={{ opacity: 0, y: 45 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 0.12, ease }}
+          >
+            <h1 className="hero-title gradient-text">Video Creator</h1>
+          </motion.div>
+          <span className="demo-stamp">Demo<br />Portfolio</span>
+          <div className="hero-bottom">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.55, ease }}
+            >
+              <div className="eyebrow">{siteContent.name}</div>
+              <p className="hero-intro">{t(siteContent.heroIntro, language)}</p>
+            </motion.div>
+            <motion.div
+              className="hero-actions"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.65, ease }}
+            >
+              <button type="button" className="primary-button" onClick={() => open(projects[0])}>
+                <Play size={15} fill="currentColor" /> Showreel
+              </button>
+              <a className="ghost-button" href="#work">
+                {language === "zh" ? "浏览作品" : "Explore work"}
+              </a>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        <div className="hero-scroll-track" aria-hidden="true">
+          <motion.span style={{ scaleY: reduced ? 1 : progressScale }} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function StackCard({
   project,
   index,
@@ -275,13 +372,16 @@ function StackCard({
   open: (project: Project) => void;
 }) {
   const { language } = useLanguage();
-  const itemRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: itemRef, offset: ["start start", "end start"] });
-  const targetScale = 1 - (total - 1 - index) * 0.025;
-  const scale = useTransform(scrollYProgress, [0, 1], [1, targetScale]);
+  const scale = 1 - (total - 1 - index) * 0.018;
   return (
-    <div ref={itemRef} className="project-stack-item">
-      <motion.article className="project-card" style={{ scale }}>
+      <motion.article
+        className="project-card"
+        style={{
+          scale,
+          top: `calc(4.8rem + ${index * 1.35}rem)`,
+          zIndex: index + 1,
+        }}
+      >
         <div className="project-info">
           <div>
             <div className="project-index">{String(index + 1).padStart(2, "0")}</div>
@@ -314,7 +414,6 @@ function StackCard({
           </span>
         </div>
       </motion.article>
-    </div>
   );
 }
 
@@ -358,55 +457,12 @@ function AnimatedAbout() {
 export function PortfolioHome() {
   const { language } = useLanguage();
   const [activeProject, setActiveProject] = useState<Project | null>(null);
-  const featured = projects.filter((project) => project.featured);
+  const featured = projects.filter((project) => project.featured).slice(0, 3);
 
   return (
     <main className="site-shell">
       <Header />
-      <section className="hero container-wide">
-        <div className="hero-glow" />
-        <motion.div
-          className="hero-title-wrap"
-          initial={{ opacity: 0, y: 45 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.12, ease }}
-        >
-          <h1 className="hero-title gradient-text">Video Creator</h1>
-        </motion.div>
-        <motion.div
-          className="hero-reel"
-          style={{ "--visual-bg": projects[0].visual } as CSSProperties}
-          initial={{ opacity: 0, y: 40, x: "-50%", rotate: -2 }}
-          animate={{ opacity: 1, y: 0, x: "-50%", rotate: -2 }}
-          transition={{ duration: 0.9, delay: 0.4, ease }}
-        >
-          <PreviewVideo project={projects[0]} />
-        </motion.div>
-        <span className="demo-stamp">Demo<br />Portfolio</span>
-        <div className="hero-bottom">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.55, ease }}
-          >
-            <div className="eyebrow">{siteContent.name}</div>
-            <p className="hero-intro">{t(siteContent.heroIntro, language)}</p>
-          </motion.div>
-          <motion.div
-            className="hero-actions"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.65, ease }}
-          >
-            <button type="button" className="primary-button" onClick={() => setActiveProject(projects[0])}>
-              <Play size={15} fill="currentColor" /> Showreel
-            </button>
-            <a className="ghost-button" href="#work">
-              {language === "zh" ? "浏览作品" : "Explore work"}
-            </a>
-          </motion.div>
-        </div>
-      </section>
+      <ScrollHero open={setActiveProject} />
 
       <Marquee />
 
@@ -416,17 +472,19 @@ export function PortfolioHome() {
             <div className="eyebrow">{language === "zh" ? "精选案例" : "Selected cases"}</div>
             <h2 className="section-heading gradient-text">{language === "zh" ? "作品" : "Work"}</h2>
           </FadeIn>
-          <span className="section-count">04 / 06 · Demo</span>
+          <span className="section-count">03 / 06 · Demo</span>
         </div>
-        {featured.map((project, index) => (
-          <StackCard
-            key={project.slug}
-            project={project}
-            index={index}
-            total={featured.length}
-            open={setActiveProject}
-          />
-        ))}
+        <div className="project-stack">
+          {featured.map((project, index) => (
+            <StackCard
+              key={project.slug}
+              project={project}
+              index={index}
+              total={featured.length}
+              open={setActiveProject}
+            />
+          ))}
+        </div>
       </section>
 
       <section id="about" className="about-section container-wide">
