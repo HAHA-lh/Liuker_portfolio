@@ -11,7 +11,6 @@ import {
 import {
   AnimatePresence,
   motion,
-  useMotionValueEvent,
   useReducedMotion,
   useScroll,
   useTransform,
@@ -29,6 +28,13 @@ import { useLanguage } from "./language";
 import { ThemeToggle } from "./theme";
 
 const ease = [0.25, 0.1, 0.25, 1] as const;
+
+const heroPosts = [
+  { src: "/hero-posts/liker-post-01.webp", projectIndex: 0 },
+  { src: "/hero-posts/liker-post-02.webp", projectIndex: 1 },
+  { src: "/hero-posts/liker-post-03.webp", projectIndex: 2 },
+  { src: "/hero-posts/liker-post-04.webp", projectIndex: 3 },
+] as const;
 
 function FadeIn({
   children,
@@ -266,17 +272,69 @@ function Marquee() {
   );
 }
 
+function HeroPost({
+  post,
+  index,
+  progress,
+  reduced,
+  open,
+}: {
+  post: (typeof heroPosts)[number];
+  index: number;
+  progress: MotionValue<number>;
+  reduced: boolean | null;
+  open: (project: Project) => void;
+}) {
+  const { language } = useLanguage();
+  const project = projects[post.projectIndex];
+  const positions = [
+    { compactX: "-7vw", openX: "-29vw", exitX: "-36vw", y: "-4vh", rotate: -13 },
+    { compactX: "-2.5vw", openX: "-10vw", exitX: "-13vw", y: "4vh", rotate: -5 },
+    { compactX: "2.5vw", openX: "10vw", exitX: "13vw", y: "-2vh", rotate: 5 },
+    { compactX: "7vw", openX: "29vw", exitX: "36vw", y: "3vh", rotate: 13 },
+  ] as const;
+  const position = positions[index];
+  const x = useTransform(
+    progress,
+    [0, 0.54, 1],
+    [position.compactX, position.openX, position.exitX],
+  );
+  const y = useTransform(progress, [0, 0.54, 1], ["2vh", position.y, "-12vh"]);
+  const rotate = useTransform(progress, [0, 0.54, 1], [position.rotate * 0.55, position.rotate, position.rotate * 1.2]);
+  const scale = useTransform(progress, [0, 0.54, 1], [0.9 + index * 0.018, 1, 0.94]);
+
+  return (
+    <motion.button
+      type="button"
+      className="hero-post-card"
+      style={
+        reduced
+          ? { x: position.openX, y: position.y, rotate: position.rotate, scale: 1 }
+          : { x, y, rotate, scale }
+      }
+      onClick={() => open(project)}
+      aria-label={`${t(project.title, language)} — ${t(project.category, language)}`}
+    >
+      <span className="hero-post-image">
+        <img src={post.src} alt="" draggable={false} />
+      </span>
+      <span className="hero-post-caption">
+        <span>{String(index + 1).padStart(2, "0")}</span>
+        <strong>{t(project.title, language)}</strong>
+        <span>{t(project.category, language)}</span>
+      </span>
+    </motion.button>
+  );
+}
+
 function ScrollHero({ open }: { open: (project: Project) => void }) {
   const { language } = useLanguage();
   const sectionRef = useRef<HTMLElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const durationRef = useRef(0);
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end end"],
   });
-  const videoScale = useTransform(scrollYProgress, [0, 1], [1, 1.12]);
   const overlayOpacity = useTransform(
     scrollYProgress,
     [0, 0.18, 0.72, 0.95],
@@ -285,37 +343,20 @@ function ScrollHero({ open }: { open: (project: Project) => void }) {
   const overlayY = useTransform(scrollYProgress, [0, 1], [0, -90]);
   const progressScale = useTransform(scrollYProgress, [0, 1], [0.04, 1]);
 
-  useMotionValueEvent(scrollYProgress, "change", (progress) => {
-    const video = videoRef.current;
-    if (reduced || !video || !durationRef.current) return;
-    const end = Math.max(0, durationRef.current - 0.05);
-    video.currentTime = Math.min(end, progress * end);
-  });
-
-  const registerDuration = () => {
-    const video = videoRef.current;
-    if (!video || !Number.isFinite(video.duration)) return;
-    durationRef.current = video.duration;
-    video.currentTime = 0.01;
-  };
-
   return (
-    <section ref={sectionRef} className="hero" aria-label="Scroll-controlled showreel">
+    <section ref={sectionRef} className="hero" aria-label="Scroll-controlled portfolio posts">
       <div className="hero-stage">
-        <div className="hero-media">
-          <motion.div className="hero-media-frame" style={{ scale: reduced ? 1 : videoScale }}>
-            <video
-              ref={videoRef}
-              src={projects[0].heroVideo}
-              poster={projects[0].poster || undefined}
-              muted
-              playsInline
-              preload="auto"
-              onLoadedMetadata={registerDuration}
-              aria-label="16 by 9 scroll-controlled demo showreel"
+        <div className="hero-posts" aria-label={language === "zh" ? "精选作品帖子" : "Selected portfolio posts"}>
+          {heroPosts.map((post, index) => (
+            <HeroPost
+              key={post.src}
+              post={post}
+              index={index}
+              progress={scrollYProgress}
+              reduced={reduced}
+              open={open}
             />
-            <div className="hero-scrim" />
-          </motion.div>
+          ))}
         </div>
 
         <motion.div
