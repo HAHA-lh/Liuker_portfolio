@@ -22,7 +22,9 @@ import {
   useEffect,
   useRef,
   useState,
+  type ComponentType,
   type ElementType,
+  type HTMLAttributes,
   type MouseEvent,
 } from "react";
 import { projects, siteContent, t, type Project } from "./content";
@@ -133,9 +135,12 @@ function InlineEditable({
   ariaLabel: string;
 }) {
   const [text, save] = useEditableDraft(storageKey, value);
+  const EditableComponent = Component as ComponentType<
+    HTMLAttributes<HTMLElement>
+  >;
 
   return (
-    <Component
+    <EditableComponent
       className={`inline-editable ${className}`}
       contentEditable
       suppressContentEditableWarning
@@ -157,7 +162,7 @@ function InlineEditable({
       }}
     >
       {text}
-    </Component>
+    </EditableComponent>
   );
 }
 
