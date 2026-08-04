@@ -10,6 +10,7 @@ import "@fontsource/kanit/900.css";
 import "./globals.css";
 import { LanguageProvider } from "./language";
 import { ThemeProvider } from "./theme";
+import DotField from "./components/DotField";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -19,18 +20,18 @@ export async function generateMetadata(): Promise<Metadata> {
   const origin = host ? `${protocol}://${host}` : "http://localhost:3000";
 
   return {
-    title: "Liker — Video Creator",
+    title: "LIUKER — Video Creator",
     description:
       "A bilingual demo portfolio for a video creator, director and motion designer.",
     openGraph: {
-      title: "Liker — Video Creator",
+      title: "LIUKER — Video Creator",
       description: "Selected moving-image work, process and experience.",
       type: "website",
       images: [{ url: `${origin}/og.png`, width: 1536, height: 1024 }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "Liker — Video Creator",
+      title: "LIUKER — Video Creator",
       description: "Selected moving-image work, process and experience.",
       images: [`${origin}/og.png`],
     },
@@ -53,7 +54,23 @@ export default function RootLayout({
       </head>
       <body>
         <ThemeProvider>
-          <LanguageProvider>{children}</LanguageProvider>
+          <LanguageProvider>
+            <div className="site-dot-background" aria-hidden="true">
+              <DotField
+                dotRadius={1.5}
+                dotSpacing={18}
+                cursorRadius={520}
+                bulgeStrength={74}
+                glowRadius={240}
+                sparkle
+                waveAmplitude={1.15}
+                gradientFrom="rgba(190, 50, 178, 0.28)"
+                gradientTo="rgba(255, 123, 58, 0.19)"
+                glowColor="rgba(105, 73, 255, 0.22)"
+              />
+            </div>
+            {children}
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

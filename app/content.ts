@@ -1,3 +1,5 @@
+import { projectRows } from "./project-rows.generated";
+
 export type Language = "zh" | "en";
 
 export type LocalizedText = {
@@ -40,7 +42,7 @@ const media = {
 };
 
 export const siteContent = {
-  name: "Liker",
+  name: "LIUKER",
   role: { zh: "视频创作者 / 动态设计师", en: "VIDEO CREATOR / MOTION DESIGNER" },
   heroIntro: {
     zh: "用影像、节奏与设计，把想法变成让人记住的画面。",
@@ -107,7 +109,7 @@ export const siteContent = {
   ],
 } as const;
 
-export const projects: Project[] = [
+const baseProjects: Project[] = [
   {
     slug: "afterglow",
     title: { zh: "余晖", en: "Afterglow" },
@@ -289,6 +291,34 @@ export const projects: Project[] = [
     featured: false,
   },
 ];
+
+export const projects: Project[] = projectRows.map((row) => {
+  const template = baseProjects.find((project) => project.slug === row.templateSlug) ?? baseProjects[0];
+
+  return {
+    ...template,
+    slug: row.slug,
+    title: {
+      zh: row.titleZh || template.title.zh,
+      en: row.titleEn || template.title.en,
+    },
+    category: {
+      zh: row.categoryZh || template.category.zh,
+      en: row.categoryEn || template.category.en,
+    },
+    year: row.year || template.year,
+    role: {
+      zh: row.roleZh || template.role.zh,
+      en: row.roleEn || template.role.en,
+    },
+    duration: row.duration || template.duration,
+    previewVideo: row.previewVideo || template.previewVideo,
+    heroVideo: row.fullVideo || template.heroVideo,
+    poster: row.cover || template.poster,
+    visual: row.visual || template.visual,
+    featured: row.featured,
+  };
+});
 
 export function t(value: LocalizedText, language: Language) {
   return value[language];

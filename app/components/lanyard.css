@@ -1,0 +1,48 @@
+.lanyard-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 720px;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+
+.lanyard-wrapper:active {
+  cursor: grabbing;
+}
+
+.lanyard-wrapper canvas {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.lanyard-instruction {
+  position: absolute;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: rgba(223, 231, 239, 0.48);
+  font-size: 0.63rem;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+.lanyard-instruction i {
+  width: 2.5rem;
+  height: 1px;
+  background: linear-gradient(90deg, #b50cff, #ff7048);
+}
+
+@media (max-width: 720px) {
+  .lanyard-wrapper {
+    min-height: 590px;
+  }
+}

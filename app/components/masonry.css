@@ -1,0 +1,219 @@
+.masonry-list {
+  position: relative;
+  width: 100%;
+  min-height: 36rem;
+  isolation: isolate;
+  perspective: 1200px;
+}
+
+.masonry-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  padding: 0;
+  will-change: transform, width, height, opacity;
+}
+
+.masonry-card-media {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  border-radius: clamp(1.4rem, 3vw, 2.5rem);
+  background-color: var(--surface);
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 22px 70px var(--card-shadow);
+  transform-origin: center;
+  will-change: transform;
+  --glow-x: 50%;
+  --glow-y: 50%;
+  --glow-intensity: 0;
+  --glow-radius: 260px;
+  transform-style: preserve-3d;
+}
+
+.masonry-card-media::after {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  border-radius: inherit;
+  padding: 3px;
+  background: radial-gradient(
+    var(--glow-radius) circle at var(--glow-x) var(--glow-y),
+    rgba(132, 0, 255, calc(var(--glow-intensity) * 0.92)) 0%,
+    rgba(255, 92, 87, calc(var(--glow-intensity) * 0.45)) 30%,
+    transparent 64%
+  );
+  content: "";
+  pointer-events: none;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+.masonry-global-spotlight {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  left: 0;
+  width: 720px;
+  height: 720px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(132, 0, 255, 0.16) 0%,
+    rgba(132, 0, 255, 0.08) 20%,
+    rgba(255, 92, 87, 0.035) 40%,
+    transparent 70%
+  );
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  transition: opacity 260ms ease;
+  will-change: transform, opacity;
+}
+
+.masonry-card-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(5, 5, 8, 0.1) 42%, rgba(5, 5, 8, 0.88));
+}
+
+.masonry-index {
+  position: absolute;
+  top: 1.15rem;
+  left: 1.25rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: clamp(2rem, 4vw, 4rem);
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  z-index: 3;
+  transform: translateZ(20px);
+}
+
+.masonry-copy {
+  position: absolute;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  left: 1.25rem;
+  color: #f7f3ff;
+  z-index: 3;
+  transform: translateZ(24px);
+  transition: transform 300ms ease, opacity 300ms ease;
+}
+
+.masonry-copy span {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  opacity: 0.68;
+}
+
+.masonry-copy h3 {
+  max-width: 12ch;
+  margin-top: 0.35rem;
+  font-size: clamp(1.8rem, 4vw, 3.8rem);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+  text-transform: uppercase;
+}
+
+.masonry-actions {
+  position: absolute;
+  z-index: 6;
+  top: 1.1rem;
+  right: 1.1rem;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.magic-bento-card:hover .masonry-copy {
+  transform: translate3d(0, -0.3rem, 28px);
+}
+
+.magic-bento-particle {
+  position: absolute;
+  z-index: 5;
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(190, 90, 255, 1);
+  box-shadow: 0 0 8px rgba(190, 90, 255, 0.8), 0 0 16px rgba(255, 92, 87, 0.34);
+  pointer-events: none;
+}
+
+.magic-bento-particle::before {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: rgba(132, 0, 255, 0.18);
+  content: "";
+}
+
+.magic-bento-ripple {
+  position: absolute;
+  z-index: 7;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(132, 0, 255, 0.42) 0%, rgba(255, 92, 87, 0.17) 34%, transparent 70%);
+  pointer-events: none;
+}
+
+.masonry-actions button {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(8, 8, 12, 0.38);
+  padding: 0.7rem 0.85rem;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+
+.masonry-actions button:last-child {
+  width: 2.5rem;
+  padding: 0;
+}
+
+@media (max-width: 639px) {
+  .masonry-list {
+    min-height: 55rem;
+  }
+
+  .masonry-actions button:first-child {
+    width: 2.5rem;
+    overflow: hidden;
+    padding: 0;
+    color: transparent;
+  }
+
+  .masonry-actions button:first-child svg {
+    color: #fff;
+  }
+}
+
+@media (hover: none), (prefers-reduced-motion: reduce) {
+  .masonry-global-spotlight,
+  .magic-bento-particle {
+    display: none;
+  }
+
+  .masonry-card-media {
+    transform: none !important;
+  }
+}
