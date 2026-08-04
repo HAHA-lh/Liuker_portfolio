@@ -65,6 +65,10 @@ function normalizeAsset(value) {
   return normalized.startsWith("/") ? normalized : `/${normalized}`;
 }
 
+function normalizeCover(value) {
+  return normalizeAsset(value).replace(/\.(?:jpe?g|png)$/i, ".webp");
+}
+
 const csvText = (await fs.readFile(sourcePath, "utf8")).replace(/^\uFEFF/, "");
 const [headerRow, ...dataRows] = parseCsv(csvText);
 const headers = headerRow.map((header) => header.trim());
@@ -119,7 +123,7 @@ const records = dataRows.map((cells, rowIndex) => {
     duration: source.duration.trim(),
     previewVideo: normalizeAsset(source.preview_video),
     fullVideo: normalizeAsset(source.full_video),
-    cover: normalizeAsset(source.cover),
+    cover: normalizeCover(source.cover),
     visual: source.visual.trim(),
     featured: asBoolean(source.featured),
     enabled: asBoolean(source.enabled, true),

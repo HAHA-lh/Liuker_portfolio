@@ -453,6 +453,8 @@ a:focus-visible {
 }
 
 .hero-media-frame video {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -461,8 +463,30 @@ a:focus-visible {
   transition: filter 300ms ease;
 }
 
+.hero-poster {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: block;
+  background: #130a1d;
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 420ms ease;
+}
+
+.hero-poster.is-hidden {
+  opacity: 0;
+}
+
+.hero-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .hero-scrim {
   position: absolute;
+  z-index: 3;
   inset: 0;
   background:
     linear-gradient(180deg, rgba(5, 5, 5, 0.4) 0%, transparent 28%, rgba(5, 5, 5, 0.14) 55%, rgba(5, 5, 5, 0.86) 100%),
@@ -824,6 +848,11 @@ a:focus-visible {
   opacity: 0.82;
   pointer-events: none;
   filter: saturate(1.08) contrast(1.03);
+}
+
+.about-orb-mount {
+  width: 100%;
+  height: 100%;
 }
 
 .about-content {

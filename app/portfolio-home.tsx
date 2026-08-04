@@ -26,6 +26,7 @@ import {
   type ElementType,
   type HTMLAttributes,
   type MouseEvent,
+  type ReactNode,
 } from "react";
 import { projects, siteContent, t, type Project } from "./content";
 import ClickSpark from "./components/ClickSpark";
@@ -34,7 +35,6 @@ import GlassSurface from "./components/GlassSurface";
 import GradientText from "./components/GradientText";
 import type { InfiniteMenuItem } from "./components/InfiniteMenu";
 import Masonry, { type MasonryItem } from "./components/Masonry";
-import Orb from "./components/Orb";
 import StaggeredMenu from "./components/StaggeredMenu";
 import TextPressure from "./components/TextPressure";
 import VariableProximity from "./components/VariableProximity";
@@ -44,37 +44,45 @@ import { ThemeToggle, useTheme } from "./theme";
 const ease = [0.25, 0.1, 0.25, 1] as const;
 const InfiniteMenu = lazy(() => import("./components/InfiniteMenu"));
 const Lanyard = lazy(() => import("./components/Lanyard"));
+const Orb = lazy(() => import("./components/Orb"));
+
+const HERO_VIDEO_SRC = "/media/projects/%E4%B8%BB%E9%A1%B5_interactive_1080p_v3.mp4?v=bdcf780d-gop2";
+const HERO_POSTER_WEBP = "/media/posters/home-hero.webp";
+const HERO_POSTER_AVIF = "/media/posters/home-hero.avif";
 
 function ViewportMount({
   children,
   className = "",
-  rootMargin = "800px",
+  rootMargin = "0px",
 }: {
-  children: React.ReactNode;
+  children: ReactNode | ((active: boolean) => ReactNode);
   className?: string;
   rootMargin?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [ready, setReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [active, setActive] = useState(false);
 
   useEffect(() => {
     const element = ref.current;
-    if (!element || ready) return;
+    if (!element) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (!entry.isIntersecting) return;
-        setReady(true);
-        observer.disconnect();
+        const nextActive = entry.isIntersecting;
+        setActive(nextActive);
+        if (nextActive) setMounted(true);
       },
-      { rootMargin },
+      { rootMargin, threshold: 0.01 },
     );
     observer.observe(element);
     return () => observer.disconnect();
-  }, [ready, rootMargin]);
+  }, [rootMargin]);
+
+  const content = typeof children === "function" ? children(active) : children;
 
   return (
-    <div ref={ref} className={`viewport-mount ${className}`}>
-      {ready ? <Suspense fallback={<div className="scene-loader" />}>{children}</Suspense> : <div className="scene-loader" />}
+    <div ref={ref} className={`viewport-mount ${className}`} data-active={active || undefined}>
+      {mounted ? <Suspense fallback={<div className="scene-loader" />}>{content}</Suspense> : <div className="scene-loader" />}
     </div>
   );
 }
@@ -657,13 +665,16 @@ function Marquee({ open }: { open: (project: Project) => void }) {
         <span>Selected loop / 01—20</span>
         <span>{language === "zh" ? "拖动探索作品" : "Drag to explore"}</span>
       </div>
-      <ViewportMount className="infinite-menu-mount" rootMargin="1000px">
-        <InfiniteMenu
-          items={menuItems}
-          scale={1}
-          actionLabel={language === "zh" ? "打开作品" : "Open project"}
-          onItemClick={(item) => item.value && open(item.value as Project)}
-        />
+      <ViewportMount className="infinite-menu-mount">
+        {(active) => (
+          <InfiniteMenu
+            active={active}
+            items={menuItems}
+            scale={1}
+            actionLabel={language === "zh" ? "打开作品" : "Open project"}
+            onItemClick={(item) => item.value && open(item.value as Project)}
+          />
+        )}
       </ViewportMount>
     </section>
   );
@@ -679,6 +690,10 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
   const renderedTimeRef = useRef(0);
   const seekFrameRef = useRef<number | null>(null);
   const lastSeekAtRef = useRef(0);
+  const loadRequestedRef = useRef(false);
+  const [videoRequested, setVideoRequested] = useState(false);
+  const [frameReady, setFrameReady] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -693,6 +708,12 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
   const overlayY = useTransform(scrollYProgress, [0, 1], [0, -90]);
   const titleOpacity = useTransform(scrollYProgress, [0, 1], [0.1, 0.7]);
   const progressScale = useTransform(scrollYProgress, [0, 1], [0.04, 1]);
+
+  const requestHeroVideo = () => {
+    if (loadRequestedRef.current) return;
+    loadRequestedRef.current = true;
+    setVideoRequested(true);
+  };
 
   const seekTowardTarget = (timestamp: number) => {
     const video = videoRef.current;
@@ -736,6 +757,7 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
 
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
     scrollProgressRef.current = Math.min(1, Math.max(0, progress));
+    if (scrollProgressRef.current > 0.001) requestHeroVideo();
     const video = videoRef.current;
     if (reduced || !video || !durationRef.current) return;
     const end = Math.max(0, durationRef.current - 0.05);
@@ -747,6 +769,12 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
     if (seekFrameRef.current !== null) {
       window.cancelAnimationFrame(seekFrameRef.current);
     }
+  }, []);
+
+  useEffect(() => {
+    const requestOnScroll = () => requestHeroVideo();
+    window.addEventListener("scroll", requestOnScroll, { passive: true, once: true });
+    return () => window.removeEventListener("scroll", requestOnScroll);
   }, []);
 
   const registerDuration = () => {
@@ -792,15 +820,28 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
     <section ref={sectionRef} className="hero" aria-label="Scroll-controlled showreel">
       <div className="hero-stage">
         <div className="hero-media">
-          <motion.div className="hero-media-frame" style={{ scale: reduced ? 1 : videoScale }}>
+          <motion.div
+            className="hero-media-frame"
+            data-video-requested={videoRequested || undefined}
+            data-frame-ready={frameReady || undefined}
+            data-video-failed={videoFailed || undefined}
+            style={{ scale: reduced ? 1 : videoScale }}
+          >
+            <picture className={`hero-poster ${frameReady ? "is-hidden" : ""}`}>
+              <source srcSet={HERO_POSTER_AVIF} type="image/avif" />
+              <img src={HERO_POSTER_WEBP} alt="" fetchPriority="high" decoding="async" />
+            </picture>
             <video
               ref={videoRef}
-              src="/media/projects/%E4%B8%BB%E9%A1%B5_interactive_1080p_v3.mp4?v=bdcf780d-gop2"
+              src={videoRequested ? HERO_VIDEO_SRC : undefined}
               muted
               playsInline
-              preload="auto"
+              preload={videoRequested ? "metadata" : "none"}
               onLoadedMetadata={registerDuration}
               onCanPlay={queueSeek}
+              onLoadedData={() => setFrameReady(true)}
+              onSeeked={() => setFrameReady(true)}
+              onError={() => setVideoFailed(true)}
               disablePictureInPicture
               tabIndex={-1}
               aria-label="16 by 9 scroll-controlled showreel"
@@ -1048,8 +1089,10 @@ function ContactSection() {
           </div>
         </div>
         <div className="contact-lanyard-stage">
-          <ViewportMount className="lanyard-mount" rootMargin="900px">
-            <Lanyard position={[0, 0, 18]} gravity={[0, -38, 0]} />
+          <ViewportMount className="lanyard-mount">
+            {(active) => (
+              <Lanyard active={active} position={[0, 0, 18]} gravity={[0, -38, 0]} />
+            )}
           </ViewportMount>
         </div>
       </div>
@@ -1107,12 +1150,17 @@ export function PortfolioHome() {
 
       <section id="about" className="about-section container-wide">
         <div className="about-orb-stage">
-          <Orb
-            hue={285}
-            hoverIntensity={0.62}
-            rotateOnHover
-            backgroundColor={theme === "light" ? "#f3f0e9" : "#0c0c0c"}
-          />
+          <ViewportMount className="about-orb-mount">
+            {(active) => (
+              <Orb
+                active={active}
+                hue={285}
+                hoverIntensity={0.62}
+                rotateOnHover
+                backgroundColor={theme === "light" ? "#f3f0e9" : "#0c0c0c"}
+              />
+            )}
+          </ViewportMount>
         </div>
         <div className="about-content">
           <FadeIn>

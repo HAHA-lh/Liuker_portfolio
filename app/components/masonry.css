@@ -35,6 +35,18 @@
   transform-style: preserve-3d;
 }
 
+.masonry-card-picture,
+.masonry-card-picture img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.masonry-card-picture img {
+  object-fit: cover;
+}
+
 .masonry-card-media::after {
   position: absolute;
   z-index: 2;

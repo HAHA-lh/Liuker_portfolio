@@ -23,6 +23,9 @@ type MasonryProps<T> = {
   detailsLabel: string;
 };
 
+const imageVariant = (src: string, extension: "avif" | "webp") =>
+  src.replace(/\.(?:avif|jpe?g|png|webp)$/i, `.${extension}`);
+
 function useColumns() {
   const [columns, setColumns] = useState(3);
   useEffect(() => {
@@ -311,7 +314,16 @@ export default function Masonry<T>({
           onMouseLeave={(event) => cardLeave(event, item.id)}
           onClick={cardClick}
         >
-          <div className="masonry-card-media magic-bento-card" style={{ backgroundImage: `url(${item.img})` }}>
+          <div className="masonry-card-media magic-bento-card">
+            <picture className="masonry-card-picture">
+              <source srcSet={imageVariant(item.img, "avif")} type="image/avif" />
+              <img
+                src={imageVariant(item.img, "webp")}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+            </picture>
             <div className="masonry-card-shade" />
             <span className="masonry-index">{String(index + 1).padStart(2, "0")}</span>
             <div className="masonry-copy">

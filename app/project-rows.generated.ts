@@ -15,7 +15,7 @@ export const projectRows = [
     "duration": "0:31",
     "previewVideo": "/media/projects/Ballantine_30s.mp4",
     "fullVideo": "/media/projects/Ballantine_30s.mp4",
-    "cover": "/media/projects/photo/Ballantine_30s.png",
+    "cover": "/media/projects/photo/Ballantine_30s.webp",
     "visual": "",
     "featured": true,
     "enabled": true
@@ -34,7 +34,7 @@ export const projectRows = [
     "duration": "4:14",
     "previewVideo": "/media/projects/BMW .mp4",
     "fullVideo": "/media/projects/BMW .mp4",
-    "cover": "/media/projects/photo/BMW .png",
+    "cover": "/media/projects/photo/BMW .webp",
     "visual": "",
     "featured": true,
     "enabled": true
@@ -53,7 +53,7 @@ export const projectRows = [
     "duration": "1:11",
     "previewVideo": "/media/projects/BO.mp4",
     "fullVideo": "/media/projects/BO.mp4",
-    "cover": "/media/projects/photo/BO.png",
+    "cover": "/media/projects/photo/BO.webp",
     "visual": "",
     "featured": true,
     "enabled": true
@@ -72,7 +72,7 @@ export const projectRows = [
     "duration": "0:37",
     "previewVideo": "/media/projects/HOW_Bra.mp4",
     "fullVideo": "/media/projects/HOW_Bra.mp4",
-    "cover": "/media/projects/photo/HOW_Bra.png",
+    "cover": "/media/projects/photo/HOW_Bra.webp",
     "visual": "",
     "featured": true,
     "enabled": true
@@ -91,7 +91,7 @@ export const projectRows = [
     "duration": "1:56",
     "previewVideo": "/media/projects/HR Designer .mp4",
     "fullVideo": "/media/projects/HR Designer .mp4",
-    "cover": "/media/projects/photo/HR Designer .png",
+    "cover": "/media/projects/photo/HR Designer .webp",
     "visual": "",
     "featured": true,
     "enabled": true
@@ -110,7 +110,7 @@ export const projectRows = [
     "duration": "1:00",
     "previewVideo": "/media/projects/HUAWEI Y9 .mp4",
     "fullVideo": "/media/projects/HUAWEI Y9 .mp4",
-    "cover": "/media/projects/photo/HUAWEI Y9 .png",
+    "cover": "/media/projects/photo/HUAWEI Y9 .webp",
     "visual": "",
     "featured": true,
     "enabled": true
@@ -129,7 +129,7 @@ export const projectRows = [
     "duration": "0:12",
     "previewVideo": "/media/projects/LOL片头.mp4",
     "fullVideo": "/media/projects/LOL片头.mp4",
-    "cover": "/media/projects/photo/LOL片头.png",
+    "cover": "/media/projects/photo/LOL片头.webp",
     "visual": "",
     "featured": false,
     "enabled": true
@@ -148,7 +148,7 @@ export const projectRows = [
     "duration": "1:31",
     "previewVideo": "/media/projects/LUX_.mp4",
     "fullVideo": "/media/projects/LUX_.mp4",
-    "cover": "/media/projects/photo/LUX_.png",
+    "cover": "/media/projects/photo/LUX_.webp",
     "visual": "",
     "featured": false,
     "enabled": true
@@ -167,7 +167,7 @@ export const projectRows = [
     "duration": "5:30",
     "previewVideo": "/media/projects/PHILIPS_.mp4",
     "fullVideo": "/media/projects/PHILIPS_.mp4",
-    "cover": "/media/projects/photo/PHILIPS_.png",
+    "cover": "/media/projects/photo/PHILIPS_.webp",
     "visual": "",
     "featured": false,
     "enabled": true
@@ -186,7 +186,7 @@ export const projectRows = [
     "duration": "1:15",
     "previewVideo": "/media/projects/QQ全世界圈着玩-穿越AR赛场.mp4",
     "fullVideo": "/media/projects/QQ全世界圈着玩-穿越AR赛场.mp4",
-    "cover": "/media/projects/photo/QQ全世界圈着玩-穿越AR赛场.png",
+    "cover": "/media/projects/photo/QQ全世界圈着玩-穿越AR赛场.webp",
     "visual": "",
     "featured": false,
     "enabled": true
@@ -205,7 +205,7 @@ export const projectRows = [
     "duration": "0:15",
     "previewVideo": "/media/projects/TWININGS.mp4",
     "fullVideo": "/media/projects/TWININGS.mp4",
-    "cover": "/media/projects/photo/TWININGS.png",
+    "cover": "/media/projects/photo/TWININGS.webp",
     "visual": "",
     "featured": false,
     "enabled": true
@@ -224,7 +224,7 @@ export const projectRows = [
     "duration": "0:34",
     "previewVideo": "/media/projects/VSL.mp4",
     "fullVideo": "/media/projects/VSL.mp4",
-    "cover": "/media/projects/photo/VSL.png",
+    "cover": "/media/projects/photo/VSL.webp",
     "visual": "",
     "featured": false,
     "enabled": true
@@ -243,7 +243,7 @@ export const projectRows = [
     "duration": "1:23",
     "previewVideo": "/media/projects/奔驰_Smart.mp4",
     "fullVideo": "/media/projects/奔驰_Smart.mp4",
-    "cover": "/media/projects/photo/奔驰_Smart.png",
+    "cover": "/media/projects/photo/奔驰_Smart.webp",
     "visual": "",
     "featured": false,
     "enabled": true
@@ -262,7 +262,7 @@ export const projectRows = [
     "duration": "1:42",
     "previewVideo": "/media/projects/大众_CC.mp4",
     "fullVideo": "/media/projects/大众_CC.mp4",
-    "cover": "/media/projects/photo/大众_CC.png",
+    "cover": "/media/projects/photo/大众_CC.webp",
     "visual": "",
     "featured": false,
     "enabled": true
@@ -281,7 +281,7 @@ export const projectRows = [
     "duration": "1:55",
     "previewVideo": "/media/projects/冈本_圣诞树.mp4",
     "fullVideo": "/media/projects/冈本_圣诞树.mp4",
-    "cover": "/media/projects/photo/冈本_圣诞树.png",
+    "cover": "/media/projects/photo/冈本_圣诞树.webp",
     "visual": "",
     "featured": false,
     "enabled": true
@@ -300,7 +300,7 @@ export const projectRows = [
     "duration": "0:30",
     "previewVideo": "/media/projects/杰士邦_30s.mp4",
     "fullVideo": "/media/projects/杰士邦_30s.mp4",
-    "cover": "/media/projects/photo/杰士邦_30s.png",
+    "cover": "/media/projects/photo/杰士邦_30s.webp",
     "visual": "",
     "featured": false,
     "enabled": true
@@ -319,7 +319,7 @@ export const projectRows = [
     "duration": "1:02",
     "previewVideo": "/media/projects/仁孚_MG.mp4",
     "fullVideo": "/media/projects/仁孚_MG.mp4",
-    "cover": "/media/projects/photo/仁孚_MG.png",
+    "cover": "/media/projects/photo/仁孚_MG.webp",
     "visual": "",
     "featured": false,
     "enabled": true
@@ -338,7 +338,7 @@ export const projectRows = [
     "duration": "1:07",
     "previewVideo": "/media/projects/小电视形象展示.mp4",
     "fullVideo": "/media/projects/小电视形象展示.mp4",
-    "cover": "/media/projects/photo/小电视形象展示.png",
+    "cover": "/media/projects/photo/小电视形象展示.webp",
     "visual": "",
     "featured": false,
     "enabled": true
@@ -376,7 +376,7 @@ export const projectRows = [
     "duration": "00:45",
     "previewVideo": "https://videos.pexels.com/video-files/3130284/3130284-hd_3840_2160_30fps.mp4",
     "fullVideo": "https://videos.pexels.com/video-files/3130284/3130284-hd_3840_2160_30fps.mp4",
-    "cover": "/og.png",
+    "cover": "/og.webp",
     "visual": "",
     "featured": false,
     "enabled": true

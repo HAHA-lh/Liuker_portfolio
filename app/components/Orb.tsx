@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import "./orb.css";
 
 type OrbProps = {
+  active?: boolean;
   hue?: number;
   hoverIntensity?: number;
   rotateOnHover?: boolean;
@@ -177,6 +178,7 @@ function colorToVector(color: string) {
 }
 
 export default function Orb({
+  active = true,
   hue = 0,
   hoverIntensity = 0.2,
   rotateOnHover = true,
@@ -184,6 +186,13 @@ export default function Orb({
   backgroundColor = "#000000",
 }: OrbProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const activeRef = useRef(active);
+  const resumeRef = useRef<() => void>(() => undefined);
+
+  useEffect(() => {
+    activeRef.current = active;
+    if (active) resumeRef.current();
+  }, [active]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -245,18 +254,15 @@ export default function Orb({
     let frame = 0;
     let lastTime = performance.now();
     let rotation = 0;
-    let visible = true;
-    const visibilityObserver = new IntersectionObserver(
-      ([entry]) => {
-        visible = entry.isIntersecting;
-      },
-      { rootMargin: "160px" },
-    );
-    visibilityObserver.observe(container);
+    let running = false;
 
     const update = (time: number) => {
-      frame = window.requestAnimationFrame(update);
-      if (!visible) return;
+      frame = 0;
+      if (!activeRef.current) {
+        running = false;
+        return;
+      }
+      running = true;
       const delta = Math.min(0.05, (time - lastTime) / 1000);
       lastTime = time;
       const effectiveHover = forceHoverState ? 1 : targetHover;
@@ -269,13 +275,20 @@ export default function Orb({
       if (rotateOnHover && effectiveHover > 0.5) rotation += delta * 0.3;
       program.uniforms.rot.value = rotation;
       renderer.render({ scene: mesh });
+      frame = window.requestAnimationFrame(update);
     };
-    frame = window.requestAnimationFrame(update);
+    const resume = () => {
+      if (running || frame || !activeRef.current) return;
+      lastTime = performance.now();
+      frame = window.requestAnimationFrame(update);
+    };
+    resumeRef.current = resume;
+    resume();
 
     return () => {
       window.cancelAnimationFrame(frame);
+      resumeRef.current = () => undefined;
       observer.disconnect();
-      visibilityObserver.disconnect();
       window.removeEventListener("pointermove", handlePointerMove);
       document.removeEventListener("mouseleave", handlePointerLeave);
       gl.canvas.remove();

@@ -127,15 +127,16 @@ function Band({ isMobile = false, lanyardWidth = 0.78 }) {
   const frontTexture = useMemo(() => createCardTexture("front"), []);
   const backTexture = useMemo(() => createCardTexture("back"), []);
   const bandTexture = useMemo(() => createBandTexture(), []);
-  const curve = useMemo(
-    () => new THREE.CatmullRomCurve3([
-      new THREE.Vector3(),
-      new THREE.Vector3(),
-      new THREE.Vector3(),
-      new THREE.Vector3(),
-    ]),
-    [],
-  );
+  const curve = useMemo(() => {
+    const nextCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0.5, -3.15, 0),
+      new THREE.Vector3(0.35, -2.1, 0),
+      new THREE.Vector3(0.15, -1.05, 0),
+      new THREE.Vector3(0, 0, 0),
+    ]);
+    nextCurve.curveType = "centripetal";
+    return nextCurve;
+  }, []);
   const vec = useMemo(() => new THREE.Vector3(), []);
   const ang = useMemo(() => new THREE.Vector3(), []);
   const rot = useMemo(() => new THREE.Vector3(), []);
@@ -167,6 +168,10 @@ function Band({ isMobile = false, lanyardWidth = 0.78 }) {
     bandTexture?.dispose();
   }, [frontTexture, backTexture, bandTexture]);
 
+  useEffect(() => {
+    band.current?.geometry.setPoints(curve.getPoints(isMobile ? 18 : 34));
+  }, [curve, isMobile]);
+
   useFrame((state, delta) => {
     if (dragged) {
       vec.set(state.pointer.x, state.pointer.y, 0.5).unproject(state.camera);
@@ -185,21 +190,42 @@ function Band({ isMobile = false, lanyardWidth = 0.78 }) {
       if (!ref.current.lerped) {
         ref.current.lerped = new THREE.Vector3().copy(ref.current.translation());
       }
-      const distance = ref.current.lerped.distanceTo(ref.current.translation());
+      const translation = ref.current.translation();
+      if (![translation.x, translation.y, translation.z].every(Number.isFinite)) return;
+      const distance = ref.current.lerped.distanceTo(translation);
       const speed = THREE.MathUtils.clamp(distance, 0.1, 1);
-      ref.current.lerped.lerp(ref.current.translation(), delta * speed * 45);
+      ref.current.lerped.lerp(translation, THREE.MathUtils.clamp(delta * speed * 45, 0, 1));
     });
-    curve.points[0].copy(j3.current.translation());
-    curve.points[1].copy(j2.current.lerped);
-    curve.points[2].copy(j1.current.lerped);
-    curve.points[3].copy(fixed.current.translation());
-    band.current?.geometry.setPoints(curve.getPoints(isMobile ? 18 : 34));
+
+    const translations = [
+      j3.current.translation(),
+      j2.current.lerped,
+      j1.current.lerped,
+      fixed.current.translation(),
+    ];
+    const isFinitePoint = (point) =>
+      point && [point.x, point.y, point.z].every(Number.isFinite);
+
+    if (translations.every(isFinitePoint)) {
+      translations.forEach((point, index) => curve.points[index].copy(point));
+
+      // Rope joints can briefly overlap when the physics scene wakes up. Keep
+      // the spline control points distinct so MeshLine never receives NaNs.
+      for (let index = 1; index < curve.points.length; index += 1) {
+        if (curve.points[index].distanceToSquared(curve.points[index - 1]) < 1e-8) {
+          curve.points[index].y += index * 0.0001;
+        }
+      }
+
+      const linePoints = curve.getPoints(isMobile ? 18 : 34);
+      if (linePoints.every(isFinitePoint)) {
+        band.current?.geometry.setPoints(linePoints);
+      }
+    }
     ang.copy(card.current.angvel());
     rot.copy(card.current.rotation());
     card.current.setAngvel({ x: ang.x, y: ang.y - rot.y * 0.24, z: ang.z });
   });
-
-  curve.curveType = "chordal";
 
   return (
     <group position={[0, 4.3, 0]}>
@@ -274,34 +300,24 @@ function Band({ isMobile = false, lanyardWidth = 0.78 }) {
 }
 
 export default function Lanyard({
+  active = true,
   position = [0, 0, 18],
   gravity = [0, -38, 0],
   fov = 28,
 }: {
+  active?: boolean;
   position?: [number, number, number];
   gravity?: [number, number, number];
   fov?: number;
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     const updateMobile = () => setIsMobile(window.innerWidth < 768);
     updateMobile();
     window.addEventListener("resize", updateMobile);
     return () => window.removeEventListener("resize", updateMobile);
-  }, []);
-
-  useEffect(() => {
-    const wrapper = wrapperRef.current;
-    if (!wrapper) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsVisible(entry.isIntersecting),
-      { rootMargin: "120px" },
-    );
-    observer.observe(wrapper);
-    return () => observer.disconnect();
   }, []);
 
   return (
@@ -314,7 +330,7 @@ export default function Lanyard({
       <Canvas
         camera={{ position, fov }}
         dpr={[1, isMobile ? 1.2 : 1.6]}
-        frameloop={isVisible ? "always" : "never"}
+        frameloop={active ? "always" : "never"}
         gl={{ alpha: true, antialias: !isMobile, powerPreference: "high-performance" }}
         shadows={!isMobile}
       >

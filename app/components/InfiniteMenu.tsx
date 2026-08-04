@@ -468,7 +468,16 @@ class InfiniteGridMenu<T> {
   }
 
   setEnabled(enabled: boolean) {
+    if (this.enabled === enabled || this.destroyed) return;
     this.enabled = enabled;
+    if (enabled) {
+      this.previousTime = 0;
+      if (!this.frameId) this.frameId = requestAnimationFrame(this.run);
+    } else if (this.frameId) {
+      cancelAnimationFrame(this.frameId);
+      this.frameId = 0;
+      this.onMovementChange(false);
+    }
   }
 
   destroy() {
@@ -552,13 +561,14 @@ class InfiniteGridMenu<T> {
   }
 
   private run = (time = 0) => {
-    if (this.destroyed) return;
+    if (this.destroyed || !this.enabled) {
+      this.frameId = 0;
+      return;
+    }
     const delta = Math.min(32, this.previousTime ? time - this.previousTime : this.targetFrameDuration);
     this.previousTime = time;
-    if (this.enabled) {
-      this.animate(delta);
-      this.render();
-    }
+    this.animate(delta);
+    this.render();
     this.frameId = requestAnimationFrame(this.run);
   };
 
@@ -663,16 +673,20 @@ class InfiniteGridMenu<T> {
 export default function InfiniteMenu<T>({
   items,
   scale = 1,
+  active = true,
   onItemClick,
   actionLabel = "Open project",
 }: {
   items: InfiniteMenuItem<T>[];
   scale?: number;
+  active?: boolean;
   onItemClick?: (item: InfiniteMenuItem<T>) => void;
   actionLabel?: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<InfiniteGridMenu<T> | null>(null);
+  const initialActiveRef = useRef(active);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMoving, setIsMoving] = useState(false);
 
@@ -681,16 +695,17 @@ export default function InfiniteMenu<T>({
     const shell = shellRef.current;
     if (!canvas || !shell || !items.length) return;
     const menu = new InfiniteGridMenu(canvas, items, setActiveIndex, setIsMoving, scale);
-    const observer = new IntersectionObserver(
-      ([entry]) => menu.setEnabled(entry.isIntersecting),
-      { rootMargin: "180px" },
-    );
-    observer.observe(shell);
+    menuRef.current = menu;
+    menu.setEnabled(initialActiveRef.current);
     return () => {
-      observer.disconnect();
+      menuRef.current = null;
       menu.destroy();
     };
   }, [items, scale]);
+
+  useEffect(() => {
+    menuRef.current?.setEnabled(active);
+  }, [active]);
 
   if (!items.length) return null;
   const activeItem = items[activeIndex % items.length];
