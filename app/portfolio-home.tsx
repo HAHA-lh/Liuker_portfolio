@@ -1003,7 +1003,7 @@ function ExperienceTimeline() {
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <InlineEditable
                   as="strong"
-                  storageKey={`liuker-experience-${index}-year-${language}`}
+                  storageKey={`liuker-experience-v2-${index}-year-${language}`}
                   value={item.year}
                   ariaLabel={language === "zh" ? "点击编辑年份" : "Click to edit year"}
                 />
@@ -1015,13 +1015,13 @@ function ExperienceTimeline() {
                 </span>
                 <InlineEditable
                   as="h3"
-                  storageKey={`liuker-experience-${index}-title-${language}`}
+                  storageKey={`liuker-experience-v2-${index}-title-${language}`}
                   value={t(item.title, language)}
                   ariaLabel={language === "zh" ? "点击编辑经历名称" : "Click to edit role"}
                 />
                 <InlineEditable
                   as="p"
-                  storageKey={`liuker-experience-${index}-note-${language}`}
+                  storageKey={`liuker-experience-v2-${index}-note-${language}`}
                   value={t(item.note, language)}
                   ariaLabel={language === "zh" ? "点击编辑经历说明" : "Click to edit experience note"}
                 />

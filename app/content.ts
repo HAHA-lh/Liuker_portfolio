@@ -67,27 +67,27 @@ export const siteContent = {
   },
   experience: [
     {
-      year: "20XX — NOW",
-      title: { zh: "视频创作者 / 自由职业", en: "Video Creator / Freelance" },
+      year: "2025 — NOW",
+      title: { zh: "CGI视频创作者 / 自由职业", en: "CGI Video Creator / Freelance" },
       note: {
-        zh: "占位经历：品牌短片、社交内容与动态视觉。",
-        en: "Placeholder experience: brand films, social content and motion visuals.",
+        zh: "品牌短片、社交内容与动态视觉。",
+        en: "Brand films, social content and motion visuals.",
       },
     },
     {
-      year: "20XX — 20XX",
-      title: { zh: "后期与动态设计", en: "Post-production & Motion" },
+      year: "2021 — 2024",
+      title: { zh: "直播礼物动态设计", en: "Live Gift Motion Design" },
       note: {
-        zh: "占位经历：剪辑、调色、声音与动态图形。",
-        en: "Placeholder experience: editing, color, sound and motion graphics.",
+        zh: "前期构思、中期制作、礼物上线",
+        en: "Concept development, production and gift launch.",
       },
     },
     {
-      year: "20XX — 20XX",
-      title: { zh: "视觉设计实习", en: "Visual Design Intern" },
+      year: "2018 — 2020",
+      title: { zh: "后期与动态设计", en: "Post-production & Motion Design" },
       note: {
-        zh: "占位经历：视觉研究、分镜与设计系统。",
-        en: "Placeholder experience: visual research, storyboards and design systems.",
+        zh: "视觉研究、分镜与设计系统。",
+        en: "Visual research, storyboards and design systems.",
       },
     },
   ],
