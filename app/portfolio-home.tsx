@@ -49,6 +49,7 @@ const Orb = lazy(() => import("./components/Orb"));
 const HERO_VIDEO_SRC = "/media/projects/%E4%B8%BB%E9%A1%B5_interactive_1080p_v3.mp4?v=bdcf780d-gop2";
 const HERO_POSTER_WEBP = "/media/posters/home-hero.webp";
 const HERO_POSTER_AVIF = "/media/posters/home-hero.avif";
+const CONTENT_EDITING_ENABLED = process.env.NODE_ENV === "development";
 
 function ViewportMount({
   children,
@@ -112,18 +113,22 @@ function FadeIn({
   );
 }
 
-function useEditableDraft(storageKey: string, fallback: string) {
+function useEditableDraft(storageKey: string, fallback: string, enabled = CONTENT_EDITING_ENABLED) {
   const [text, setText] = useState(fallback);
 
   useEffect(() => {
+    if (!enabled) {
+      setText(fallback);
+      return;
+    }
     const saved = window.localStorage.getItem(storageKey);
     setText(saved || fallback);
-  }, [fallback, storageKey]);
+  }, [enabled, fallback, storageKey]);
 
   const save = (nextValue: string) => {
     const next = nextValue.trim() || fallback;
     setText(next);
-    window.localStorage.setItem(storageKey, next);
+    if (enabled) window.localStorage.setItem(storageKey, next);
   };
 
   return [text, save] as const;
@@ -149,25 +154,28 @@ function InlineEditable({
 
   return (
     <EditableComponent
-      className={`inline-editable ${className}`}
-      contentEditable
-      suppressContentEditableWarning
+      className={[CONTENT_EDITING_ENABLED ? "inline-editable" : "", className].filter(Boolean).join(" ")}
+      contentEditable={CONTENT_EDITING_ENABLED || undefined}
+      suppressContentEditableWarning={CONTENT_EDITING_ENABLED || undefined}
       spellCheck={false}
-      aria-label={ariaLabel}
-      title={ariaLabel}
-      onBlur={(event: React.FocusEvent<HTMLElement>) =>
-        save(event.currentTarget.textContent || "")
-      }
-      onKeyDown={(event: React.KeyboardEvent<HTMLElement>) => {
-        if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-          event.preventDefault();
-          event.currentTarget.blur();
-        }
-        if (event.key === "Escape") {
-          event.currentTarget.textContent = text;
-          event.currentTarget.blur();
-        }
-      }}
+      aria-label={CONTENT_EDITING_ENABLED ? ariaLabel : undefined}
+      title={CONTENT_EDITING_ENABLED ? ariaLabel : undefined}
+      data-editable={CONTENT_EDITING_ENABLED || undefined}
+      onBlur={CONTENT_EDITING_ENABLED
+        ? (event: React.FocusEvent<HTMLElement>) => save(event.currentTarget.textContent || "")
+        : undefined}
+      onKeyDown={CONTENT_EDITING_ENABLED
+        ? (event: React.KeyboardEvent<HTMLElement>) => {
+            if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+              event.preventDefault();
+              event.currentTarget.blur();
+            }
+            if (event.key === "Escape") {
+              event.currentTarget.textContent = text;
+              event.currentTarget.blur();
+            }
+          }
+        : undefined}
     >
       {text}
     </EditableComponent>
@@ -191,6 +199,7 @@ function EditableProximityCopy({
   useEffect(() => setDraft(text), [text]);
 
   const beginEditing = () => {
+    if (!CONTENT_EDITING_ENABLED) return;
     setDraft(text);
     setEditing(true);
   };
@@ -204,7 +213,7 @@ function EditableProximityCopy({
     <div
       ref={containerRef}
       className={`about-proximity-wrap editable-proximity ${editing ? "is-editing" : ""}`}
-      onDoubleClick={beginEditing}
+      onDoubleClick={CONTENT_EDITING_ENABLED ? beginEditing : undefined}
     >
       {editing ? (
         <textarea
@@ -236,14 +245,16 @@ function EditableProximityCopy({
           className="about-proximity-copy"
         />
       )}
-      <button
-        type="button"
-        className="inline-edit-trigger"
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={editing ? finishEditing : beginEditing}
-      >
-        {editing ? "✓" : editLabel}
-      </button>
+      {CONTENT_EDITING_ENABLED && (
+        <button
+          type="button"
+          className="inline-edit-trigger"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={editing ? finishEditing : beginEditing}
+        >
+          {editing ? "✓" : editLabel}
+        </button>
+      )}
     </div>
   );
 }
@@ -264,6 +275,7 @@ function EditablePressureTitle({
   useEffect(() => setDraft(text), [text]);
 
   const beginEditing = () => {
+    if (!CONTENT_EDITING_ENABLED) return;
     setDraft(text);
     setEditing(true);
   };
@@ -273,7 +285,10 @@ function EditablePressureTitle({
   };
 
   return (
-    <div className={`about-pressure-wrap editable-pressure ${editing ? "is-editing" : ""}`} onDoubleClick={beginEditing}>
+    <div
+      className={`about-pressure-wrap editable-pressure ${editing ? "is-editing" : ""}`}
+      onDoubleClick={CONTENT_EDITING_ENABLED ? beginEditing : undefined}
+    >
       {editing ? (
         <input
           className="about-title-editor"
@@ -301,14 +316,16 @@ function EditablePressureTitle({
           minFontSize={48}
         />
       )}
-      <button
-        type="button"
-        className="inline-edit-trigger"
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={editing ? finishEditing : beginEditing}
-      >
-        {editing ? "✓" : editLabel}
-      </button>
+      {CONTENT_EDITING_ENABLED && (
+        <button
+          type="button"
+          className="inline-edit-trigger"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={editing ? finishEditing : beginEditing}
+        >
+          {editing ? "✓" : editLabel}
+        </button>
+      )}
     </div>
   );
 }
@@ -1074,11 +1091,21 @@ function ContactSection() {
             <div className="eyebrow">
               {language === "zh" ? "联系卡 · 拖动互动" : "Contact card · Drag to interact"}
             </div>
-            <h2 className="contact-title gradient-text">
-              {t(siteContent.contact.heading, language)}
-            </h2>
+            <InlineEditable
+              as="h2"
+              className="contact-title gradient-text"
+              storageKey={`liuker-contact-heading-${language}`}
+              value={t(siteContent.contact.heading, language)}
+              ariaLabel={language === "zh" ? "点击编辑联系标题" : "Click to edit contact heading"}
+            />
           </FadeIn>
-          <p className="contact-note">{t(siteContent.contact.note, language)}</p>
+          <InlineEditable
+            as="p"
+            className="contact-note"
+            storageKey={`liuker-contact-note-${language}`}
+            value={t(siteContent.contact.note, language)}
+            ariaLabel={language === "zh" ? "点击编辑联系说明" : "Click to edit contact note"}
+          />
           <span className="ghost-button contact-placeholder" aria-disabled="true">
             <BriefcaseBusiness size={16} />
             {language === "zh" ? "等待真实联系方式" : "Awaiting real contact details"}
