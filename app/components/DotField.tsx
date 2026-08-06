@@ -17,6 +17,7 @@ type DotFieldProps = {
   gradientTo?: string;
   glowColor?: string;
   className?: string;
+  pauseWhenSelectorVisible?: string;
 };
 
 const TWO_PI = Math.PI * 2;
@@ -33,6 +34,7 @@ const DotField = memo(function DotField({
   gradientTo = "rgba(180, 151, 207, 0.25)",
   glowColor = "rgba(182, 0, 168, 0.28)",
   className = "",
+  pauseWhenSelectorVisible,
 }: DotFieldProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -55,10 +57,15 @@ const DotField = memo(function DotField({
     let visible = true;
     let stopped = false;
     let lastPaint = 0;
+    let parentLeft = 0;
+    let parentTop = 0;
+    let blockedBySelector = false;
     const mouse = { x: -9999, y: -9999, px: -9999, py: -9999, speed: 0 };
 
     const build = () => {
       const rect = parent.getBoundingClientRect();
+      parentLeft = rect.left;
+      parentTop = rect.top;
       width = rect.width;
       height = rect.height;
       canvas.width = Math.max(1, Math.round(width * dpr));
@@ -82,10 +89,9 @@ const DotField = memo(function DotField({
     };
 
     const pointerMove = (event: PointerEvent) => {
-      if (!visible) return;
-      const rect = parent.getBoundingClientRect();
-      mouse.x = event.clientX - rect.left;
-      mouse.y = event.clientY - rect.top;
+      if (!visible || blockedBySelector) return;
+      mouse.x = event.clientX - parentLeft;
+      mouse.y = event.clientY - parentTop;
       const dx = mouse.x - mouse.px;
       const dy = mouse.y - mouse.py;
       const distance = Math.hypot(dx, dy);
@@ -148,7 +154,7 @@ const DotField = memo(function DotField({
     draw();
 
     const loop = (timestamp: number) => {
-      if (stopped || !visible || document.hidden) {
+      if (stopped || !visible || blockedBySelector || document.hidden) {
         raf = 0;
         return;
       }
@@ -160,7 +166,7 @@ const DotField = memo(function DotField({
     };
 
     const start = () => {
-      if (interactive && visible && !document.hidden && !raf) {
+      if (interactive && visible && !blockedBySelector && !document.hidden && !raf) {
         raf = requestAnimationFrame(loop);
       }
     };
@@ -173,12 +179,27 @@ const DotField = memo(function DotField({
     const observer = new IntersectionObserver(
       ([entry]) => {
         visible = entry.isIntersecting;
-        if (visible) start();
+        if (visible && !blockedBySelector) start();
         else stop();
       },
       { threshold: 0, rootMargin: "120px" },
     );
     observer.observe(parent);
+
+    const blocker = pauseWhenSelectorVisible
+      ? document.querySelector(pauseWhenSelectorVisible)
+      : null;
+    const blockerObserver = blocker
+      ? new IntersectionObserver(
+          ([entry]) => {
+            blockedBySelector = entry.isIntersecting;
+            if (blockedBySelector) stop();
+            else start();
+          },
+          { threshold: 0.01 },
+        )
+      : null;
+    if (blocker && blockerObserver) blockerObserver.observe(blocker);
 
     const visibilityChange = () => {
       if (document.hidden) stop();
@@ -202,12 +223,13 @@ const DotField = memo(function DotField({
       stopped = true;
       stop();
       observer.disconnect();
+      blockerObserver?.disconnect();
       window.clearTimeout(resizeTimer);
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", pointerMove);
       document.removeEventListener("visibilitychange", visibilityChange);
     };
-  }, [bulgeStrength, cursorRadius, dotRadius, dotSpacing, glowColor, glowRadius, gradientFrom, gradientTo, sparkle, waveAmplitude]);
+  }, [bulgeStrength, cursorRadius, dotRadius, dotSpacing, glowColor, glowRadius, gradientFrom, gradientTo, pauseWhenSelectorVisible, sparkle, waveAmplitude]);
 
   return <div className={`dot-field-container ${className}`} aria-hidden="true"><canvas ref={canvasRef} /></div>;
 });

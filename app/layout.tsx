@@ -64,6 +64,7 @@ export default function RootLayout({
                 glowRadius={240}
                 sparkle
                 waveAmplitude={1.15}
+                pauseWhenSelectorVisible=".hero-stage"
                 gradientFrom="rgba(190, 50, 178, 0.28)"
                 gradientTo="rgba(255, 123, 58, 0.19)"
                 glowColor="rgba(105, 73, 255, 0.22)"

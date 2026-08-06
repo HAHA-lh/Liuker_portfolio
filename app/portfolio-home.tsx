@@ -19,6 +19,7 @@ import {
 import {
   lazy,
   Suspense,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -46,10 +47,45 @@ const InfiniteMenu = lazy(() => import("./components/InfiniteMenu"));
 const Lanyard = lazy(() => import("./components/Lanyard"));
 const Orb = lazy(() => import("./components/Orb"));
 
-const HERO_VIDEO_SRC = "/media/projects/%E4%B8%BB%E9%A1%B5_interactive_1080p_v3.mp4?v=bdcf780d-gop2";
+const HERO_VIDEO_1080P_SRC = "/media/projects/%E4%B8%BB%E9%A1%B5_scrub_1080p.mp4?v=20260806-scrub-v1";
+const HERO_VIDEO_720P_SRC = "/media/projects/%E4%B8%BB%E9%A1%B5_scrub_720p.mp4?v=20260806-scrub-v1";
 const HERO_POSTER_WEBP = "/media/posters/home-hero.webp";
 const HERO_POSTER_AVIF = "/media/posters/home-hero.avif";
 const CONTENT_EDITING_ENABLED = process.env.NODE_ENV === "development";
+
+type NavigatorWithPerformanceHints = Navigator & {
+  deviceMemory?: number;
+  connection?: {
+    effectiveType?: string;
+    saveData?: boolean;
+  };
+};
+
+type ScrubbableVideo = HTMLVideoElement & {
+  fastSeek?: (time: number) => void;
+  requestVideoFrameCallback?: (
+    callback: (now: number, metadata: { mediaTime: number }) => void,
+  ) => number;
+  cancelVideoFrameCallback?: (handle: number) => void;
+};
+
+function selectHeroVideoSource() {
+  const nav = navigator as NavigatorWithPerformanceHints;
+  const connection = nav.connection;
+  const constrainedNetwork =
+    connection?.saveData ||
+    connection?.effectiveType === "slow-2g" ||
+    connection?.effectiveType === "2g" ||
+    connection?.effectiveType === "3g";
+  const constrainedDevice =
+    (nav.deviceMemory !== undefined && nav.deviceMemory <= 4) ||
+    (nav.hardwareConcurrency !== undefined && nav.hardwareConcurrency <= 4);
+  const compactViewport = window.matchMedia("(max-width: 900px)").matches;
+
+  return constrainedNetwork || constrainedDevice || compactViewport
+    ? HERO_VIDEO_720P_SRC
+    : HERO_VIDEO_1080P_SRC;
+}
 
 function ViewportMount({
   children,
@@ -704,11 +740,13 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
   const durationRef = useRef(0);
   const scrollProgressRef = useRef(0);
   const targetTimeRef = useRef(0);
-  const renderedTimeRef = useRef(0);
   const seekFrameRef = useRef<number | null>(null);
   const lastSeekAtRef = useRef(0);
+  const settleTimerRef = useRef<number | null>(null);
+  const presentedFrameRef = useRef<number | null>(null);
+  const preciseSeekRef = useRef(false);
   const loadRequestedRef = useRef(false);
-  const [videoRequested, setVideoRequested] = useState(false);
+  const [heroVideoSrc, setHeroVideoSrc] = useState<string | null>(null);
   const [frameReady, setFrameReady] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const reduced = useReducedMotion();
@@ -726,51 +764,78 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
   const titleOpacity = useTransform(scrollYProgress, [0, 1], [0.1, 0.7]);
   const progressScale = useTransform(scrollYProgress, [0, 1], [0.04, 1]);
 
-  const requestHeroVideo = () => {
+  const requestHeroVideo = useCallback(() => {
     if (loadRequestedRef.current) return;
     loadRequestedRef.current = true;
-    setVideoRequested(true);
-  };
+    setHeroVideoSrc(selectHeroVideoSource());
+  }, []);
 
-  const seekTowardTarget = (timestamp: number) => {
-    const video = videoRef.current;
+  const markNextPresentedFrame = useCallback((video: ScrubbableVideo) => {
+    if (!video.requestVideoFrameCallback) return;
+    if (
+      presentedFrameRef.current !== null &&
+      video.cancelVideoFrameCallback
+    ) {
+      video.cancelVideoFrameCallback(presentedFrameRef.current);
+    }
+    presentedFrameRef.current = video.requestVideoFrameCallback(() => {
+      presentedFrameRef.current = null;
+      setFrameReady(true);
+    });
+  }, []);
+
+  const seekToLatestTarget = useCallback((timestamp: number) => {
+    seekFrameRef.current = null;
+    const video = videoRef.current as ScrubbableVideo | null;
     if (reduced || !video || !durationRef.current) {
-      seekFrameRef.current = null;
       return;
     }
 
-    if (timestamp - lastSeekAtRef.current < 40) {
-      seekFrameRef.current = window.requestAnimationFrame(seekTowardTarget);
+    const precise = preciseSeekRef.current;
+    preciseSeekRef.current = false;
+    if (!precise && timestamp - lastSeekAtRef.current < 34) {
       return;
     }
 
-    if (video.seeking) {
-      seekFrameRef.current = window.requestAnimationFrame(seekTowardTarget);
+    const targetTime = Math.min(
+      Math.max(0.01, targetTimeRef.current),
+      Math.max(0.01, durationRef.current - 0.05),
+    );
+    const difference = targetTime - (Number.isFinite(video.currentTime) ? video.currentTime : 0);
+    if (Math.abs(difference) < 0.012) {
+      markNextPresentedFrame(video);
       return;
     }
 
-    const actualTime = Number.isFinite(video.currentTime)
-      ? video.currentTime
-      : renderedTimeRef.current;
-    const difference = targetTimeRef.current - actualTime;
-    if (Math.abs(difference) < 0.018) {
-      renderedTimeRef.current = targetTimeRef.current;
-      seekFrameRef.current = null;
-      return;
+    try {
+      if (!precise && Math.abs(difference) > 0.16 && video.fastSeek) {
+        video.fastSeek(targetTime);
+      } else {
+        video.currentTime = targetTime;
+      }
+    } catch {
+      video.currentTime = targetTime;
     }
-
-    const easedStep = Math.max(-0.12, Math.min(0.12, difference * 0.22));
-    renderedTimeRef.current = actualTime + easedStep;
-    video.currentTime = renderedTimeRef.current;
     lastSeekAtRef.current = timestamp;
-    seekFrameRef.current = window.requestAnimationFrame(seekTowardTarget);
-  };
+    markNextPresentedFrame(video);
+  }, [markNextPresentedFrame, reduced]);
 
-  const queueSeek = () => {
+  const queueSeek = useCallback((precise = false) => {
+    preciseSeekRef.current = preciseSeekRef.current || precise;
     if (seekFrameRef.current === null) {
-      seekFrameRef.current = window.requestAnimationFrame(seekTowardTarget);
+      seekFrameRef.current = window.requestAnimationFrame(seekToLatestTarget);
     }
-  };
+  }, [seekToLatestTarget]);
+
+  const queueSettledSeek = useCallback(() => {
+    if (settleTimerRef.current !== null) {
+      window.clearTimeout(settleTimerRef.current);
+    }
+    settleTimerRef.current = window.setTimeout(() => {
+      settleTimerRef.current = null;
+      queueSeek(true);
+    }, 96);
+  }, [queueSeek]);
 
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
     scrollProgressRef.current = Math.min(1, Math.max(0, progress));
@@ -780,19 +845,33 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
     const end = Math.max(0, durationRef.current - 0.05);
     targetTimeRef.current = scrollProgressRef.current * end;
     queueSeek();
+    queueSettledSeek();
   });
 
-  useEffect(() => () => {
-    if (seekFrameRef.current !== null) {
-      window.cancelAnimationFrame(seekFrameRef.current);
-    }
+  useEffect(() => {
+    const video = videoRef.current as ScrubbableVideo | null;
+    return () => {
+      if (seekFrameRef.current !== null) {
+        window.cancelAnimationFrame(seekFrameRef.current);
+      }
+      if (settleTimerRef.current !== null) {
+        window.clearTimeout(settleTimerRef.current);
+      }
+      if (
+        video &&
+        presentedFrameRef.current !== null &&
+        video.cancelVideoFrameCallback
+      ) {
+        video.cancelVideoFrameCallback(presentedFrameRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
     const requestOnScroll = () => requestHeroVideo();
     window.addEventListener("scroll", requestOnScroll, { passive: true, once: true });
     return () => window.removeEventListener("scroll", requestOnScroll);
-  }, []);
+  }, [requestHeroVideo]);
 
   const registerDuration = () => {
     const video = videoRef.current;
@@ -801,9 +880,8 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
     const end = Math.max(0, video.duration - 0.05);
     const initialTime = Math.max(0.01, scrollProgressRef.current * end);
     targetTimeRef.current = initialTime;
-    renderedTimeRef.current = video.currentTime || 0.01;
     video.pause();
-    queueSeek();
+    queueSeek(true);
   };
 
   useEffect(() => {
@@ -816,11 +894,8 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
       const end = Math.max(0, video.duration - 0.05);
       const nextTime = Math.max(0.01, scrollProgressRef.current * end);
       targetTimeRef.current = nextTime;
-      renderedTimeRef.current = Number.isFinite(video.currentTime)
-        ? video.currentTime
-        : 0.01;
       video.pause();
-      queueSeek();
+      queueSeek(true);
     };
 
     ensureDuration();
@@ -831,7 +906,7 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
       video.removeEventListener("loadedmetadata", ensureDuration);
       video.removeEventListener("durationchange", ensureDuration);
     };
-  }, []);
+  }, [queueSeek]);
 
   return (
     <section ref={sectionRef} className="hero" aria-label="Scroll-controlled showreel">
@@ -839,7 +914,7 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
         <div className="hero-media">
           <motion.div
             className="hero-media-frame"
-            data-video-requested={videoRequested || undefined}
+            data-video-requested={Boolean(heroVideoSrc) || undefined}
             data-frame-ready={frameReady || undefined}
             data-video-failed={videoFailed || undefined}
             style={{ scale: reduced ? 1 : videoScale }}
@@ -850,13 +925,13 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
             </picture>
             <video
               ref={videoRef}
-              src={videoRequested ? HERO_VIDEO_SRC : undefined}
+              src={heroVideoSrc ?? undefined}
               muted
               playsInline
-              preload={videoRequested ? "metadata" : "none"}
+              preload={heroVideoSrc ? "metadata" : "none"}
               onLoadedMetadata={registerDuration}
-              onCanPlay={queueSeek}
-              onLoadedData={() => setFrameReady(true)}
+              onCanPlay={() => queueSeek(true)}
+              onLoadedData={() => queueSeek(true)}
               onSeeked={() => setFrameReady(true)}
               onError={() => setVideoFailed(true)}
               disablePictureInPicture

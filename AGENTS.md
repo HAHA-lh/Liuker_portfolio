@@ -259,13 +259,15 @@ npm run content:sync
 代码常量位于 `app/portfolio-home.tsx`：
 
 ```ts
-const HERO_VIDEO_SRC = "/media/projects/%E4%B8%BB%E9%A1%B5_interactive_1080p_v3.mp4?...";
+const HERO_VIDEO_1080P_SRC = "/media/projects/%E4%B8%BB%E9%A1%B5_scrub_1080p.mp4?...";
+const HERO_VIDEO_720P_SRC = "/media/projects/%E4%B8%BB%E9%A1%B5_scrub_720p.mp4?...";
 ```
 
 实际文件：
 
 ```text
-public/media/projects/主页_interactive_1080p_v3.mp4
+public/media/projects/主页_scrub_1080p.mp4
+public/media/projects/主页_scrub_720p.mp4
 ```
 
 首屏海报：
@@ -277,20 +279,23 @@ public/media/posters/home-hero.webp
 
 替换首屏视频时：
 
-1. 保持 1920×1080、8-bit、浏览器兼容 H.264。
-2. 为滚轮拖动优化关键帧间隔，建议 GOP 约 2–12 帧；过长 GOP 会导致 seek 卡顿。
+1. 同时提供 1920×1080 与 1280×720 两套 8-bit、浏览器兼容 H.264 素材。
+2. 为滚轮拖动优化关键帧间隔，当前两套素材均使用 GOP 2、24fps、无 B 帧。
 3. 使用 `faststart`，把 MP4 moov atom 移到文件开头。
-4. 更新 `HERO_VIDEO_SRC` 查询参数以破除 CDN 缓存。
+4. 更新 `HERO_VIDEO_1080P_SRC` 与 `HERO_VIDEO_720P_SRC` 查询参数以破除 CDN 缓存。
 5. 从新视频生成匹配的 AVIF/WebP 首帧或代表帧海报。
 6. 不要把首屏改回自动播放，也不要恢复鼠标左右控制。
 
 当前滚轮 seek 逻辑：
 
 - 滚动进度映射到 `duration - 0.05`。
-- 约每 40ms 才尝试一次 seek。
-- 单次追帧限制为约 `0.12s`，并按差值的 `22%` 缓动追踪。
+- 活跃滚动期间约每 34ms 合并一次输入，只处理最新目标时间，不再逐段追赶旧目标。
+- 大跨度跳转优先使用 `fastSeek()`；滚动停止约 96ms 后再执行一次精确 seek。
+- 通过 `requestVideoFrameCallback()` 确认新画面已经提交；不支持时使用 `seeked` 事件降级。
+- 小屏、低内存、低核心数、节流网络或开启省流量的设备自动使用 720p，其余设备使用 1080p。
 - 视频保持暂停，依靠 `currentTime` 更新画面。
 - 首次滚动前不设置视频 `src`。
+- 首屏可见时，全局 DotField 暂停，只保留首屏自身的一层 Canvas，避免双层重绘争用资源。
 
 ### 7.2 Showreel
 
@@ -512,7 +517,7 @@ npm run lint
 
 ### 替换首屏滚轮视频
 
-不要走 CSV。替换专用文件并更新 `HERO_VIDEO_SRC` 与海报常量；保持滚轮 seek 逻辑不变。
+不要走 CSV。同步替换 1080p/720p 两套专用文件，更新 `HERO_VIDEO_1080P_SRC`、`HERO_VIDEO_720P_SRC` 与海报常量；保持“最新目标合并 + 停止后精确定位”的滚轮 seek 逻辑不变。
 
 ### 替换 Showreel
 
