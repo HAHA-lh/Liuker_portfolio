@@ -7,6 +7,9 @@
   },
   "scripts": {
     "content:sync": "node scripts/sync-projects.mjs",
+    "media:audit": "node scripts/audit-media.mjs",
+    "media:prepare": "node scripts/prepare-video.mjs",
+    "media:studio": "node tools/media-studio/server.mjs",
     "dev": "npm run content:sync && vinext dev",
     "build": "npm run content:sync && vinext build",
     "start": "vinext start",

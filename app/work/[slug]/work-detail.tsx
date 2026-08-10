@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
 import type { CSSProperties } from "react";
 import { siteContent, t, type Project } from "../../content";
+import LazyVideo from "../../components/LazyVideo";
 import { useLanguage } from "../../language";
 import { ThemeToggle } from "../../theme";
 
@@ -70,7 +71,14 @@ export function WorkDetail({ project, nextProject }: { project: Project; nextPro
 
       <section className="container-wide">
         <div className="detail-player" style={{ "--visual-bg": project.visual } as CSSProperties}>
-          <video src={project.heroVideo} poster={project.poster || undefined} controls playsInline preload="metadata" />
+          <LazyVideo
+            src={project.heroVideo}
+            poster={project.poster || undefined}
+            controls
+            playsInline
+            preloadWhenVisible="metadata"
+            rootMargin="800px 0px"
+          />
         </div>
       </section>
 
@@ -90,10 +98,22 @@ export function WorkDetail({ project, nextProject }: { project: Project; nextPro
         </div>
         <div className="media-grid">
           <div className="media-panel" style={{ "--visual-bg": project.visual } as CSSProperties}>
-            <video src={project.previewVideo} muted loop playsInline preload="metadata" />
+            <LazyVideo
+              src={project.previewVideo}
+              poster={project.poster || undefined}
+              muted
+              loop
+              playsInline
+              playWhenVisible
+              unloadOnExit
+              preloadWhenVisible="auto"
+              rootMargin="300px 0px"
+            />
           </div>
           <div className="media-panel" style={{ "--visual-bg": project.visual } as CSSProperties}>
-            <video src={project.previewVideo} muted loop playsInline preload="metadata" />
+            {project.poster && (
+              <img src={project.poster} alt="" loading="lazy" decoding="async" />
+            )}
           </div>
         </div>
       </section>

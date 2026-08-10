@@ -1209,7 +1209,7 @@ export function PortfolioHome() {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [showreelOpen, setShowreelOpen] = useState(false);
   const masonryHeights = [520, 410, 470, 390, 540, 430, 500, 380, 460, 560, 405, 485, 535, 420, 510, 390, 475, 545, 415, 495];
-  const masonryItems: MasonryItem<Project>[] = projects.slice(0, 20).map((project, index) => ({
+  const masonryItems: MasonryItem<Project>[] = projects.map((project, index) => ({
     id: `${project.slug}-${index + 1}`,
     img: project.poster || "/og.png",
     height: masonryHeights[index % masonryHeights.length],

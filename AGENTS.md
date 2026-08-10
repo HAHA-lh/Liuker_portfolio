@@ -88,6 +88,8 @@
 │  ├─ hero-posts/                 # 首屏备用/历史海报资源
 │  └─ og.*                        # 社交分享图
 ├─ scripts/sync-projects.mjs      # CSV → TypeScript 数据生成器
+├─ scripts/prepare-video.mjs      # 母版 → 预览、完整视频与双格式封面
+├─ scripts/audit-media.mjs        # 扫描编码、色深、帧率、体积与 faststart
 ├─ build/sites-vite-plugin.ts     # Sites/vinext 构建适配
 ├─ worker/index.ts                # Cloudflare Worker/vinext 入口
 ├─ vercel.json                    # Vercel 使用 Next.js 构建
@@ -315,6 +317,20 @@ public/media/showreel/LIUKER_Showreel_2026_web.mp4
 - 视频、图片和代码中的路径必须保持一致；带空格和中文的文件名可以工作，但新增素材建议使用稳定的 ASCII 名称以减少部署平台差异。
 - 所有视频由 Git LFS 追踪。克隆后若缺素材，运行 `git lfs pull`。
 
+### 7.4 新视频入库规范
+
+- 原始母版保存在工作盘或归档盘，不直接放入 `public/`。母版可以是 ProRes、DNxHR 或其他高质量 10-bit 格式。
+- 运行 `npm run media:prepare -- --input "D:\\Footage\\master.mov" --slug project-name`，自动生成：
+  - `project-name-preview.mp4`：720p、默认 8 秒、静音预览。
+  - `project-name-full.mp4`：1080p 完整视频与 AAC 音频。
+  - `photo/project-name.webp` 和可用时的同名 AVIF 封面。
+- 网页 MP4 统一为 H.264 High、8-bit `yuv420p`、24–30fps、faststart；不要直接把 H.264 High 10 / `yuv420p10le` 当作唯一网页素材。
+- 常规完整视频 GOP 约 2 秒即可；只有首屏滚轮素材需要 GOP 2、无 B 帧的高密度关键帧版本。
+- `preview_video` 必须指向短小的独立预览文件，不再与 `full_video` 共用长视频。
+- AV1、VP9 或 HEVC 可在未来作为额外高清源，但必须保留 8-bit H.264 MP4 回退。
+- 入库后运行 `npm run media:audit`。当前历史素材中仍有一批 10-bit H.264，后续应使用此流程逐项迁移，不要直接覆盖母版。
+- 当视频数量或访问量继续增长时，把网页版本迁移到 Vercel Blob、OSS、R2 或视频 CDN；CSV 已支持 HTTPS 绝对地址，Git LFS 继续只承担源文件版本管理。
+
 ## 8. 性能与生命周期约束
 
 这些优化是之前为解决卡顿和无法播放问题加入的，修改时必须保留：
@@ -327,6 +343,8 @@ public/media/showreel/LIUKER_Showreel_2026_web.mp4
 - 同一时间只允许一个预览视频播放。
 - Showreel 只在点击后挂载。
 - 项目弹窗和详情页主视频使用 `preload="metadata"`。
+- 详情页视频通过 `LazyVideo` 在接近视口时才设置 `src`；离开视口后暂停，装饰预览会释放解码资源。
+- 详情页第二个媒体画面使用懒加载封面，不再同时解码两路重复预览视频。
 
 ### 8.2 Canvas/WebGL 懒初始化
 
@@ -417,6 +435,21 @@ npm run dev
 npm run content:sync
 ```
 
+准备新视频（批量工作台，推荐）：
+
+```bash
+npm run media:studio
+```
+
+启动本地媒体工作台 `http://127.0.0.1:4178`，批量导入母版、自动转换、自动更新 CSV 和网站数据。工作台只在本机运行，不会部署到线上；所有操作失败时自动回滚，不会破坏旧数据。同 slug 默认只更新视频和封面并保留已有项目资料，只有主动开启“覆盖已有项目资料”才会更新文案与状态。
+
+准备新视频（命令行，单个项目）：
+
+```bash
+npm run media:prepare -- --input "D:\\Footage\\project-master.mov" --slug project-name
+npm run media:audit
+```
+
 类型检查：
 
 ```bash
@@ -474,6 +507,7 @@ npm run lint
 7. Git LFS 适合作为源文件版本管理，但不应长期承担面向所有访客的视频分发。
 8. 多个本地项目文件名含空格和中文；未来批量素材更新建议统一安全命名规则。
 9. 当前项目同时支持 Next/Vercel 与 vinext/Sites 两条构建路径；修改框架配置时必须同时验证，不能只保证其中一条。
+10. 当前历史项目中仍有多条 H.264 High 10 / 10-bit 文件，部分浏览器可能转为软件解码或无法播放；使用 `npm run media:audit` 查看清单并逐项迁移。
 
 ## 15. 后续优先级建议
 
@@ -509,11 +543,12 @@ npm run lint
 
 ### 批量替换项目视频
 
-1. 把视频和封面放入 `public/media/projects/` 与 `public/media/projects/photo/`。
-2. 更新 `content/projects.csv`。
-3. 运行 `npm run content:sync`。
-4. 检查 `app/project-rows.generated.ts` 的项目数、路径和顺序。
-5. 构建并检查 Git LFS 是否追踪新增视频。
+1. 保留工作盘中的原始母版，不要把母版直接作为网页文件。
+2. 对每个母版运行 `npm run media:prepare`，生成 preview/full/WebP/AVIF 网页资产。
+3. 更新 `content/projects.csv`，确保 `preview_video` 与 `full_video` 使用不同文件。
+4. 运行 `npm run content:sync` 和 `npm run media:audit`。
+5. 检查 `app/project-rows.generated.ts` 的项目数、路径和顺序。
+6. 构建并检查 Git LFS 是否追踪新增视频。
 
 ### 替换首屏滚轮视频
 

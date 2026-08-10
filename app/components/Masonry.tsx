@@ -26,6 +26,26 @@ type MasonryProps<T> = {
 const imageVariant = (src: string, extension: "avif" | "webp") =>
   src.replace(/\.(?:avif|jpe?g|png|webp)$/i, `.${extension}`);
 
+function MasonryPicture({ src }: { src: string }) {
+  const [avifUnavailable, setAvifUnavailable] = useState(false);
+  return (
+    <picture className="masonry-card-picture">
+      {!avifUnavailable && <source srcSet={imageVariant(src, "avif")} type="image/avif" />}
+      <img
+        src={imageVariant(src, "webp")}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        onError={(event) => {
+          if (!avifUnavailable && event.currentTarget.currentSrc.toLowerCase().includes(".avif")) {
+            setAvifUnavailable(true);
+          }
+        }}
+      />
+    </picture>
+  );
+}
+
 function useColumns() {
   const [columns, setColumns] = useState(3);
   useEffect(() => {
@@ -315,15 +335,7 @@ export default function Masonry<T>({
           onClick={cardClick}
         >
           <div className="masonry-card-media magic-bento-card">
-            <picture className="masonry-card-picture">
-              <source srcSet={imageVariant(item.img, "avif")} type="image/avif" />
-              <img
-                src={imageVariant(item.img, "webp")}
-                alt=""
-                loading="lazy"
-                decoding="async"
-              />
-            </picture>
+            <MasonryPicture src={item.img} />
             <div className="masonry-card-shade" />
             <span className="masonry-index">{String(index + 1).padStart(2, "0")}</span>
             <div className="masonry-copy">

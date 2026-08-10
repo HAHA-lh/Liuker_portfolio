@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#08080b" />
+    <meta
+      name="description"
+      content="LIUKER 本地视频素材工作台：批量上传母版、自动生成网页视频与封面，并同步作品清单。"
+    />
+    <title>LIUKER Media Studio</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-glow page-glow--one" aria-hidden="true"></div>
+    <div class="page-glow page-glow--two" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="回到 LIUKER Media Studio 顶部">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">LIUKER</span>
+        <span class="brand-product">MEDIA STUDIO</span>
+      </a>
+
+      <div class="topbar-actions">
+        <div class="connection-pill" id="connection-pill" role="status" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="connection-text">正在连接本地服务</span>
+        </div>
+        <a class="button button--ghost button--compact" href="http://localhost:3000" target="_blank" rel="noreferrer">
+          查看网站 <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero container" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span>LOCAL WORKFLOW</span><span>2026 / LIUKER</span></p>
+          <h1 id="page-title">把母版放进来，<br /><span>剩下的交给工作台。</span></h1>
+          <p class="hero-intro">
+            批量导入高质量视频母版，自动生成 720P 预览、1080P 完整视频、WebP 与 AVIF 封面，并将项目素材同步到网站数据源。
+          </p>
+        </div>
+
+        <ol class="workflow" aria-label="素材处理流程">
+          <li class="workflow-step is-active">
+            <span class="workflow-number">01</span>
+            <span><strong>导入母版</strong><small>批量设置项目信息</small></span>
+          </li>
+          <li class="workflow-step">
+            <span class="workflow-number">02</span>
+            <span><strong>自动转换</strong><small>预览 · 完整版 · 双封面</small></span>
+          </li>
+          <li class="workflow-step">
+            <span class="workflow-number">03</span>
+            <span><strong>更新网站</strong><small>同步清单并检查规范</small></span>
+          </li>
+        </ol>
+      </section>
+
+      <div class="workspace container">
+        <div class="workspace-main">
+          <section class="panel upload-panel" aria-labelledby="upload-title">
+            <div class="section-heading">
+              <div>
+                <p class="section-kicker">01 / MASTER FILES</p>
+                <h2 id="upload-title">批量导入视频</h2>
+              </div>
+              <button class="text-button" id="clear-queue" type="button" disabled>清空队列</button>
+            </div>
+
+            <label class="drop-zone" id="drop-zone" for="file-input">
+              <input
+                id="file-input"
+                type="file"
+                accept="video/*,.mov,.mp4,.mxf,.mkv,.avi,.m4v,.webm"
+                multiple
+                hidden
+              />
+              <span class="drop-icon" aria-hidden="true"><span>＋</span></span>
+              <span class="drop-title">拖入高质量视频母版</span>
+              <span class="drop-copy">或点击选择多个文件 · MOV / MP4 / MXF / MKV</span>
+              <span class="drop-note">原始母版只用于本地转换，不会直接作为网页视频</span>
+            </label>
+
+            <div class="queue-summary" id="queue-summary" hidden>
+              <div>
+                <strong id="queue-count">0 个文件</strong>
+                <span id="queue-size">0 MB</span>
+              </div>
+              <div class="summary-progress" id="summary-progress" hidden>
+                <span id="summary-progress-label">准备上传</span>
+                <div class="progress-track" aria-hidden="true"><span id="summary-progress-bar"></span></div>
+              </div>
+            </div>
+
+            <div class="queue-list" id="queue-list" aria-live="polite"></div>
+          </section>
+
+          <section class="panel defaults-panel" aria-labelledby="defaults-title">
+            <div class="section-heading">
+              <div>
+                <p class="section-kicker">02 / BATCH DEFAULTS</p>
+                <h2 id="defaults-title">批量默认信息</h2>
+              </div>
+              <p class="section-help">这些设置会应用到本次所有项目</p>
+            </div>
+
+            <form class="defaults-form" id="defaults-form">
+              <label class="field">
+                <span>中文分类</span>
+                <input name="category_zh" type="text" value="品牌短片" autocomplete="off" />
+              </label>
+              <label class="field">
+                <span>English category</span>
+                <input name="category_en" type="text" value="Brand Film" autocomplete="off" />
+              </label>
+              <label class="field field--small">
+                <span>年份</span>
+                <input name="year" type="number" min="2000" max="2100" />
+              </label>
+              <label class="field">
+                <span>中文职责</span>
+                <input name="role_zh" type="text" value="创意 / 导演 / 后期" autocomplete="off" />
+              </label>
+              <label class="field">
+                <span>English role</span>
+                <input name="role_en" type="text" value="Creative / Direction / Post" autocomplete="off" />
+              </label>
+              <label class="field">
+                <span>详情模板</span>
+                <select name="template_slug">
+                  <option value="afterglow">afterglow</option>
+                  <option value="neon-pulse">neon-pulse</option>
+                  <option value="quiet-tides">quiet-tides</option>
+                  <option value="kinetic-type">kinetic-type</option>
+                  <option value="orbital-form">orbital-form</option>
+                  <option value="nocturne">nocturne</option>
+                </select>
+              </label>
+              <label class="field field--small">
+                <span>预览起点 / 秒</span>
+                <input name="preview_start" type="number" min="0" step="0.1" value="0" />
+              </label>
+              <label class="field field--small">
+                <span>预览时长 / 秒</span>
+                <input name="preview_duration" type="number" min="1" max="30" step="0.5" value="8" />
+              </label>
+              <label class="toggle-field">
+                <input name="featured" type="checkbox" />
+                <span class="toggle-ui" aria-hidden="true"></span>
+                <span><strong>设为精选项目</strong><small>应用到本批次项目</small></span>
+              </label>
+              <label class="toggle-field">
+                <input name="update_existing_metadata" type="checkbox" />
+                <span class="toggle-ui" aria-hidden="true"></span>
+                <span><strong>覆盖已有项目资料</strong><small>默认关闭；替换同 slug 素材时保留原标题、分类、年份、模板与状态</small></span>
+              </label>
+            </form>
+          </section>
+
+          <section class="panel launch-panel" aria-labelledby="launch-title">
+            <div class="launch-copy">
+              <p class="section-kicker">03 / PROCESS</p>
+              <h2 id="launch-title">准备开始处理</h2>
+              <p>素材会逐个上传，转换任务在后台执行。关闭页面前请等待上传队列完成。</p>
+            </div>
+            <button class="button button--primary button--large" id="start-upload" type="button" disabled>
+              <span>开始生成并更新网站</span><span aria-hidden="true">→</span>
+            </button>
+          </section>
+
+          <section class="panel jobs-panel" aria-labelledby="jobs-title">
+            <div class="section-heading">
+              <div>
+                <p class="section-kicker">LIVE / CONVERSION JOBS</p>
+                <h2 id="jobs-title">处理进度</h2>
+              </div>
+              <button class="icon-button" id="refresh-jobs" type="button" aria-label="刷新处理任务">↻</button>
+            </div>
+            <div class="jobs-list" id="jobs-list">
+              <div class="empty-state">
+                <span class="empty-orbit" aria-hidden="true"></span>
+                <p>还没有处理任务</p>
+                <small>上传母版后，转换阶段会显示在这里</small>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <aside class="workspace-aside">
+          <section class="panel projects-panel" aria-labelledby="projects-title">
+            <div class="section-heading section-heading--compact">
+              <div>
+                <p class="section-kicker">WEBSITE / PROJECTS</p>
+                <h2 id="projects-title">网站项目</h2>
+              </div>
+              <button class="icon-button" id="refresh-projects" type="button" aria-label="刷新网站项目">↻</button>
+            </div>
+            <div class="metric-row">
+              <div><span>已启用</span><strong id="project-count">—</strong></div>
+              <div><span>最近更新</span><strong id="project-updated">—</strong></div>
+            </div>
+            <div class="projects-list" id="projects-list">
+              <div class="skeleton-stack" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+            </div>
+            <a class="button button--ghost button--full" href="http://localhost:3000/#work" target="_blank" rel="noreferrer">
+              在网站中查看 <span aria-hidden="true">↗</span>
+            </a>
+          </section>
+
+          <section class="panel audit-panel" aria-labelledby="audit-title">
+            <div class="audit-heading">
+              <div class="audit-mark" aria-hidden="true">✓</div>
+              <div>
+                <p class="section-kicker">QUALITY CONTROL</p>
+                <h2 id="audit-title">媒体规范检查</h2>
+              </div>
+            </div>
+            <p class="audit-copy">检查编码、色深、分辨率、帧率、体积和 Fast Start，提前发现浏览器播放风险。</p>
+            <button class="button button--secondary button--full" id="run-audit" type="button">运行媒体检查</button>
+            <div class="audit-result" id="audit-result" hidden>
+              <div class="audit-result-head">
+                <strong id="audit-result-title">检查报告</strong>
+                <time id="audit-result-time"></time>
+              </div>
+              <pre id="audit-output" tabindex="0"></pre>
+            </div>
+          </section>
+
+          <section class="spec-card" aria-labelledby="spec-title">
+            <p class="section-kicker">OUTPUT STANDARD</p>
+            <h2 id="spec-title">网页素材输出标准</h2>
+            <dl>
+              <div><dt>预览视频</dt><dd>720P · 8s · 静音</dd></div>
+              <div><dt>完整视频</dt><dd>1080P · H.264 · AAC</dd></div>
+              <div><dt>色深</dt><dd>8-bit · yuv420p</dd></div>
+              <div><dt>封面</dt><dd>WebP + AVIF</dd></div>
+            </dl>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="footer container">
+      <span>© 2026 LIUKER</span>
+      <span>LOCAL MEDIA PIPELINE · PRIVATE</span>
+    </footer>
+
+    <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+  </body>
+</html>
