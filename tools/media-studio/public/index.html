@@ -63,6 +63,106 @@
 
       <div class="workspace container">
         <div class="workspace-main">
+          <section class="panel replacement-panel" aria-labelledby="replacement-title">
+            <div class="section-heading replacement-heading">
+              <div>
+                <p class="section-kicker">QUICK REPLACE / WEBSITE MEDIA</p>
+                <h2 id="replacement-title">替换网站现有视频</h2>
+                <p class="replacement-intro">选择网站中的现有位置，上传一个新母版。工作台会自动转换并只替换该位置的素材引用。</p>
+              </div>
+              <button class="icon-button" id="refresh-replacement-targets" type="button" aria-label="刷新可替换位置">↻</button>
+            </div>
+
+            <div class="replacement-grid">
+              <div class="replacement-step">
+                <div class="replacement-step-heading">
+                  <span>01</span>
+                  <div><strong>选择替换位置</strong><small>项目资料和页面结构不会被改动</small></div>
+                </div>
+
+                <div class="replacement-type-tabs" role="group" aria-label="选择视频位置类型">
+                  <button class="replacement-type is-active" type="button" data-replacement-type="project" aria-pressed="true">
+                    <span>作品项目</span><small>预览、完整版与封面</small>
+                  </button>
+                  <button class="replacement-type" type="button" data-replacement-type="hero" aria-pressed="false">
+                    <span>首屏交互</span><small>滚轮控制视频</small>
+                  </button>
+                  <button class="replacement-type" type="button" data-replacement-type="showreel" aria-pressed="false">
+                    <span>Showreel</span><small>点击播放视频</small>
+                  </button>
+                </div>
+
+                <label class="field replacement-target-field">
+                  <span>需要替换的位置</span>
+                  <select id="replacement-target" aria-describedby="replacement-target-help" disabled>
+                    <option value="">正在读取网站素材…</option>
+                  </select>
+                </label>
+                <p class="replacement-target-help" id="replacement-target-help">从网站当前已登记的视频位置中选择。</p>
+
+                <div class="replacement-target-card" id="replacement-target-card" hidden>
+                  <div class="replacement-target-head">
+                    <div>
+                      <span id="replacement-target-kind">作品项目</span>
+                      <strong id="replacement-target-name">—</strong>
+                    </div>
+                    <span class="replacement-target-id" id="replacement-target-id">—</span>
+                  </div>
+                  <p id="replacement-target-description"></p>
+                  <div class="replacement-assets" id="replacement-current-assets"></div>
+                  <div class="replacement-impact">
+                    <span aria-hidden="true">i</span>
+                    <p><strong>替换影响</strong><small id="replacement-impact-text">—</small></p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="replacement-step">
+                <div class="replacement-step-heading">
+                  <span>02</span>
+                  <div><strong>上传新母版</strong><small>单次只替换一个位置，支持常见视频格式</small></div>
+                </div>
+
+                <label class="replacement-drop-zone" id="replacement-drop-zone" for="replacement-file-input">
+                  <input
+                    id="replacement-file-input"
+                    type="file"
+                    accept="video/*,.mov,.mp4,.mxf,.mkv,.avi,.m4v,.webm"
+                    hidden
+                  />
+                  <span class="replacement-drop-icon" aria-hidden="true">＋</span>
+                  <span class="replacement-drop-title">拖入新的高质量母版</span>
+                  <span class="replacement-drop-copy">或点击选择一个视频文件</span>
+                </label>
+
+                <div class="replacement-file" id="replacement-file" hidden>
+                  <div>
+                    <strong id="replacement-file-name">—</strong>
+                    <small id="replacement-file-meta">—</small>
+                  </div>
+                  <button class="remove-file" id="remove-replacement-file" type="button" aria-label="移除替换母版">×</button>
+                </div>
+
+                <div class="replacement-progress" id="replacement-progress" hidden role="status" aria-live="polite">
+                  <div><span id="replacement-progress-label">准备上传</span><strong id="replacement-progress-value">0%</strong></div>
+                  <div class="progress-track" aria-hidden="true"><span id="replacement-progress-bar"></span></div>
+                </div>
+                <p class="replacement-error" id="replacement-error" hidden></p>
+              </div>
+            </div>
+
+            <div class="replacement-confirmation">
+              <label class="replacement-confirm-check">
+                <input id="replacement-confirm" type="checkbox" disabled />
+                <span class="replacement-check-ui" aria-hidden="true">✓</span>
+                <span><strong>确认替换所选位置</strong><small id="replacement-confirm-copy">请选择位置并添加新母版后确认。替换前会自动备份，失败时恢复，全部成功后覆盖当前素材。</small></span>
+              </label>
+              <button class="button button--primary button--large" id="start-replacement" type="button" disabled>
+                <span>确认生成并替换</span><span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </section>
+
           <section class="panel upload-panel" aria-labelledby="upload-title">
             <div class="section-heading">
               <div>

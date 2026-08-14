@@ -35,10 +35,20 @@ import DotField from "./components/DotField";
 import GlassSurface from "./components/GlassSurface";
 import GradientText from "./components/GradientText";
 import type { InfiniteMenuItem } from "./components/InfiniteMenu";
+import LoadingScreen from "./components/LoadingScreen";
 import Masonry, { type MasonryItem } from "./components/Masonry";
 import StaggeredMenu from "./components/StaggeredMenu";
 import TextPressure from "./components/TextPressure";
 import VariableProximity from "./components/VariableProximity";
+import {
+  getPreparedHeroVideoSource,
+  HERO_FRAME_READY_EVENT,
+  HERO_MEDIA_PREPARED_EVENT,
+  HERO_POSTER_AVIF,
+  HERO_POSTER_WEBP,
+  selectHeroVideoSource,
+  SHOWREEL_VIDEO_SRC,
+} from "./hero-media";
 import { useLanguage } from "./language";
 import { ThemeToggle, useTheme } from "./theme";
 
@@ -47,19 +57,7 @@ const InfiniteMenu = lazy(() => import("./components/InfiniteMenu"));
 const Lanyard = lazy(() => import("./components/Lanyard"));
 const Orb = lazy(() => import("./components/Orb"));
 
-const HERO_VIDEO_1080P_SRC = "/media/projects/%E4%B8%BB%E9%A1%B5_scrub_1080p.mp4?v=20260806-scrub-v1";
-const HERO_VIDEO_720P_SRC = "/media/projects/%E4%B8%BB%E9%A1%B5_scrub_720p.mp4?v=20260806-scrub-v1";
-const HERO_POSTER_WEBP = "/media/posters/home-hero.webp";
-const HERO_POSTER_AVIF = "/media/posters/home-hero.avif";
 const CONTENT_EDITING_ENABLED = process.env.NODE_ENV === "development";
-
-type NavigatorWithPerformanceHints = Navigator & {
-  deviceMemory?: number;
-  connection?: {
-    effectiveType?: string;
-    saveData?: boolean;
-  };
-};
 
 type ScrubbableVideo = HTMLVideoElement & {
   fastSeek?: (time: number) => void;
@@ -68,24 +66,6 @@ type ScrubbableVideo = HTMLVideoElement & {
   ) => number;
   cancelVideoFrameCallback?: (handle: number) => void;
 };
-
-function selectHeroVideoSource() {
-  const nav = navigator as NavigatorWithPerformanceHints;
-  const connection = nav.connection;
-  const constrainedNetwork =
-    connection?.saveData ||
-    connection?.effectiveType === "slow-2g" ||
-    connection?.effectiveType === "2g" ||
-    connection?.effectiveType === "3g";
-  const constrainedDevice =
-    (nav.deviceMemory !== undefined && nav.deviceMemory <= 4) ||
-    (nav.hardwareConcurrency !== undefined && nav.hardwareConcurrency <= 4);
-  const compactViewport = window.matchMedia("(max-width: 900px)").matches;
-
-  return constrainedNetwork || constrainedDevice || compactViewport
-    ? HERO_VIDEO_720P_SRC
-    : HERO_VIDEO_1080P_SRC;
-}
 
 function ViewportMount({
   children,
@@ -680,7 +660,7 @@ function ShowreelModal({ open, onClose }: { open: boolean; onClose: () => void }
               </button>
               <video
                 ref={videoRef}
-                src="/media/showreel/LIUKER_Showreel_2026_web.mp4?v=4b1e0911-web19"
+                src={SHOWREEL_VIDEO_SRC}
                 controls
                 autoPlay
                 playsInline
@@ -767,7 +747,12 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
   const requestHeroVideo = useCallback(() => {
     if (loadRequestedRef.current) return;
     loadRequestedRef.current = true;
-    setHeroVideoSrc(selectHeroVideoSource());
+    setHeroVideoSrc(getPreparedHeroVideoSource() ?? selectHeroVideoSource());
+  }, []);
+
+  const notifyFrameReady = useCallback(() => {
+    setFrameReady(true);
+    document.dispatchEvent(new Event(HERO_FRAME_READY_EVENT));
   }, []);
 
   const markNextPresentedFrame = useCallback((video: ScrubbableVideo) => {
@@ -780,9 +765,9 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
     }
     presentedFrameRef.current = video.requestVideoFrameCallback(() => {
       presentedFrameRef.current = null;
-      setFrameReady(true);
+      notifyFrameReady();
     });
-  }, []);
+  }, [notifyFrameReady]);
 
   const seekToLatestTarget = useCallback((timestamp: number) => {
     seekFrameRef.current = null;
@@ -873,6 +858,13 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
     return () => window.removeEventListener("scroll", requestOnScroll);
   }, [requestHeroVideo]);
 
+  useEffect(() => {
+    const usePreparedMedia = () => requestHeroVideo();
+    document.addEventListener(HERO_MEDIA_PREPARED_EVENT, usePreparedMedia);
+    if (getPreparedHeroVideoSource()) requestHeroVideo();
+    return () => document.removeEventListener(HERO_MEDIA_PREPARED_EVENT, usePreparedMedia);
+  }, [requestHeroVideo]);
+
   const registerDuration = () => {
     const video = videoRef.current;
     if (!video || !Number.isFinite(video.duration)) return;
@@ -931,8 +923,11 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
               preload={heroVideoSrc ? "metadata" : "none"}
               onLoadedMetadata={registerDuration}
               onCanPlay={() => queueSeek(true)}
-              onLoadedData={() => queueSeek(true)}
-              onSeeked={() => setFrameReady(true)}
+              onLoadedData={() => {
+                queueSeek(true);
+                notifyFrameReady();
+              }}
+              onSeeked={notifyFrameReady}
               onError={() => setVideoFailed(true)}
               disablePictureInPicture
               tabIndex={-1}
@@ -1220,14 +1215,16 @@ export function PortfolioHome() {
   }));
 
   return (
-    <ClickSpark
-      sparkColor="#ff6a8b"
-      sparkSize={12}
-      sparkRadius={25}
-      sparkCount={10}
-      duration={480}
-    >
-    <main className="site-shell">
+    <>
+      <LoadingScreen />
+      <ClickSpark
+        sparkColor="#ff6a8b"
+        sparkSize={12}
+        sparkRadius={25}
+        sparkCount={10}
+        duration={480}
+      >
+      <main className="site-shell">
       <Header />
       <ScrollHero onOpenShowreel={() => setShowreelOpen(true)} />
 
@@ -1293,7 +1290,8 @@ export function PortfolioHome() {
 
       <ShowreelModal open={showreelOpen} onClose={() => setShowreelOpen(false)} />
       <VideoModal project={activeProject} onClose={() => setActiveProject(null)} />
-    </main>
-    </ClickSpark>
+      </main>
+      </ClickSpark>
+    </>
   );
 }

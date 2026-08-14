@@ -45,6 +45,7 @@
 8. About、Experience、Toolkit 和 Contact 的部分文字曾支持页面内编辑，最终要求为“仅开发环境可编辑，部署后不可编辑”。
 9. 项目已经接入 GitHub、Git LFS 和 Vercel；后续修改应保留可持续迭代能力。
 10. 经历时间线已从占位内容更新为 2018 至今的三段真实方向，当前内容见第 6.2 节。
+11. 首页入口增加关键资源 Loading：进入前完整缓存当前设备对应的首屏交互视频并解码首帧；Showreel 和项目视频仍保持按需加载。
 
 ## 3. 技术栈
 
@@ -70,6 +71,7 @@
 ├─ app/
 │  ├─ page.tsx                    # 首页入口，只渲染 PortfolioHome
 │  ├─ portfolio-home.tsx          # 首页主要结构、状态、弹窗和交互编排
+│  ├─ hero-media.ts               # 首屏/Showreel 路径、设备选源与首屏完整缓存
 │  ├─ content.ts                  # 网站主文案、经历、技能、项目模板与数据合并
 │  ├─ project-rows.generated.ts   # 由 CSV 自动生成，禁止手改
 │  ├─ globals.css                 # 全站视觉、布局、响应式和主要区块样式
@@ -105,38 +107,43 @@
 
 首页由 `app/portfolio-home.tsx` 中的 `PortfolioHome` 组织，顺序固定为：
 
-1. `Header`
+1. `LoadingScreen`
+   - 仅首页显示，先加载 AVIF/WebP 海报、字体和当前设备对应的首屏交互视频。
+   - 视频完整缓存到内存并完成首帧解码后，实际 `ScrollHero` 才接管素材。
+   - 最长等待约 18 秒；异常网络或解码失败时自动进入流式降级，不能无限卡在 Loading。
+   - Loading 期间暂停 DotField 动画，避免 Canvas 与视频下载/解码争抢资源。
+2. `Header`
    - 左上 LIUKER 品牌标记。
    - 右上 `StaggeredMenu` 抽屉菜单。
    - 菜单内包含作品、关于、经历、联系锚点，以及主题和语言切换。
-2. `ScrollHero`
+3. `ScrollHero`
    - 100svh sticky 首屏，外部滚动区桌面约 340svh、移动端约 190svh。
    - 轻量 AVIF/WebP 海报先显示。
-   - 用户第一次滚动后才请求首屏视频。
+   - Loading 成功时直接复用内存 Blob；降级时才在用户第一次滚动后请求网络视频。
    - 滚动进度映射到视频时间，不自动播放。
    - 中央 `SHOWREEL` 渐变大字的透明度随滚动从约 10% 增长到 70%。
    - Showreel 按钮打开独立播放弹窗。
-3. `Marquee` / `InfiniteMenu`
+4. `Marquee` / `InfiniteMenu`
    - 20 个项目映射成 WebGL2 球形菜单。
    - 鼠标或触摸拖拽旋转，松开后自动吸附到最近项目。
    - 点击中心动作按钮打开对应项目的视频弹窗。
-4. `#work`
+5. `#work`
    - 20 个项目的 Masonry 卡片墙。
    - 带聚光、边缘发光、粒子、轻微倾斜/磁吸和点击效果。
    - 卡片可打开视频弹窗或项目详情页。
-5. `#about`
+6. `#about`
    - OGL `Orb` 动态背景。
    - 标题使用 `TextPressure`。
    - 正文使用 `VariableProximity`，鼠标靠近时改变可变字体参数。
-6. `#experience`
+7. `#experience`
    - 中轴线随滚动生长的编辑式时间线。
    - 三段经历交错排版，下面是软件工具和专业能力。
-7. `#contact`
+8. `#contact`
    - Three.js + Rapier 的可拖拽 `Lanyard` 联系卡。
    - 当前真实联系方式仍是占位状态。
-8. 全页外层 `ClickSpark`
+9. 全页外层 `ClickSpark`
    - 点击产生轻量火花。
-9. 全局背景 `DotField`
+10. 全局背景 `DotField`
    - 在 `app/layout.tsx` 中渲染，覆盖整个页面背景并响应鼠标。
 
 ### 5.2 项目详情 `/work/[slug]`
@@ -258,7 +265,7 @@ npm run content:sync
 
 ### 7.1 首屏交互视频
 
-代码常量位于 `app/portfolio-home.tsx`：
+代码常量集中位于 `app/hero-media.ts`，`portfolio-home.tsx` 与首页 Loading 共用，媒体工作台也会更新这里的缓存版本：
 
 ```ts
 const HERO_VIDEO_1080P_SRC = "/media/projects/%E4%B8%BB%E9%A1%B5_scrub_1080p.mp4?...";
@@ -296,7 +303,7 @@ public/media/posters/home-hero.webp
 - 通过 `requestVideoFrameCallback()` 确认新画面已经提交；不支持时使用 `seeked` 事件降级。
 - 小屏、低内存、低核心数、节流网络或开启省流量的设备自动使用 720p，其余设备使用 1080p。
 - 视频保持暂停，依靠 `currentTime` 更新画面。
-- 首次滚动前不设置视频 `src`。
+- 首页 Loading 会把选中的 1080p/720p 文件完整缓存为 Blob 并解码首帧；滚轮交互复用该内存地址，网络/解码失败时才回退到首次滚动后按需请求。
 - 首屏可见时，全局 DotField 暂停，只保留首屏自身的一层 Canvas，避免双层重绘争用资源。
 
 ### 7.2 Showreel
@@ -337,7 +344,8 @@ public/media/showreel/LIUKER_Showreel_2026_web.mp4
 
 ### 8.1 按需加载
 
-- 首屏先显示海报，第一次滚动后才加载视频元数据。
+- 首页 Loading 只预载首屏关键视频、海报和字体；不会预载 Showreel 或 20 个项目视频。
+- 首屏视频按设备能力选择 1080p/720p，完整缓存并解码首帧后进入；超过安全时限自动回退到流式按需加载。
 - 项目预览 `<video>` 使用 `preload="none"`，桌面悬停时才设置 `src`。
 - 项目卡离开视口后暂停视频、移除 `src` 并 `load()` 释放解码资源。
 - 同一时间只允许一个预览视频播放。
@@ -443,6 +451,16 @@ npm run media:studio
 
 启动本地媒体工作台 `http://127.0.0.1:4178`，批量导入母版、自动转换、自动更新 CSV 和网站数据。工作台只在本机运行，不会部署到线上；所有操作失败时自动回滚，不会破坏旧数据。同 slug 默认只更新视频和封面并保留已有项目资料，只有主动开启“覆盖已有项目资料”才会更新文案与状态。
 
+工作台中的“替换网站现有视频”面板可直接选择已有项目、首屏交互视频或 Showreel：项目替换会锁定并保留原有标题、分类、顺序和状态；首屏替换会自动生成滚轮交互专用的 1080p/720p 视频和 AVIF/WebP 海报，并刷新缓存版本；Showreel 替换会生成带 AAC 音频的 1080p 网页版本。替换前会创建回滚备份，只有转码、校验和数据同步全部成功后才覆盖正式文件。
+
+Windows 用户可以把工作台安装成当前账户的本地快捷应用：
+
+```bash
+npm run media:studio:install
+```
+
+安装后可从桌面的 `LIUKER Media Studio.cmd` 或开始菜单打开应用。启动器会复用已有工作台，或在后台仅绑定 `127.0.0.1:4178` 启动服务，并优先使用 Edge/Chrome 独立应用窗口。开始菜单同时提供 Stop 和 Uninstall；它不设置开机自启。安装器把兼容的 Node 运行时固定在被 `.gitignore` 忽略的 `.media-studio/runtime/`，因此系统 Node 升级或 Codex 退出不会影响下次打开。快捷方式只适用于当前项目绝对路径；项目移动后需重新运行安装命令。
+
 准备新视频（命令行，单个项目）：
 
 ```bash
@@ -544,19 +562,18 @@ npm run lint
 ### 批量替换项目视频
 
 1. 保留工作盘中的原始母版，不要把母版直接作为网页文件。
-2. 对每个母版运行 `npm run media:prepare`，生成 preview/full/WebP/AVIF 网页资产。
-3. 更新 `content/projects.csv`，确保 `preview_video` 与 `full_video` 使用不同文件。
-4. 运行 `npm run content:sync` 和 `npm run media:audit`。
-5. 检查 `app/project-rows.generated.ts` 的项目数、路径和顺序。
-6. 构建并检查 Git LFS 是否追踪新增视频。
+2. 推荐打开媒体工作台的“替换网站现有视频”，选择“作品项目”和目标项目，再上传单个高质量母版。
+3. 工作台自动生成 preview/full/WebP/AVIF，保留项目原有文案与顺序，并执行内容同步和媒体审计。
+4. 如使用命令行，则运行 `npm run media:prepare`，手动更新 CSV 后再运行 `npm run content:sync` 与 `npm run media:audit`。
+5. 构建并检查 Git LFS 是否追踪新增视频。
 
 ### 替换首屏滚轮视频
 
-不要走 CSV。同步替换 1080p/720p 两套专用文件，更新 `HERO_VIDEO_1080P_SRC`、`HERO_VIDEO_720P_SRC` 与海报常量；保持“最新目标合并 + 停止后精确定位”的滚轮 seek 逻辑不变。
+推荐在媒体工作台中选择“首屏交互视频”并上传一个母版；工作台会生成 1080p/720p 两套密集关键帧视频、更新海报和缓存版本。不要走 CSV，也不要改变“最新目标合并 + 停止后精确定位”的滚轮 seek 逻辑。
 
 ### 替换 Showreel
 
-替换 `public/media/showreel/LIUKER_Showreel_2026_web.mp4`，必要时更新 `ShowreelModal` 的时长显示与查询参数。
+推荐在媒体工作台中选择 `Showreel` 并上传一个带音频母版；工作台会替换 `public/media/showreel/LIUKER_Showreel_2026_web.mp4` 并刷新缓存版本。必要时仍需手动更新 `ShowreelModal` 的展示时长。
 
 ### 增加或删除项目
 
@@ -583,7 +600,7 @@ npm run lint
 - [ ] 中文和英文都能正常显示。
 - [ ] 深色和浅色主题都可读。
 - [ ] 桌面与手机布局没有横向溢出。
-- [ ] 首屏先显示海报，首次滚动后才请求视频。
+- [ ] 首页 Loading 能显示真实进度，首屏视频/海报/字体就绪后平滑退出；异常网络下不超过安全时限并能流式降级。
 - [ ] 滚轮可以平滑地向前和向后控制首屏视频。
 - [ ] Showreel 仅点击后加载，可关闭并停止播放。
 - [ ] InfiniteMenu 可拖拽并能打开正确项目。

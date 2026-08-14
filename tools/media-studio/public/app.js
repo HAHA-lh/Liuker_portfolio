@@ -8,12 +8,45 @@
     uploadIndex: -1,
     jobs: [],
     projects: [],
+    replacementTargets: [],
+    replacementType: "project",
+    replacementTargetId: "",
+    replacementFile: null,
+    replacementUploading: false,
+    replacementProgress: 0,
+    replacementStatus: "idle",
+    replacementMessage: "",
+    replacementJobId: "",
     polling: false,
   };
 
   const els = {
     connectionPill: document.querySelector("#connection-pill"),
     connectionText: document.querySelector("#connection-text"),
+    replacementTypes: [...document.querySelectorAll("[data-replacement-type]")],
+    replacementTarget: document.querySelector("#replacement-target"),
+    refreshReplacementTargets: document.querySelector("#refresh-replacement-targets"),
+    replacementTargetCard: document.querySelector("#replacement-target-card"),
+    replacementTargetKind: document.querySelector("#replacement-target-kind"),
+    replacementTargetName: document.querySelector("#replacement-target-name"),
+    replacementTargetId: document.querySelector("#replacement-target-id"),
+    replacementTargetDescription: document.querySelector("#replacement-target-description"),
+    replacementCurrentAssets: document.querySelector("#replacement-current-assets"),
+    replacementImpactText: document.querySelector("#replacement-impact-text"),
+    replacementFileInput: document.querySelector("#replacement-file-input"),
+    replacementDropZone: document.querySelector("#replacement-drop-zone"),
+    replacementFile: document.querySelector("#replacement-file"),
+    replacementFileName: document.querySelector("#replacement-file-name"),
+    replacementFileMeta: document.querySelector("#replacement-file-meta"),
+    removeReplacementFile: document.querySelector("#remove-replacement-file"),
+    replacementProgress: document.querySelector("#replacement-progress"),
+    replacementProgressLabel: document.querySelector("#replacement-progress-label"),
+    replacementProgressValue: document.querySelector("#replacement-progress-value"),
+    replacementProgressBar: document.querySelector("#replacement-progress-bar"),
+    replacementError: document.querySelector("#replacement-error"),
+    replacementConfirm: document.querySelector("#replacement-confirm"),
+    replacementConfirmCopy: document.querySelector("#replacement-confirm-copy"),
+    startReplacement: document.querySelector("#start-replacement"),
     fileInput: document.querySelector("#file-input"),
     dropZone: document.querySelector("#drop-zone"),
     clearQueue: document.querySelector("#clear-queue"),
@@ -160,6 +193,227 @@
     }
     if (Array.isArray(payload?.data)) return payload.data;
     return [];
+  }
+
+  const replacementTypeCopy = {
+    project: {
+      label: "作品项目",
+      description: "替换项目卡片预览、弹窗和详情页使用的视频素材。",
+      impact: "会重新生成 720P 预览、1080P 完整视频及 WebP/AVIF 封面；项目标题、分类、年份和详情资料保持不变。",
+    },
+    hero: {
+      label: "首屏交互",
+      description: "替换首页滚轮控制时间轴的首屏交互视频。",
+      impact: "会生成滚轮交互专用的 1080P/720P 视频与首屏封面；当前滚轮控制方式保持不变。",
+    },
+    showreel: {
+      label: "Showreel",
+      description: "替换点击 SHOWREEL 按钮后加载播放的独立视频。",
+      impact: "只替换 Showreel 播放素材；首屏滚轮交互视频和作品项目不受影响。",
+    },
+  };
+
+  const replacementAssetLabels = {
+    video1080: "1080P 交互视频",
+    video720: "720P 交互视频",
+    posterWebp: "WebP 首屏封面",
+    posterAvif: "AVIF 首屏封面",
+    video: "当前视频",
+    preview: "项目预览视频",
+    full: "项目完整视频",
+    cover: "WebP 项目封面",
+    avif: "AVIF 项目封面",
+  };
+
+  function normalizeReplacementTargets(payload) {
+    const directTargets = normalizeList(payload, ["targets", "replacementTargets", "items", "results"]);
+    const source = directTargets.length
+      ? directTargets
+      : [...(Array.isArray(payload?.special) ? payload.special : []), ...(Array.isArray(payload?.projects) ? payload.projects : [])];
+
+    const seen = new Set();
+    return source.map((target) => {
+      const type = String(target.targetType || target.type || (target.slug ? "project" : "project")).toLowerCase();
+      const id = String(target.targetId || target.id || target.slug || type);
+      const key = `${type}:${id}`;
+      if (seen.has(key)) return null;
+      seen.add(key);
+      return {
+        ...target,
+        type,
+        id,
+        label: target.label || target.titleZh || target.title_zh || target.titleEn || target.title_en || id,
+        description: target.description || replacementTypeCopy[type]?.description || "替换网站中当前登记的视频素材。",
+        impact: target.impact || replacementTypeCopy[type]?.impact || "替换前自动备份当前素材；失败时恢复备份，全部成功后覆盖网站素材。",
+        currentAssets: target.currentAssets || target.current_assets || target.assets || {},
+      };
+    }).filter(Boolean);
+  }
+
+  function selectedReplacementTarget() {
+    return state.replacementTargets.find((target) => target.type === state.replacementType && target.id === state.replacementTargetId) || null;
+  }
+
+  function replacementLocked() {
+    return state.replacementUploading || state.replacementStatus === "queued";
+  }
+
+  function assetEntries(target) {
+    const assets = target?.currentAssets;
+    if (Array.isArray(assets)) {
+      return assets.map((asset, index) => ({
+        label: asset.label || asset.name || `素材 ${index + 1}`,
+        path: asset.path || asset.src || asset.url || "",
+      })).filter((asset) => asset.path);
+    }
+    if (!assets || typeof assets !== "object") return [];
+    return Object.entries(assets).map(([key, value]) => ({
+      label: replacementAssetLabels[key] || key,
+      path: typeof value === "string" ? value : value?.path || value?.src || value?.url || "",
+    })).filter((asset) => asset.path);
+  }
+
+  function resetReplacementConfirmation() {
+    state.replacementStatus = "idle";
+    state.replacementMessage = "";
+    state.replacementProgress = 0;
+    state.replacementJobId = "";
+    els.replacementConfirm.checked = false;
+    els.replacementError.hidden = true;
+    els.replacementError.textContent = "";
+  }
+
+  function renderReplacementTargetSelect() {
+    const targets = state.replacementTargets.filter((target) => target.type === state.replacementType);
+    if (!targets.some((target) => target.id === state.replacementTargetId)) {
+      state.replacementTargetId = targets[0]?.id || "";
+    }
+
+    els.replacementTypes.forEach((button) => {
+      const active = button.dataset.replacementType === state.replacementType;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", String(active));
+      button.disabled = replacementLocked();
+    });
+
+    els.replacementTarget.disabled = replacementLocked() || !targets.length;
+    els.replacementTarget.innerHTML = targets.length
+      ? targets.map((target) => {
+          const order = target.type === "project" && target.order ? `${String(target.order).padStart(2, "0")} · ` : "";
+          return `<option value="${escapeHtml(target.id)}"${target.id === state.replacementTargetId ? " selected" : ""}>${escapeHtml(order + target.label)}</option>`;
+        }).join("")
+      : `<option value="">${state.replacementTargets.length ? "此类型暂时没有可替换位置" : "正在读取网站素材…"}</option>`;
+  }
+
+  function renderReplacementTargetDetails() {
+    const target = selectedReplacementTarget();
+    els.replacementTargetCard.hidden = !target;
+    if (!target) return;
+
+    const typeCopy = replacementTypeCopy[target.type] || replacementTypeCopy.project;
+    els.replacementTargetKind.textContent = typeCopy.label;
+    els.replacementTargetName.textContent = target.label;
+    els.replacementTargetId.textContent = target.type === "project" ? target.slug || target.id : target.id;
+    els.replacementTargetDescription.textContent = target.description;
+    els.replacementImpactText.textContent = Array.isArray(target.impact) ? target.impact.join("；") : target.impact;
+
+    const assets = assetEntries(target);
+    els.replacementCurrentAssets.innerHTML = assets.length
+      ? assets.map((asset) => `
+          <div class="replacement-asset">
+            <span>${escapeHtml(asset.label)}</span>
+            <code title="${escapeHtml(asset.path)}">${escapeHtml(asset.path)}</code>
+          </div>`).join("")
+      : '<p class="replacement-assets-empty">当前路径尚未登记；转换成功后将写入新素材。</p>';
+  }
+
+  function replacementReady() {
+    return Boolean(
+      token
+      && selectedReplacementTarget()
+      && state.replacementFile
+      && els.replacementConfirm.checked
+      && !state.replacementUploading
+      && state.replacementStatus !== "queued"
+    );
+  }
+
+  function renderReplacement() {
+    renderReplacementTargetSelect();
+    renderReplacementTargetDetails();
+
+    const target = selectedReplacementTarget();
+    const file = state.replacementFile;
+    els.replacementFile.hidden = !file;
+    els.replacementDropZone.hidden = Boolean(file);
+    els.replacementFileInput.disabled = replacementLocked();
+    els.removeReplacementFile.disabled = replacementLocked();
+
+    if (file) {
+      els.replacementFileName.textContent = file.name;
+      els.replacementFileMeta.textContent = `${formatBytes(file.size)} · ${file.type || "video"}`;
+    }
+
+    els.replacementConfirm.disabled = !target || !file || state.replacementUploading || state.replacementStatus === "queued";
+    els.replacementConfirmCopy.textContent = target && file
+      ? `确认用“${file.name}”替换“${target.label}”。替换前会自动备份，失败时恢复，全部成功后覆盖当前素材。`
+      : "请选择位置并添加新母版后确认。替换前会自动备份，失败时恢复，全部成功后覆盖当前素材。";
+
+    const showProgress = state.replacementUploading || state.replacementStatus === "queued" || state.replacementStatus === "done";
+    els.replacementProgress.hidden = !showProgress;
+    els.replacementProgress.classList.toggle("is-complete", state.replacementStatus === "done");
+    els.replacementProgressValue.textContent = `${Math.round(state.replacementProgress)}%`;
+    els.replacementProgressBar.style.width = `${Math.min(100, state.replacementProgress)}%`;
+    els.replacementProgressLabel.textContent = state.replacementMessage || (state.replacementUploading ? "正在上传新母版" : "已进入后台转换队列");
+
+    els.startReplacement.disabled = !replacementReady();
+    els.startReplacement.querySelector("span:first-child").textContent = state.replacementUploading
+      ? "正在上传新母版…"
+      : state.replacementStatus === "queued"
+        ? "已提交，等待转换"
+        : state.replacementStatus === "done"
+          ? "替换已完成"
+        : "确认生成并替换";
+  }
+
+  function setReplacementFile(file) {
+    if (replacementLocked()) return;
+    if (!file) {
+      state.replacementFile = null;
+      els.replacementFileInput.value = "";
+      resetReplacementConfirmation();
+      renderReplacement();
+      return;
+    }
+    if (!isSupportedFile(file)) {
+      showToast("请选择 MOV、MP4、MXF、MKV、AVI、M4V 或 WebM 视频母版。", "error");
+      els.replacementFileInput.value = "";
+      return;
+    }
+    state.replacementFile = file;
+    resetReplacementConfirmation();
+    renderReplacement();
+  }
+
+  async function refreshReplacementTargets({ quiet = false } = {}) {
+    if (!token) return;
+    els.refreshReplacementTargets.disabled = true;
+    try {
+      const response = await fetch("/api/replacement-targets", { headers: tokenHeaders(), cache: "no-store" });
+      const payload = await parseResponse(response);
+      state.replacementTargets = normalizeReplacementTargets(payload);
+      renderReplacement();
+      setConnection("online", "本地服务已连接");
+      if (!quiet) showToast("可替换视频位置已刷新", "success");
+    } catch (error) {
+      state.replacementTargets = [];
+      renderReplacement();
+      els.replacementTarget.innerHTML = '<option value="">读取失败，请重启或刷新工作台</option>';
+      els.replacementTarget.disabled = true;
+      if (!quiet) showToast(error instanceof Error ? error.message : String(error), "error", 6500);
+    } finally {
+      els.refreshReplacementTargets.disabled = false;
+    }
   }
 
   function isSupportedFile(file) {
@@ -320,6 +574,83 @@
     });
   }
 
+  function uploadReplacement(file, target) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/upload");
+      xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+      xhr.setRequestHeader("x-media-studio-token", token);
+      xhr.setRequestHeader("x-media-meta", base64UrlJson({
+        workflow: "replace",
+        targetType: target.type,
+        targetId: target.id,
+        original_name: file.name,
+        size: file.size,
+        mime_type: file.type || "application/octet-stream",
+      }));
+
+      xhr.upload.addEventListener("progress", (event) => {
+        if (!event.lengthComputable) return;
+        state.replacementProgress = (event.loaded / event.total) * 100;
+        state.replacementMessage = `正在上传“${file.name}”`;
+        renderReplacement();
+      });
+
+      xhr.addEventListener("load", () => {
+        let payload;
+        try {
+          payload = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+        } catch {
+          payload = { message: xhr.responseText };
+        }
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(payload);
+        } else {
+          reject(new Error(payload?.error || payload?.message || `上传失败（${xhr.status}）`));
+        }
+      });
+      xhr.addEventListener("error", () => reject(new Error("无法连接本地上传服务")));
+      xhr.addEventListener("abort", () => reject(new Error("上传已取消")));
+      xhr.send(file);
+    });
+  }
+
+  async function startReplacement() {
+    if (!replacementReady()) return;
+    const target = selectedReplacementTarget();
+    const file = state.replacementFile;
+    if (!target || !file) return;
+
+    state.replacementUploading = true;
+    state.replacementStatus = "uploading";
+    state.replacementProgress = 0;
+    state.replacementMessage = `准备上传“${file.name}”`;
+    els.replacementError.hidden = true;
+    els.replacementError.textContent = "";
+    renderReplacement();
+
+    try {
+      const payload = await uploadReplacement(file, target);
+      state.replacementUploading = false;
+      state.replacementStatus = "queued";
+      state.replacementProgress = 100;
+      state.replacementMessage = "上传完成，已进入后台转换队列";
+      state.replacementJobId = String(payload?.job?.id || payload?.jobId || payload?.id || "");
+      els.replacementConfirm.checked = false;
+      showToast(`“${target.label}”的新母版已提交，转换成功后网站会自动更新。`, "success", 6500);
+      await refreshJobs({ quiet: true });
+    } catch (error) {
+      state.replacementUploading = false;
+      state.replacementStatus = "error";
+      state.replacementMessage = "替换任务提交失败";
+      state.replacementProgress = 0;
+      els.replacementError.hidden = false;
+      els.replacementError.textContent = error instanceof Error ? error.message : String(error);
+      showToast(els.replacementError.textContent, "error", 6500);
+    }
+    renderReplacement();
+  }
+
   async function startUpload() {
     if (state.uploading || !state.queue.length) return;
     if (!token) {
@@ -423,6 +754,57 @@
     }).join("");
   }
 
+  async function syncReplacementJobStatus() {
+    if (state.replacementStatus !== "queued") return;
+    const target = selectedReplacementTarget();
+    const job = state.replacementJobId
+      ? state.jobs.find((entry) => String(entry.id || entry.job_id || "") === state.replacementJobId)
+      : state.jobs.find((entry) => {
+          const workflow = String(entry.workflow || "").toLowerCase();
+          const type = String(entry.targetType || entry.target_type || "").toLowerCase();
+          const id = String(entry.targetId || entry.target_id || "");
+          return workflow === "replace" && target && type === target.type && id === target.id;
+        });
+    if (!job) return;
+
+    const status = jobStatus(job);
+    const progress = Number(job.progress);
+    if (Number.isFinite(progress)) state.replacementProgress = Math.min(100, Math.max(0, progress));
+    state.replacementMessage = job.stage_label || job.stage || job.message || "正在转换替换素材";
+
+    if (/fail|error|cancel/.test(status)) {
+      state.replacementStatus = "error";
+      state.replacementJobId = "";
+      els.replacementError.hidden = false;
+      els.replacementError.textContent = job.error || job.error_message || job.message || "替换任务失败，旧素材已自动恢复。";
+      renderReplacement();
+      showToast(`替换失败：${els.replacementError.textContent}`, "error", 7000);
+      return;
+    }
+
+    if (/complete|completed|done/.test(status)) {
+      const completedLabel = target?.label || job.targetId || "所选位置";
+      state.replacementStatus = "done";
+      state.replacementProgress = 100;
+      state.replacementMessage = job.stage_label || job.stage || "替换完成，网站素材已更新";
+      state.replacementJobId = "";
+      state.replacementFile = null;
+      els.replacementFileInput.value = "";
+      els.replacementConfirm.checked = false;
+      els.replacementError.hidden = true;
+      els.replacementError.textContent = "";
+      renderReplacement();
+      await Promise.allSettled([
+        refreshReplacementTargets({ quiet: true }),
+        refreshProjects({ quiet: true }),
+      ]);
+      showToast(`“${completedLabel}”已替换完成，可以继续替换其他素材。`, "success", 6500);
+      return;
+    }
+
+    renderReplacement();
+  }
+
   async function refreshJobs({ quiet = false } = {}) {
     if (!token || state.polling) return;
     state.polling = true;
@@ -431,6 +813,7 @@
       const payload = await parseResponse(response);
       state.jobs = normalizeList(payload, ["jobs", "items", "results"]);
       renderJobs();
+      await syncReplacementJobStatus();
       setConnection("online", "本地服务已连接");
     } catch (error) {
       setConnection("offline", "本地服务未连接");
@@ -523,6 +906,46 @@
   }
 
   function bindEvents() {
+    els.replacementTypes.forEach((button) => {
+      button.addEventListener("click", () => {
+        if (replacementLocked()) return;
+        state.replacementType = button.dataset.replacementType || "project";
+        state.replacementTargetId = "";
+        resetReplacementConfirmation();
+        renderReplacement();
+      });
+    });
+
+    els.replacementTarget.addEventListener("change", () => {
+      if (replacementLocked()) return;
+      state.replacementTargetId = els.replacementTarget.value;
+      resetReplacementConfirmation();
+      renderReplacement();
+    });
+
+    els.replacementFileInput.addEventListener("change", () => setReplacementFile(els.replacementFileInput.files?.[0] || null));
+    ["dragenter", "dragover"].forEach((eventName) => {
+      els.replacementDropZone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        if (!replacementLocked()) els.replacementDropZone.classList.add("is-dragging");
+      });
+    });
+    ["dragleave", "drop"].forEach((eventName) => {
+      els.replacementDropZone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        els.replacementDropZone.classList.remove("is-dragging");
+      });
+    });
+    els.replacementDropZone.addEventListener("drop", (event) => {
+      const files = [...(event.dataTransfer?.files || [])];
+      if (files.length > 1) showToast("替换现有位置时一次只能选择一个母版，已使用第一个文件。", "info");
+      if (files[0]) setReplacementFile(files[0]);
+    });
+    els.removeReplacementFile.addEventListener("click", () => setReplacementFile(null));
+    els.replacementConfirm.addEventListener("change", renderReplacement);
+    els.startReplacement.addEventListener("click", startReplacement);
+    els.refreshReplacementTargets.addEventListener("click", () => refreshReplacementTargets());
+
     els.fileInput.addEventListener("change", () => addFiles([...els.fileInput.files]));
 
     ["dragenter", "dragover"].forEach((eventName) => {
@@ -561,6 +984,7 @@
     setDefaultYear();
     bindEvents();
     renderQueue();
+    renderReplacement();
 
     if (!token) {
       setConnection("offline", "本地访问令牌缺失");
@@ -569,9 +993,14 @@
       return;
     }
 
-    Promise.allSettled([refreshProjects({ quiet: true }), refreshJobs({ quiet: true })]);
+    Promise.allSettled([
+      refreshProjects({ quiet: true }),
+      refreshJobs({ quiet: true }),
+      refreshReplacementTargets({ quiet: true }),
+    ]);
     window.setInterval(() => refreshJobs({ quiet: true }), 2500);
     window.setInterval(() => refreshProjects({ quiet: true }), 20000);
+    window.setInterval(() => refreshReplacementTargets({ quiet: true }), 20000);
   }
 
   init();

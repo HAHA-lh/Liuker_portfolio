@@ -10,11 +10,15 @@ import { readProjects, upsertProject, validateProjectMetadata, writeCsvAtomic, w
 import { commandAvailable, probeMediaSync } from "../../scripts/lib/media-probe.mjs";
 
 const studioRoot = path.dirname(fileURLToPath(import.meta.url));
-const projectRoot = path.resolve(studioRoot, "..", "..");
+const defaultProjectRoot = path.resolve(studioRoot, "..", "..");
+const projectRoot = path.resolve(process.env.MEDIA_STUDIO_PROJECT_ROOT || defaultProjectRoot);
 const publicRoot = path.join(projectRoot, "public");
 const projectsDirectory = path.join(publicRoot, "media", "projects");
 const posterDirectory = path.join(projectsDirectory, "photo");
+const heroPosterDirectory = path.join(publicRoot, "media", "posters");
+const showreelDirectory = path.join(publicRoot, "media", "showreel");
 const csvPath = path.join(projectRoot, "content", "projects.csv");
+const mediaConfigPath = path.join(projectRoot, "app", "hero-media.ts");
 const workRoot = path.join(projectRoot, ".media-studio");
 const uploadRoot = path.join(workRoot, "uploads");
 const jobRoot = path.join(workRoot, "jobs");
@@ -32,10 +36,19 @@ let queueRunning = false;
 let latestAudit = null;
 let mutationTail = Promise.resolve();
 
+await Promise.all([
+  fsp.access(path.join(projectRoot, "package.json")),
+  fsp.access(csvPath),
+  fsp.access(mediaConfigPath),
+]).catch(() => {
+  throw new Error(`MEDIA_STUDIO_PROJECT_ROOT 不是有效的 LIUKER 项目目录：${projectRoot}`);
+});
 await fsp.mkdir(uploadRoot, { recursive: true });
 await fsp.mkdir(jobRoot, { recursive: true });
 await fsp.mkdir(projectsDirectory, { recursive: true });
 await fsp.mkdir(posterDirectory, { recursive: true });
+await fsp.mkdir(heroPosterDirectory, { recursive: true });
+await fsp.mkdir(showreelDirectory, { recursive: true });
 
 const tools = {
   ffmpeg: commandAvailable(ffmpegCommand),
@@ -75,6 +88,9 @@ function decodeMetadata(header) {
   if (!source || typeof source !== "object") throw new Error("素材信息无效");
   return {
     ...source,
+    workflow: source.workflow ?? (source.targetType || source.target_type ? "replace" : "ingest"),
+    targetType: source.targetType ?? source.target_type ?? null,
+    targetId: source.targetId ?? source.target_id ?? null,
     fileName: source.fileName ?? source.original_name,
     titleZh: source.titleZh ?? source.title_zh,
     titleEn: source.titleEn ?? source.title_en,
@@ -88,6 +104,67 @@ function decodeMetadata(header) {
     posterTime: source.posterTime ?? source.poster_time,
     updateExistingMetadata: source.updateExistingMetadata ?? source.update_existing_metadata ?? false,
   };
+}
+
+function validateTimingMetadata(metadata) {
+  for (const key of ["previewStart", "previewDuration", "posterTime"]) {
+    if (metadata[key] === undefined) continue;
+    const number = Number(metadata[key]);
+    if (!Number.isFinite(number) || number < 0) throw new Error(`${key} 必须是非负数字`);
+  }
+  if (metadata.previewDuration !== undefined && Number(metadata.previewDuration) <= 0) {
+    throw new Error("预览时长必须大于 0 秒");
+  }
+}
+
+async function resolveUploadMetadata(source) {
+  const workflow = String(source.workflow || "ingest").toLowerCase();
+  if (workflow !== "replace") {
+    validateProjectMetadata(source);
+    return { ...source, workflow: "ingest", targetType: "project", targetId: source.slug };
+  }
+
+  const targetType = String(source.targetType || "").toLowerCase();
+  const targetId = String(source.targetId || "").trim();
+  if (!new Set(["project", "hero", "showreel"]).has(targetType)) {
+    throw new Error("替换目标必须是 project、hero 或 showreel");
+  }
+  validateTimingMetadata(source);
+
+  if (targetType === "hero" || targetType === "showreel") {
+    if (targetId && targetId !== targetType) throw new Error(`无效的 ${targetType} 替换目标：${targetId}`);
+    return {
+      ...source,
+      workflow: "replace",
+      targetType,
+      targetId: targetType,
+      slug: `${targetType}-replacement`,
+    };
+  }
+
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(targetId)) throw new Error("项目替换目标无效");
+  const { records } = await readProjects(csvPath);
+  const existing = records.find((record) => record.slug.trim() === targetId);
+  if (!existing) throw new Error(`找不到要替换的项目：${targetId}`);
+  const metadata = {
+    ...source,
+    workflow: "replace",
+    targetType: "project",
+    targetId,
+    slug: targetId,
+    templateSlug: existing.template_slug,
+    titleZh: existing.title_zh,
+    titleEn: existing.title_en,
+    categoryZh: existing.category_zh,
+    categoryEn: existing.category_en,
+    year: existing.year,
+    roleZh: existing.role_zh,
+    roleEn: existing.role_en,
+    featured: String(existing.featured).toUpperCase() === "TRUE",
+    updateExistingMetadata: false,
+  };
+  validateProjectMetadata(metadata);
+  return metadata;
 }
 
 function safeFileName(value) {
@@ -143,7 +220,7 @@ function parseRate(rate) {
   return denominator ? numerator / denominator : 0;
 }
 
-async function validateVideoOutput(file, { maxWidth, maxHeight }) {
+async function validateVideoOutput(file, { maxWidth, maxHeight, exactWidth, exactHeight, noBFrames = false }) {
   const probe = probeMediaSync(file, { ffmpegCommand, ffprobeCommand });
   const video = probe.streams?.find((stream) => stream.codec_type === "video");
   if (!video) throw new Error(`生成文件缺少视频流：${path.basename(file)}`);
@@ -152,6 +229,12 @@ async function validateVideoOutput(file, { maxWidth, maxHeight }) {
   }
   if (video.width > maxWidth || video.height > maxHeight) {
     throw new Error(`生成文件尺寸超出限制：${path.basename(file)} (${video.width}x${video.height})`);
+  }
+  if ((exactWidth && video.width !== exactWidth) || (exactHeight && video.height !== exactHeight)) {
+    throw new Error(`生成文件尺寸不符合要求：${path.basename(file)} (${video.width}x${video.height})`);
+  }
+  if (noBFrames && Number(video.has_b_frames || 0) !== 0) {
+    throw new Error(`生成文件包含 B 帧，不适合滚轮逐帧定位：${path.basename(file)}`);
   }
   if (parseRate(video.avg_frame_rate) > 30.01) {
     throw new Error(`生成文件帧率超过 30fps：${path.basename(file)}`);
@@ -168,6 +251,9 @@ function serializeJob(job) {
     fileName: job.fileName,
     slug: job.metadata.slug,
     titleZh: job.metadata.titleZh,
+    workflow: job.metadata.workflow,
+    targetType: job.metadata.targetType,
+    targetId: job.metadata.targetId,
     status: job.status,
     stage: job.stage,
     progress: job.progress,
@@ -286,6 +372,86 @@ async function publishJob(job, staged) {
   });
 }
 
+function replaceAssetConstantVersion(source, constantName, version) {
+  const pattern = new RegExp(`(const\\s+${constantName}\\s*=\\s*)(["'])([^"']+)(?:\\2);`);
+  let matched = false;
+  const next = source.replace(pattern, (_match, prefix, quote, currentValue) => {
+    matched = true;
+    const assetPath = String(currentValue).split("?")[0];
+    return `${prefix}${quote}${assetPath}?v=${encodeURIComponent(version)}${quote};`;
+  });
+  if (!matched) throw new Error(`无法更新素材缓存版本：${constantName}`);
+  return next;
+}
+
+function updateAssetVersions(source, targetType, version) {
+  const constants = targetType === "hero"
+    ? ["HERO_VIDEO_1080P_SRC", "HERO_VIDEO_720P_SRC", "HERO_POSTER_WEBP", "HERO_POSTER_AVIF"]
+    : ["SHOWREEL_VIDEO_SRC"];
+  return constants.reduce(
+    (contents, constantName) => replaceAssetConstantVersion(contents, constantName, version),
+    source,
+  );
+}
+
+async function publishSpecialJob(job, staged) {
+  return withMutationLock(async () => {
+    const backupDirectory = path.join(job.workspace, "backup");
+    const targetType = job.metadata.targetType;
+    const destinations = targetType === "hero"
+      ? {
+          video1080: path.join(projectsDirectory, "主页_scrub_1080p.mp4"),
+          video720: path.join(projectsDirectory, "主页_scrub_720p.mp4"),
+          posterWebp: path.join(heroPosterDirectory, "home-hero.webp"),
+          posterAvif: path.join(heroPosterDirectory, "home-hero.avif"),
+        }
+      : {
+          video: path.join(showreelDirectory, "LIUKER_Showreel_2026_web.mp4"),
+        };
+    const sourceSnapshot = await fsp.readFile(mediaConfigPath, "utf8");
+    const moves = [];
+    let sourceChanged = false;
+    try {
+      if (targetType === "hero") {
+        moves.push(await moveWithBackup(staged.video1080, destinations.video1080, backupDirectory));
+        moves.push(await moveWithBackup(staged.video720, destinations.video720, backupDirectory));
+        moves.push(await moveWithBackup(staged.posterWebp, destinations.posterWebp, backupDirectory));
+        if (staged.posterAvif) {
+          moves.push(await moveWithBackup(staged.posterAvif, destinations.posterAvif, backupDirectory));
+        } else {
+          const removedAvif = await removeWithBackup(destinations.posterAvif, backupDirectory);
+          if (removedAvif) moves.push(removedAvif);
+        }
+      } else {
+        moves.push(await moveWithBackup(staged.video, destinations.video, backupDirectory));
+      }
+
+      const version = `media-studio-${Date.now().toString(36)}`;
+      const nextSource = updateAssetVersions(sourceSnapshot, targetType, version);
+      await writeTextAtomic(mediaConfigPath, nextSource);
+      sourceChanged = true;
+      const paths = Object.fromEntries(
+        Object.entries(destinations)
+          .filter(([key]) => key !== "posterAvif" || staged.posterAvif)
+          .map(([key, destination]) => [key, publicPath(destination)]),
+      );
+      return {
+        mode: "replaced",
+        workflow: "replace",
+        targetType,
+        targetId: job.metadata.targetId,
+        version,
+        paths,
+        currentAssets: paths,
+      };
+    } catch (error) {
+      if (sourceChanged) await writeTextAtomic(mediaConfigPath, sourceSnapshot).catch(() => undefined);
+      if (moves.length) await rollbackFiles(moves).catch(() => undefined);
+      throw error;
+    }
+  });
+}
+
 function applyProgressFromOutput(job, chunk) {
   const output = String(chunk);
   if (output.includes("720p")) updateJob(job, { stage: "生成 720p 预览", progress: 22 });
@@ -294,7 +460,146 @@ function applyProgressFromOutput(job, chunk) {
   else if (output.includes("AVIF")) updateJob(job, { stage: "生成 AVIF 封面", progress: 86 });
 }
 
+function inspectSource(file, maximumFps) {
+  const probe = probeMediaSync(file, { ffmpegCommand, ffprobeCommand });
+  const video = probe.streams?.find((stream) => stream.codec_type === "video");
+  if (!video) throw new Error("源文件中没有可用的视频流");
+  const sourceFps = parseRate(video.avg_frame_rate) || maximumFps;
+  const outputFps = Math.max(1, Math.min(sourceFps, maximumFps));
+  return {
+    outputFps,
+    fpsFilter: Number.isInteger(outputFps) ? String(outputFps) : outputFps.toFixed(3),
+    hasAudio: probe.streams?.some((stream) => stream.codec_type === "audio") || false,
+  };
+}
+
+function commonH264Arguments({ gop, crf, maxrate, bufsize, level, noBFrames = false }) {
+  return [
+    "-c:v", "libx264",
+    "-profile:v", "high",
+    "-level:v", level,
+    "-pix_fmt", "yuv420p",
+    "-preset", "slow",
+    "-crf", String(crf),
+    "-maxrate", maxrate,
+    "-bufsize", bufsize,
+    "-g", String(gop),
+    "-keyint_min", String(gop),
+    "-sc_threshold", "0",
+    ...(noBFrames ? ["-bf", "0", "-tune", "fastdecode"] : []),
+    "-movflags", "+faststart",
+  ];
+}
+
+async function generatePoster(input, destination, posterTime, codec) {
+  const args = [
+    "-y", "-hide_banner", "-loglevel", "warning",
+    "-ss", String(posterTime),
+    "-i", input,
+    "-frames:v", "1",
+    "-vf", "scale=w='min(1920,iw)':h='min(1080,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2",
+  ];
+  if (codec === "avif") {
+    args.push("-c:v", "libaom-av1", "-still-picture", "1", "-crf", "30", "-cpu-used", "6");
+  } else {
+    args.push("-c:v", "libwebp", "-quality", "82", "-compression_level", "6");
+  }
+  args.push(destination);
+  await runProcess(ffmpegCommand, args);
+}
+
+async function processHeroReplacement(job) {
+  updateJob(job, { status: "transcoding", stage: "检查首屏母版", progress: 8 });
+  const outputDirectory = path.join(job.workspace, "output", "hero");
+  await fsp.mkdir(outputDirectory, { recursive: true });
+  const staged = {
+    video1080: path.join(outputDirectory, "hero-1080.mp4"),
+    video720: path.join(outputDirectory, "hero-720.mp4"),
+    posterWebp: path.join(outputDirectory, "hero.webp"),
+    posterAvif: path.join(outputDirectory, "hero.avif"),
+  };
+  const { fpsFilter } = inspectSource(job.uploadPath, 24);
+  const encodes = [
+    {
+      destination: staged.video1080,
+      stage: "生成首屏 1080p 滚轮视频",
+      progress: 20,
+      filter: `scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=${fpsFilter}`,
+      options: { gop: 2, crf: 19, maxrate: "12M", bufsize: "24M", level: "4.1", noBFrames: true },
+    },
+    {
+      destination: staged.video720,
+      stage: "生成首屏 720p 滚轮视频",
+      progress: 52,
+      filter: `scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720,fps=${fpsFilter}`,
+      options: { gop: 2, crf: 21, maxrate: "6M", bufsize: "12M", level: "3.2", noBFrames: true },
+    },
+  ];
+  for (const encode of encodes) {
+    updateJob(job, { stage: encode.stage, progress: encode.progress });
+    await runProcess(ffmpegCommand, [
+      "-y", "-hide_banner", "-loglevel", "warning", "-i", job.uploadPath,
+      "-map", "0:v:0", "-vf", encode.filter,
+      ...commonH264Arguments(encode.options),
+      "-an", encode.destination,
+    ]);
+  }
+
+  const posterTime = Number(job.metadata.posterTime ?? 0.5);
+  updateJob(job, { stage: "生成首屏 WebP 封面", progress: 76 });
+  await generatePoster(job.uploadPath, staged.posterWebp, posterTime, "webp");
+  updateJob(job, { stage: "生成首屏 AVIF 封面", progress: 84 });
+  try {
+    await generatePoster(job.uploadPath, staged.posterAvif, posterTime, "avif");
+  } catch {
+    await fsp.rm(staged.posterAvif, { force: true }).catch(() => undefined);
+    staged.posterAvif = null;
+  }
+
+  updateJob(job, { stage: "验证首屏滚轮兼容性", progress: 89 });
+  await validateVideoOutput(staged.video1080, {
+    maxWidth: 1920, maxHeight: 1080, exactWidth: 1920, exactHeight: 1080, noBFrames: true,
+  });
+  await validateVideoOutput(staged.video720, {
+    maxWidth: 1280, maxHeight: 720, exactWidth: 1280, exactHeight: 720, noBFrames: true,
+  });
+  updateJob(job, { status: "publishing", stage: "原子替换首屏素材", progress: 94 });
+  const result = await publishSpecialJob(job, staged);
+  updateJob(job, { status: "done", stage: "首屏素材已替换", progress: 100, result });
+}
+
+async function processShowreelReplacement(job) {
+  updateJob(job, { status: "transcoding", stage: "检查 Showreel 母版", progress: 8 });
+  const outputDirectory = path.join(job.workspace, "output", "showreel");
+  await fsp.mkdir(outputDirectory, { recursive: true });
+  const staged = { video: path.join(outputDirectory, "showreel.mp4") };
+  const { fpsFilter, outputFps, hasAudio } = inspectSource(job.uploadPath, 30);
+  const gop = Math.max(12, Math.round(outputFps * 2));
+  updateJob(job, { stage: "生成 1080p Showreel", progress: 28 });
+  await runProcess(ffmpegCommand, [
+    "-y", "-hide_banner", "-loglevel", "warning", "-i", job.uploadPath,
+    "-map", "0:v:0", ...(hasAudio ? ["-map", "0:a:0?"] : []),
+    "-vf", `scale=w='min(1920,iw)':h='min(1080,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=${fpsFilter}`,
+    ...commonH264Arguments({ gop, crf: 20, maxrate: "8M", bufsize: "16M", level: "4.1" }),
+    ...(hasAudio ? ["-c:a", "aac", "-b:a", "160k", "-ac", "2"] : ["-an"]),
+    staged.video,
+  ]);
+  updateJob(job, { stage: "验证 Showreel 兼容性", progress: 89 });
+  await validateVideoOutput(staged.video, { maxWidth: 1920, maxHeight: 1080 });
+  updateJob(job, { status: "publishing", stage: "原子替换 Showreel", progress: 94 });
+  const result = await publishSpecialJob(job, staged);
+  updateJob(job, { status: "done", stage: "Showreel 已替换", progress: 100, result });
+}
+
 async function processJob(job) {
+  if (job.metadata.workflow === "replace" && job.metadata.targetType === "hero") {
+    await processHeroReplacement(job);
+    return;
+  }
+  if (job.metadata.workflow === "replace" && job.metadata.targetType === "showreel") {
+    await processShowreelReplacement(job);
+    return;
+  }
   updateJob(job, { status: "transcoding", stage: "检查母版", progress: 8 });
   const stagedProjects = path.join(job.workspace, "output", "projects");
   const stagedPosters = path.join(stagedProjects, "photo");
@@ -337,7 +642,20 @@ async function processJob(job) {
   await validateVideoOutput(staged.preview, { maxWidth: 1280, maxHeight: 720 });
   await validateVideoOutput(staged.full, { maxWidth: 1920, maxHeight: 1080 });
   updateJob(job, { status: "publishing", stage: "更新网站数据", progress: 92 });
-  const result = await publishJob(job, staged);
+  const projectResult = await publishJob(job, staged);
+  const result = {
+    ...projectResult,
+    workflow: job.metadata.workflow,
+    targetType: "project",
+    targetId: job.metadata.targetId,
+    paths: {
+      preview: projectResult.preview,
+      full: projectResult.full,
+      cover: projectResult.cover,
+      ...(projectResult.avif ? { avif: projectResult.avif } : {}),
+    },
+  };
+  result.currentAssets = result.paths;
   updateJob(job, { status: "done", stage: "已更新网站", progress: 100, result });
 }
 
@@ -378,8 +696,13 @@ async function handleUpload(request, response) {
     sendJson(response, 413, { error: "文件超过工作台允许的大小。" });
     return;
   }
-  const metadata = decodeMetadata(request.headers["x-media-meta"]);
-  validateProjectMetadata(metadata);
+  let metadata;
+  try {
+    metadata = await resolveUploadMetadata(decodeMetadata(request.headers["x-media-meta"]));
+  } catch (error) {
+    sendJson(response, 400, { error: error instanceof Error ? error.message : String(error) });
+    return;
+  }
   const id = randomUUID();
   const fileName = safeFileName(request.headers["x-file-name"] || metadata.fileName);
   const extension = path.extname(fileName).toLowerCase();
@@ -416,6 +739,64 @@ async function handleUpload(request, response) {
     await fsp.rm(uploadPath, { force: true }).catch(() => undefined);
     sendJson(response, 400, { error: error instanceof Error ? error.message : String(error) });
   }
+}
+
+function projectAvifPath(cover) {
+  const value = String(cover || "");
+  return value.toLowerCase().endsWith(".webp") ? `${value.slice(0, -5)}.avif` : null;
+}
+
+async function getReplacementTargets() {
+  const { records } = await readProjects(csvPath);
+  const special = [
+    {
+      id: "hero",
+      targetId: "hero",
+      type: "hero",
+      targetType: "hero",
+      label: "首页滚轮交互视频",
+      description: "生成滚轮逐帧优化的 1080p / 720p 视频与双格式封面。",
+      impact: "替换首页交互素材并自动刷新浏览器缓存版本；不会改变滚轮交互逻辑。",
+      currentAssets: {
+        video1080: "/media/projects/主页_scrub_1080p.mp4",
+        video720: "/media/projects/主页_scrub_720p.mp4",
+        posterWebp: "/media/posters/home-hero.webp",
+        posterAvif: "/media/posters/home-hero.avif",
+      },
+    },
+    {
+      id: "showreel",
+      targetId: "showreel",
+      type: "showreel",
+      targetType: "showreel",
+      label: "Showreel 完整视频",
+      description: "生成浏览器兼容的 1080p H.264 / AAC 完整视频。",
+      impact: "替换点击 SHOWREEL 后播放的独立素材，并自动刷新缓存版本。",
+      currentAssets: { video: "/media/showreel/LIUKER_Showreel_2026_web.mp4" },
+    },
+  ];
+  const projects = records.map((record) => ({
+    id: record.slug,
+    targetId: record.slug,
+    type: "project",
+    targetType: "project",
+    order: Number(record.order),
+    slug: record.slug,
+    label: record.title_zh,
+    titleZh: record.title_zh,
+    titleEn: record.title_en,
+    year: record.year,
+    enabled: String(record.enabled).toUpperCase() !== "FALSE",
+    description: `${record.category_zh} · ${record.year}`,
+    impact: "只替换该项目的预览视频、完整视频和封面，保留现有标题、顺序与详情资料。",
+    currentAssets: {
+      preview: record.preview_video,
+      full: record.full_video,
+      cover: record.cover,
+      avif: projectAvifPath(record.cover),
+    },
+  }));
+  return { special, projects, targets: [...special, ...projects] };
 }
 
 async function runAudit() {
@@ -485,6 +866,8 @@ const server = http.createServer(async (request, response) => {
             enabled: String(record.enabled).toUpperCase() !== "FALSE",
           })),
         });
+      } else if (request.method === "GET" && url.pathname === "/api/replacement-targets") {
+        sendJson(response, 200, await getReplacementTargets());
       } else if (request.method === "POST" && url.pathname === "/api/upload") {
         await handleUpload(request, response);
       } else if (request.method === "POST" && url.pathname === "/api/audit") {

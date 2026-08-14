@@ -60,6 +60,7 @@ const DotField = memo(function DotField({
     let parentLeft = 0;
     let parentTop = 0;
     let blockedBySelector = false;
+    let blockedByLoader = document.documentElement.dataset.siteLoading === "true";
     const mouse = { x: -9999, y: -9999, px: -9999, py: -9999, speed: 0 };
 
     const build = () => {
@@ -89,7 +90,7 @@ const DotField = memo(function DotField({
     };
 
     const pointerMove = (event: PointerEvent) => {
-      if (!visible || blockedBySelector) return;
+      if (!visible || blockedBySelector || blockedByLoader) return;
       mouse.x = event.clientX - parentLeft;
       mouse.y = event.clientY - parentTop;
       const dx = mouse.x - mouse.px;
@@ -154,7 +155,7 @@ const DotField = memo(function DotField({
     draw();
 
     const loop = (timestamp: number) => {
-      if (stopped || !visible || blockedBySelector || document.hidden) {
+      if (stopped || !visible || blockedBySelector || blockedByLoader || document.hidden) {
         raf = 0;
         return;
       }
@@ -166,7 +167,7 @@ const DotField = memo(function DotField({
     };
 
     const start = () => {
-      if (interactive && visible && !blockedBySelector && !document.hidden && !raf) {
+      if (interactive && visible && !blockedBySelector && !blockedByLoader && !document.hidden && !raf) {
         raf = requestAnimationFrame(loop);
       }
     };
@@ -201,6 +202,16 @@ const DotField = memo(function DotField({
       : null;
     if (blocker && blockerObserver) blockerObserver.observe(blocker);
 
+    const loaderObserver = new MutationObserver(() => {
+      blockedByLoader = document.documentElement.dataset.siteLoading === "true";
+      if (blockedByLoader) stop();
+      else start();
+    });
+    loaderObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-site-loading"],
+    });
+
     const visibilityChange = () => {
       if (document.hidden) stop();
       else start();
@@ -224,6 +235,7 @@ const DotField = memo(function DotField({
       stop();
       observer.disconnect();
       blockerObserver?.disconnect();
+      loaderObserver.disconnect();
       window.clearTimeout(resizeTimer);
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", pointerMove);
