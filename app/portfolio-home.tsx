@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ArrowUpRight,
   BriefcaseBusiness,
@@ -26,17 +25,15 @@ import {
   type ComponentType,
   type ElementType,
   type HTMLAttributes,
-  type MouseEvent,
   type ReactNode,
 } from "react";
-import { projects, siteContent, t, type Project } from "./content";
+import { siteContent, t } from "./content";
 import ClickSpark from "./components/ClickSpark";
 import DotField from "./components/DotField";
 import GlassSurface from "./components/GlassSurface";
 import GradientText from "./components/GradientText";
-import type { InfiniteMenuItem } from "./components/InfiniteMenu";
 import LoadingScreen from "./components/LoadingScreen";
-import Masonry, { type MasonryItem } from "./components/Masonry";
+import ScrollExpand from "./components/ScrollExpand";
 import StaggeredMenu from "./components/StaggeredMenu";
 import TextPressure from "./components/TextPressure";
 import VariableProximity from "./components/VariableProximity";
@@ -50,12 +47,14 @@ import {
   SHOWREEL_VIDEO_SRC,
 } from "./hero-media";
 import { useLanguage } from "./language";
+import {
+  getProjectsForPortfolioGroup,
+  portfolioGroups,
+} from "./portfolio-groups";
 import { ThemeToggle, useTheme } from "./theme";
 
 const ease = [0.25, 0.1, 0.25, 1] as const;
-const InfiniteMenu = lazy(() => import("./components/InfiniteMenu"));
 const Lanyard = lazy(() => import("./components/Lanyard"));
-const Orb = lazy(() => import("./components/Orb"));
 
 const CONTENT_EDITING_ENABLED = process.env.NODE_ENV === "development";
 
@@ -390,9 +389,14 @@ function Header() {
   const { theme } = useTheme();
   const menuItems = [
     {
+      label: language === "zh" ? "首页" : "Home",
+      ariaLabel: language === "zh" ? "返回首页顶部" : "Return to homepage",
+      link: "/",
+    },
+    {
       label: t(siteContent.nav.work, language),
       ariaLabel: language === "zh" ? "前往作品" : "Go to work",
-      link: "#work",
+      link: "#project-field",
     },
     {
       label: t(siteContent.nav.about, language),
@@ -444,163 +448,6 @@ function Header() {
         }
       />
     </>
-  );
-}
-
-function PreviewVideo({ project, className = "preview-video" }: { project: Project; className?: string }) {
-  const ref = useRef<HTMLVideoElement>(null);
-  const hoveredRef = useRef(false);
-  const reduced = useReducedMotion();
-
-  useEffect(() => {
-    const video = ref.current;
-    if (!video) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) {
-          hoveredRef.current = false;
-          video.pause();
-          if (video.getAttribute("src")) {
-            video.removeAttribute("src");
-            video.load();
-          }
-        }
-      },
-      { threshold: 0.05 },
-    );
-    observer.observe(video);
-    return () => {
-      observer.disconnect();
-      video.pause();
-      video.removeAttribute("src");
-    };
-  }, []);
-
-  const play = () => {
-    if (reduced || !window.matchMedia("(hover: hover)").matches) return;
-    const video = ref.current;
-    if (!video) return;
-    hoveredRef.current = true;
-    document.querySelectorAll<HTMLVideoElement>("video.preview-video").forEach((candidate) => {
-      if (candidate !== video) candidate.pause();
-    });
-    if (!video.getAttribute("src")) {
-      video.src = project.previewVideo;
-      video.load();
-    }
-    const start = () => {
-      if (hoveredRef.current) video.play().catch(() => undefined);
-    };
-    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) start();
-    else video.addEventListener("canplay", start, { once: true });
-  };
-
-  const pause = () => {
-    hoveredRef.current = false;
-    ref.current?.pause();
-  };
-
-  return (
-    <video
-      ref={ref}
-      className={className}
-      poster={project.poster || undefined}
-      muted
-      loop
-      playsInline
-      preload="none"
-      onMouseEnter={play}
-      onMouseLeave={pause}
-      aria-label={`${project.title.en} preview`}
-    />
-  );
-}
-
-function VideoModal({ project, onClose }: { project: Project | null; onClose: () => void }) {
-  const { language } = useLanguage();
-  const closeRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!project) return;
-    document.body.classList.add("modal-open");
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-      if (event.key === "Tab") {
-        const panel = document.querySelector<HTMLElement>(".modal-panel");
-        if (!panel) return;
-        const focusables = panel.querySelectorAll<HTMLElement>(
-          "button, a, video[controls], [tabindex]:not([tabindex='-1'])",
-        );
-        const first = focusables[0];
-        const last = focusables[focusables.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last?.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first?.focus();
-        }
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    window.setTimeout(() => closeRef.current?.focus(), 30);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.classList.remove("modal-open");
-    };
-  }, [project, onClose]);
-
-  const stop = (event: MouseEvent<HTMLDivElement>) => event.stopPropagation();
-
-  return (
-    <AnimatePresence>
-      {project && (
-        <motion.div
-          className="video-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-title"
-          onMouseDown={onClose}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <motion.div
-            className="modal-panel"
-            onMouseDown={stop}
-            initial={{ opacity: 0, scale: 0.96, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97 }}
-            transition={{ duration: 0.35, ease }}
-          >
-            <div className="modal-video">
-              <button
-                ref={closeRef}
-                type="button"
-                className="modal-close"
-                onClick={onClose}
-                aria-label={language === "zh" ? "关闭播放器" : "Close player"}
-              >
-                <X size={19} />
-              </button>
-              <video src={project.heroVideo} controls playsInline preload="metadata" />
-            </div>
-            <div className="modal-footer">
-              <div>
-                <div className="eyebrow">DEMO / {t(project.category, language)}</div>
-                <h2 id="modal-title" className="modal-title">
-                  {t(project.title, language)}
-                </h2>
-              </div>
-              <Link className="primary-button" href={`/work/${project.slug}`}>
-                {language === "zh" ? "查看完整案例" : "View case study"}
-                <ArrowUpRight size={16} />
-              </Link>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
 }
 
@@ -682,33 +529,110 @@ function ShowreelModal({ open, onClose }: { open: boolean; onClose: () => void }
   );
 }
 
-function Marquee({ open }: { open: (project: Project) => void }) {
+function PortfolioIndex() {
   const { language } = useLanguage();
-  const menuItems: InfiniteMenuItem<Project>[] = projects.slice(0, 20).map((project) => ({
-    image: project.poster || "/og.png",
-    title: t(project.title, language),
-    description: `${t(project.category, language)} · ${project.year}`,
-    meta: project.year,
-    value: project,
-  }));
+  const reduced = useReducedMotion();
 
   return (
-    <section id="project-field" className="marquee-section infinite-work-section" aria-label="Interactive project field">
-      <div className="infinite-work-kicker container-wide">
-        <span>Selected loop / 01—20</span>
-        <span>{language === "zh" ? "拖动探索作品" : "Drag to explore"}</span>
+    <section
+      id="project-field"
+      className="portfolio-index-section container-wide"
+      aria-label={language === "zh" ? "作品集分类" : "Portfolio categories"}
+    >
+      <div className="portfolio-index-lead">
+        <div>
+          <div className="eyebrow">
+            {language === "zh" ? "作品集分类 · 选择方向" : "Portfolio index · Choose a direction"}
+          </div>
+        </div>
+        <p>
+          {language === "zh"
+            ? "先选择作品方向，再进入对应的视频项目。每个方向都保留播放与案例详情入口。"
+            : "Choose a discipline, then explore its video projects with playback and case-study access."}
+        </p>
       </div>
-      <ViewportMount className="infinite-menu-mount">
-        {(active) => (
-          <InfiniteMenu
-            active={active}
-            items={menuItems}
-            scale={1}
-            actionLabel={language === "zh" ? "打开作品" : "Open project"}
-            onItemClick={(item) => item.value && open(item.value as Project)}
-          />
-        )}
-      </ViewportMount>
+
+      <div className="portfolio-group-grid">
+        {portfolioGroups.map((group, groupIndex) => {
+          const groupProjects = getProjectsForPortfolioGroup(group);
+          const previewProjects = groupProjects.slice(0, 3);
+          const entranceDelay = groupIndex * 0.14;
+
+          return (
+            <motion.div
+              key={group.id}
+              className="portfolio-group-card-frame"
+              initial={
+                reduced
+                  ? false
+                  : {
+                      opacity: 0,
+                      y: 96,
+                      scale: 0.94,
+                      rotateX: 7,
+                      clipPath: "inset(18% 0 0 0 round 2.4rem)",
+                    }
+              }
+              whileInView={
+                reduced
+                  ? undefined
+                  : {
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                      rotateX: 0,
+                      clipPath: "inset(0% 0 0 0 round 0rem)",
+                    }
+              }
+              viewport={{ once: true, amount: 0.18 }}
+              transition={{ duration: 0.88, delay: entranceDelay, ease }}
+              style={{ transformOrigin: "50% 100%" }}
+            >
+              <Link
+                href={`/portfolio/${group.id}`}
+                className={`portfolio-group-card portfolio-group-card-${groupIndex + 1}`}
+                aria-label={`${language === "zh" ? "进入" : "Open"} ${t(group.title, language)}`}
+              >
+                <motion.span
+                  className="portfolio-group-media"
+                  aria-hidden="true"
+                  initial={reduced ? false : { opacity: 0.42, scale: 1.13, y: 30 }}
+                  whileInView={reduced ? undefined : { opacity: 1, scale: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.18 }}
+                  transition={{ duration: 1.08, delay: entranceDelay + 0.1, ease }}
+                >
+                  {previewProjects.map((project, imageIndex) => (
+                    <span className={`portfolio-group-image image-${imageIndex + 1}`} key={project.slug}>
+                      <img src={project.poster || "/og.png"} alt="" loading="lazy" decoding="async" />
+                    </span>
+                  ))}
+                  <span className="portfolio-group-scrim" />
+                </motion.span>
+
+                <motion.span
+                  className="portfolio-group-content"
+                  initial={reduced ? false : { opacity: 0, y: 38 }}
+                  whileInView={reduced ? undefined : { opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.18 }}
+                  transition={{ duration: 0.72, delay: entranceDelay + 0.28, ease }}
+                >
+                  <span className="portfolio-group-meta">
+                    <span>{group.index} / 03</span>
+                    <span>{String(groupProjects.length).padStart(2, "0")} {language === "zh" ? "个项目" : "projects"}</span>
+                  </span>
+                  <span className="portfolio-group-label">{group.label}</span>
+                  <span className="portfolio-group-title">{t(group.title, language)}</span>
+                  <span className="portfolio-group-description">{t(group.description, language)}</span>
+                  <span className="portfolio-group-action">
+                    {language === "zh" ? "进入二级作品页" : "Open collection"}
+                    <ArrowUpRight size={18} />
+                  </span>
+                </motion.span>
+              </Link>
+            </motion.div>
+          );
+        })}
+      </div>
     </section>
   );
 }
@@ -1002,7 +926,7 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
               >
                 <Play size={15} fill="currentColor" /> Showreel
               </button>
-              <a className="ghost-button" href="#work">
+              <a className="ghost-button" href="#project-field">
                 {language === "zh" ? "浏览作品" : "Explore work"}
               </a>
             </motion.div>
@@ -1199,20 +1123,7 @@ function ContactSection() {
 
 export function PortfolioHome() {
   const { language } = useLanguage();
-  const { theme } = useTheme();
-  const router = useRouter();
-  const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [showreelOpen, setShowreelOpen] = useState(false);
-  const masonryHeights = [520, 410, 470, 390, 540, 430, 500, 380, 460, 560, 405, 485, 535, 420, 510, 390, 475, 545, 415, 495];
-  const masonryItems: MasonryItem<Project>[] = projects.map((project, index) => ({
-    id: `${project.slug}-${index + 1}`,
-    img: project.poster || "/og.png",
-    height: masonryHeights[index % masonryHeights.length],
-    title: t(project.title, language),
-    category: t(project.category, language),
-    year: project.year,
-    value: project,
-  }));
 
   return (
     <>
@@ -1228,60 +1139,41 @@ export function PortfolioHome() {
       <Header />
       <ScrollHero onOpenShowreel={() => setShowreelOpen(true)} />
 
-      <Marquee open={setActiveProject} />
+      <PortfolioIndex />
 
-      <section id="work" className="selected-section container-wide">
-        <div className="section-lead">
-          <FadeIn>
-            <div className="eyebrow">{language === "zh" ? "精选案例" : "Selected cases"}</div>
-            <h2 className="section-heading gradient-text">{language === "zh" ? "作品" : "Work"}</h2>
-          </FadeIn>
-          <span className="section-count">{masonryItems.length} / {projects.length} · Demo</span>
-        </div>
-        <Masonry
-          items={masonryItems}
-          onItemClick={setActiveProject}
-          onDetails={(project) => router.push(`/work/${project.slug}`)}
-          playLabel={language === "zh" ? "播放" : "Play"}
-          detailsLabel={language === "zh" ? "案例详情" : "Case study"}
-        />
-      </section>
-
-      <section id="about" className="about-section container-wide">
-        <div className="about-orb-stage">
-          <ViewportMount className="about-orb-mount">
-            {(active) => (
-              <Orb
-                active={active}
-                hue={285}
-                hoverIntensity={0.62}
-                rotateOnHover
-                backgroundColor={theme === "light" ? "#f3f0e9" : "#0c0c0c"}
-              />
-            )}
-          </ViewportMount>
-        </div>
-        <div className="about-content">
-          <FadeIn>
-            <div className="eyebrow">
-              <InlineEditable
-                storageKey={`liuker-about-kicker-${language}`}
-                value={language === "zh" ? "关于这份作品集" : "About this portfolio"}
-                ariaLabel={language === "zh" ? "点击编辑关于板块标签" : "Click to edit about label"}
-              />
-            </div>
+      <section id="about" className="about-section">
+        <ScrollExpand
+          src="/media/projects/photo/%E5%B0%8F%E7%94%B5%E8%A7%86%E5%BD%A2%E8%B1%A1%E5%B1%95%E7%A4%BA.avif"
+          mediaType="image"
+          alt={language === "zh" ? "LIUKER 虚拟形象与动态设计作品" : "LIUKER virtual character and motion design work"}
+          title={(
             <EditablePressureTitle
               storageKey={`liuker-about-title-${language}`}
               value={language === "zh" ? "关于我" : "ABOUT ME"}
               editLabel={language === "zh" ? "编辑标题" : "Edit title"}
             />
-          </FadeIn>
-          <EditableProximityCopy
-            storageKey={`liuker-about-copy-${language}`}
-            value={t(siteContent.about, language)}
-            editLabel={language === "zh" ? "编辑文字" : "Edit copy"}
-          />
-        </div>
+          )}
+          scrollHint={language === "zh" ? "继续滚动展开" : "Scroll to expand"}
+          startWidth={46}
+          startRadius={34}
+          aspectRatio={16 / 9}
+          fillViewportOnExpand
+          mediaZoom={1.28}
+          scrollDistance={1.15}
+          holdDistance={0.42}
+          smoothing={0.09}
+          overlayScrim={0.7}
+          useWindowScroll
+          className="about-scroll-expand"
+        >
+          <div className="about-content about-content--copy-only">
+            <EditableProximityCopy
+              storageKey={`liuker-about-copy-${language}`}
+              value={t(siteContent.about, language)}
+              editLabel={language === "zh" ? "编辑文字" : "Edit copy"}
+            />
+          </div>
+        </ScrollExpand>
       </section>
 
       <ExperienceTimeline />
@@ -1289,7 +1181,6 @@ export function PortfolioHome() {
       <ContactSection />
 
       <ShowreelModal open={showreelOpen} onClose={() => setShowreelOpen(false)} />
-      <VideoModal project={activeProject} onClose={() => setActiveProject(null)} />
       </main>
       </ClickSpark>
     </>

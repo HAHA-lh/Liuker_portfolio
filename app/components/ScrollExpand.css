@@ -1,0 +1,133 @@
+.scroll-expand {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  background: #08090d;
+  color: #f7f8fb;
+}
+
+.scroll-expand--scroller {
+  height: 100svh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.scroll-expand__track {
+  position: relative;
+  width: 100%;
+}
+
+.scroll-expand__stage {
+  --se-title-size: clamp(2rem, 7.5vw, 5.25rem);
+  position: sticky;
+  top: 0;
+  width: 100%;
+  min-height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.scroll-expand__frame {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #10131a;
+  transform: translate(-50%, -50%);
+  will-change: width, height, border-radius, clip-path;
+}
+
+.scroll-expand__media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  will-change: transform;
+}
+
+.scroll-expand__scrim {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 42%, transparent 0 18%, rgba(2, 3, 8, 0.18) 54%, rgba(2, 3, 8, 0.72) 100%),
+    linear-gradient(180deg, rgba(5, 6, 12, 0.12), rgba(5, 6, 12, 0.68));
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.scroll-expand__overlay {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(2rem, 7vw, 7rem);
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.scroll-expand__title {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: 50%;
+  width: min(82%, 12em);
+  color: #fff;
+  font-family: "Kanit", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: var(--se-title-size);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  text-align: center;
+  text-wrap: balance;
+  transform: translate(-50%, -50%);
+  text-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+  will-change: opacity, transform;
+}
+
+.scroll-expand__hint {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: clamp(1.6rem, 4vw, 3rem);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(5, 7, 12, 0.24);
+  padding: 0.65rem 0.9rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+@media (max-width: 640px) {
+  .scroll-expand__overlay {
+    align-items: center;
+    padding: 4rem 1.25rem 2.5rem;
+  }
+
+  .scroll-expand__title {
+    width: 88%;
+    font-size: clamp(2rem, 11vw, 3.4rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-expand__frame,
+  .scroll-expand__media,
+  .scroll-expand__overlay,
+  .scroll-expand__title,
+  .scroll-expand__hint {
+    transition: none !important;
+  }
+}
