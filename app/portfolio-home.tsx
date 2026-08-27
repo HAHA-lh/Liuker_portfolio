@@ -1076,6 +1076,7 @@ function ExperienceTimeline() {
 
 function ContactSection() {
   const { language } = useLanguage();
+  const reduceMotion = useReducedMotion();
   return (
     <footer id="contact" className="contact-section lanyard-contact-section">
       <div className="contact-glow" aria-hidden="true" />
@@ -1104,6 +1105,36 @@ function ContactSection() {
             <BriefcaseBusiness size={16} />
             {language === "zh" ? "等待真实联系方式" : "Awaiting real contact details"}
           </span>
+          <motion.figure
+            className="contact-reference-portrait"
+            initial={
+              reduceMotion
+                ? false
+                : { opacity: 0, y: 54, clipPath: "inset(18% 0 0 0 round 28px)" }
+            }
+            whileInView={{
+              opacity: 1,
+              y: 0,
+              clipPath: "inset(0% 0 0 0 round 28px)",
+            }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{ duration: 0.85, ease }}
+          >
+            <span className="contact-reference-label" aria-hidden="true">
+              LIUKER / DIGITAL PORTRAIT
+            </span>
+            <img
+              src="/media/contact/liuker-avatar.png"
+              alt={
+                language === "zh"
+                  ? "LIUKER 虚拟人物形象参考图"
+                  : "LIUKER digital character portrait"
+              }
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+            />
+          </motion.figure>
           <div className="footer-line">
             <span>© 2026 {siteContent.name}</span>
             <span>{language === "zh" ? "首版框架 · 所有内容均为演示" : "V1 Framework · All content is demo"}</span>

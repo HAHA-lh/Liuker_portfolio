@@ -1,0 +1,58 @@
+[
+  {
+    "id": "film-post",
+    "index": "01",
+    "title": { "zh": "影视后期", "en": "FILM & POST" },
+    "label": "Film / Edit / Color",
+    "description": {
+      "zh": "品牌短片、广告、剪辑与调色，以完整后期流程把素材组织成有节奏的叙事。",
+      "en": "Brand films, commercials, editing and color shaped into clear, rhythmic stories."
+    },
+    "projectSlugs": [
+      "afterglow",
+      "neon-pulse",
+      "quiet-tides",
+      "kinetic-type",
+      "nocturne",
+      "morning-haze",
+      "echo-cuts",
+      "city-breath",
+      "silent-ad",
+      "last-frame"
+    ]
+  },
+  {
+    "id": "aigc",
+    "index": "02",
+    "title": { "zh": "AIGC", "en": "AIGC" },
+    "label": "AI / CGI / Visual Lab",
+    "description": {
+      "zh": "生成式影像、三维合成与视觉实验，用新的制作方式拓展画面的想象边界。",
+      "en": "Generative imagery, CGI compositing and visual experiments that expand production possibilities."
+    },
+    "projectSlugs": [
+      "orbital-form",
+      "gravity-study",
+      "spectrum-memory",
+      "outline-of-wind",
+      "material-study"
+    ]
+  },
+  {
+    "id": "live-gifts",
+    "index": "03",
+    "title": { "zh": "直播礼物", "en": "LIVE GIFTS" },
+    "label": "Motion / Reward / Live",
+    "description": {
+      "zh": "围绕直播场景打造高识别、强节奏的动态礼物，让互动瞬间更有情绪和记忆点。",
+      "en": "High-impact motion rewards designed for expressive, memorable live interactions."
+    },
+    "projectSlugs": [
+      "glimmer-sequence",
+      "liquid-type",
+      "pixel-tides",
+      "night-signal",
+      "loop-garden"
+    ]
+  }
+]

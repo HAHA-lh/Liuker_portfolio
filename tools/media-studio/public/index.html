@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#08080b" />
     <meta
       name="description"
-      content="LIUKER 本地视频素材工作台：批量上传母版、自动生成网页视频与封面，并同步作品清单。"
+      content="LIUKER 本地视频素材工作台：批量上传母版、自动生成网页视频与封面，并同步三个作品方向。"
     />
     <title>LIUKER Media Studio</title>
     <link rel="stylesheet" href="/styles.css" />
@@ -41,7 +41,7 @@
           <p class="eyebrow"><span>LOCAL WORKFLOW</span><span>2026 / LIUKER</span></p>
           <h1 id="page-title">把母版放进来，<br /><span>剩下的交给工作台。</span></h1>
           <p class="hero-intro">
-            批量导入高质量视频母版，自动生成 720P 预览、1080P 完整视频、WebP 与 AVIF 封面，并将项目素材同步到网站数据源。
+            批量导入高质量视频母版，自动生成 720P 预览、1080P 完整视频、WebP 与 AVIF 封面，并将项目素材同步到网站的三个作品方向。
           </p>
         </div>
 
@@ -68,7 +68,7 @@
               <div>
                 <p class="section-kicker">QUICK REPLACE / WEBSITE MEDIA</p>
                 <h2 id="replacement-title">替换网站现有视频</h2>
-                <p class="replacement-intro">选择网站中的现有位置，上传一个新母版。工作台会自动转换并只替换该位置的素材引用。</p>
+                <p class="replacement-intro">选择首页、Showreel 或三个二级作品页中的现有项目，上传一个新母版。工作台会自动转换并只替换该位置的素材引用。</p>
               </div>
               <button class="icon-button" id="refresh-replacement-targets" type="button" aria-label="刷新可替换位置">↻</button>
             </div>
@@ -77,7 +77,7 @@
               <div class="replacement-step">
                 <div class="replacement-step-heading">
                   <span>01</span>
-                  <div><strong>选择替换位置</strong><small>项目资料和页面结构不会被改动</small></div>
+                  <div><strong>选择替换位置</strong><small>作品方向、项目资料和页面结构不会被改动</small></div>
                 </div>
 
                 <div class="replacement-type-tabs" role="group" aria-label="选择视频位置类型">
@@ -211,6 +211,14 @@
 
             <form class="defaults-form" id="defaults-form">
               <label class="field">
+                <span>作品方向</span>
+                <select name="portfolio_group" id="portfolio-group">
+                  <option value="film-post">01 · 影视后期</option>
+                  <option value="aigc">02 · AIGC</option>
+                  <option value="live-gifts">03 · 直播礼物</option>
+                </select>
+              </label>
+              <label class="field">
                 <span>中文分类</span>
                 <input name="category_zh" type="text" value="品牌短片" autocomplete="off" />
               </label>
@@ -257,7 +265,7 @@
               <label class="toggle-field">
                 <input name="update_existing_metadata" type="checkbox" />
                 <span class="toggle-ui" aria-hidden="true"></span>
-                <span><strong>覆盖已有项目资料</strong><small>默认关闭；替换同 slug 素材时保留原标题、分类、年份、模板与状态</small></span>
+                <span><strong>覆盖已有项目资料</strong><small>默认关闭；替换同 slug 素材时保留原作品方向、标题、分类、年份、模板与状态</small></span>
               </label>
             </form>
           </section>
@@ -295,20 +303,20 @@
           <section class="panel projects-panel" aria-labelledby="projects-title">
             <div class="section-heading section-heading--compact">
               <div>
-                <p class="section-kicker">WEBSITE / PROJECTS</p>
-                <h2 id="projects-title">网站项目</h2>
+                <p class="section-kicker">WEBSITE / PORTFOLIO FIELDS</p>
+                <h2 id="projects-title">网站作品方向</h2>
               </div>
               <button class="icon-button" id="refresh-projects" type="button" aria-label="刷新网站项目">↻</button>
             </div>
             <div class="metric-row">
               <div><span>已启用</span><strong id="project-count">—</strong></div>
-              <div><span>最近更新</span><strong id="project-updated">—</strong></div>
+              <div><span>作品方向</span><strong id="group-count">—</strong></div>
             </div>
             <div class="projects-list" id="projects-list">
               <div class="skeleton-stack" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
             </div>
-            <a class="button button--ghost button--full" href="http://localhost:3000/#work" target="_blank" rel="noreferrer">
-              在网站中查看 <span aria-hidden="true">↗</span>
+            <a class="button button--ghost button--full" href="http://localhost:3000/#project-field" target="_blank" rel="noreferrer">
+              查看三个作品方向 <span aria-hidden="true">↗</span>
             </a>
           </section>
 

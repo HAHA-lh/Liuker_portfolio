@@ -26,7 +26,7 @@ try {
   }
 
   $processId = [int]$pidData.pid
-  $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
+  $process = Get-Process | Where-Object { $_.Id -eq $processId } | Select-Object -First 1
   if ($null -eq $process) {
     if (-not $DryRun) { Remove-Item -LiteralPath $pidPath -Force }
     Write-Host "The recorded process is no longer running."
@@ -57,7 +57,9 @@ try {
   }
 
   Stop-Process -Id $processId -ErrorAction Stop
-  try { Wait-Process -Id $processId -Timeout 5 -ErrorAction Stop } catch {
+  Wait-Process -Id $processId -Timeout 5 -ErrorAction SilentlyContinue
+  $remaining = Get-Process | Where-Object { $_.Id -eq $processId } | Select-Object -First 1
+  if ($null -ne $remaining) {
     Stop-Process -Id $processId -Force -ErrorAction Stop
   }
   Remove-Item -LiteralPath $pidPath -Force -ErrorAction SilentlyContinue

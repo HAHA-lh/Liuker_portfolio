@@ -37,7 +37,7 @@
 
 1. 品牌从 LIKER 统一为 `LIUKER`。
 2. 作品清单从少量 demo 扩充到 20 个项目，并改成 CSV 批量维护。
-3. 作品浏览同时保留 WebGL 球形菜单和 Masonry 卡片墙，两者使用同一份项目数据。
+3. 首页作品入口已改为“影视后期 / AIGC / 直播礼物”三个方向；每个方向进入独立二级页，并在二级页使用 Masonry 卡片墙展示对应项目。
 4. 全站加入鼠标互动，但移除了高消耗、干扰画面的 SplashCursor 流体光迹。
 5. 首屏改为全屏视频，最终交互确定为“滚轮控制时间轴”，取消鼠标左右移动控制。
 6. 首屏滚轮视频与点击播放的 Showreel 被明确拆成两个独立素材和两套交互。
@@ -74,14 +74,17 @@
 │  ├─ hero-media.ts               # 首屏/Showreel 路径、设备选源与首屏完整缓存
 │  ├─ content.ts                  # 网站主文案、经历、技能、项目模板与数据合并
 │  ├─ project-rows.generated.ts   # 由 CSV 自动生成，禁止手改
+│  ├─ portfolio-groups.ts         # 三个作品方向及分组查询
 │  ├─ globals.css                 # 全站视觉、布局、响应式和主要区块样式
 │  ├─ language.tsx                # 中英文状态和 localStorage
 │  ├─ theme.tsx                   # 深浅主题状态和 localStorage
 │  ├─ layout.tsx                  # Provider、全局 DotField、字体和分享元数据
 │  ├─ components/                 # React Bits 改造后的交互组件
+│  ├─ portfolio/[group]/          # 三个作品方向的二级列表页
 │  └─ work/[slug]/                # 静态生成的项目详情页
 ├─ content/
 │  ├─ projects.csv                # 20 个项目的权威素材清单
+│  ├─ portfolio-groups.json       # 三个作品方向及项目 slug 归属，网站与媒体工作台共用
 │  ├─ LIUKER-作品素材清单.xlsx      # 便于人工维护的表格副本
 │  └─ README.md                   # 素材清单说明
 ├─ public/
@@ -123,14 +126,12 @@
    - 滚动进度映射到视频时间，不自动播放。
    - 中央 `SHOWREEL` 渐变大字的透明度随滚动从约 10% 增长到 70%。
    - Showreel 按钮打开独立播放弹窗。
-4. `Marquee` / `InfiniteMenu`
-   - 20 个项目映射成 WebGL2 球形菜单。
-   - 鼠标或触摸拖拽旋转，松开后自动吸附到最近项目。
-   - 点击中心动作按钮打开对应项目的视频弹窗。
-5. `#work`
-   - 20 个项目的 Masonry 卡片墙。
-   - 带聚光、边缘发光、粒子、轻微倾斜/磁吸和点击效果。
-   - 卡片可打开视频弹窗或项目详情页。
+4. `#project-field`
+   - 首页显示“影视后期 / AIGC / 直播礼物”三个作品方向入口。
+   - 每张入口卡使用该方向前三个项目的封面，并链接到 `/portfolio/[group]`。
+5. `/portfolio/[group]`
+   - 二级页按 `content/portfolio-groups.json` 中的 slug 归属展示 Masonry 卡片墙。
+   - 卡片可打开视频弹窗或进入 `/work/[slug]` 项目详情页。
 6. `#about`
    - OGL `Orb` 动态背景。
    - 标题使用 `TextPressure`。
@@ -162,9 +163,13 @@ app/project-rows.generated.ts
         │ 与 6 个 baseProjects 模板合并
         ▼
 app/content.ts 中的 projects
-        ├─ 首页 InfiniteMenu
-        ├─ 首页 Masonry
-        ├─ 视频弹窗
+        │
+content/portfolio-groups.json
+        │ 三个方向及 projectSlugs
+        ▼
+app/portfolio-groups.ts
+        ├─ 首页三个方向入口
+        ├─ /portfolio/[group] 二级 Masonry 与视频弹窗
         └─ /work/[slug] 详情页
 ```
 
@@ -449,9 +454,9 @@ npm run content:sync
 npm run media:studio
 ```
 
-启动本地媒体工作台 `http://127.0.0.1:4178`，批量导入母版、自动转换、自动更新 CSV 和网站数据。工作台只在本机运行，不会部署到线上；所有操作失败时自动回滚，不会破坏旧数据。同 slug 默认只更新视频和封面并保留已有项目资料，只有主动开启“覆盖已有项目资料”才会更新文案与状态。
+启动本地媒体工作台 `http://127.0.0.1:4178`，批量导入母版、自动转换、自动更新 CSV、作品方向和网站数据。新增项目必须选择影视后期、AIGC 或直播礼物；同 slug 默认只更新视频和封面并保留已有作品方向与项目资料，只有主动开启“覆盖已有项目资料”才会更新方向、文案与状态。工作台只在本机运行，不会部署到线上；所有操作失败时自动回滚，不会破坏旧数据。
 
-工作台中的“替换网站现有视频”面板可直接选择已有项目、首屏交互视频或 Showreel：项目替换会锁定并保留原有标题、分类、顺序和状态；首屏替换会自动生成滚轮交互专用的 1080p/720p 视频和 AVIF/WebP 海报，并刷新缓存版本；Showreel 替换会生成带 AAC 音频的 1080p 网页版本。替换前会创建回滚备份，只有转码、校验和数据同步全部成功后才覆盖正式文件。
+工作台中的“替换网站现有视频”面板可直接按作品方向选择已有项目，也可选择首屏交互视频或 Showreel：项目替换会锁定并保留原有作品方向、标题、分类、顺序和状态；首屏替换会自动生成滚轮交互专用的 1080p/720p 视频和 AVIF/WebP 海报，并刷新缓存版本；Showreel 替换会生成带 AAC 音频的 1080p 网页版本。替换前会创建回滚备份，只有转码、校验和数据同步全部成功后才覆盖正式文件。
 
 Windows 用户可以把工作台安装成当前账户的本地快捷应用：
 
@@ -578,7 +583,8 @@ npm run lint
 ### 增加或删除项目
 
 - 更新 CSV 的 `order`、`slug` 和 `enabled`。
-- 当前 UI 主要按 `projects.slice(0, 20)` 展示；若超过 20 个，需要明确决定 InfiniteMenu 和 Masonry 的展示上限。
+- 同步更新 `content/portfolio-groups.json` 中对应方向的 `projectSlugs`；使用媒体工作台新增时会自动完成这一步。
+- 若项目总数或单个方向的项目数明显增加，需要检查首页方向卡预览与二级 Masonry 的性能和排序。
 - 删除项目时检查旧详情 URL 和“下一项目”循环。
 
 ## 17. 修改时不要破坏的产品约束

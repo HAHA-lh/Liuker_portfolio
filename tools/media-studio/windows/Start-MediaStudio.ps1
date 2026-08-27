@@ -128,8 +128,10 @@ try {
   if (-not [string]::IsNullOrWhiteSpace($configuredFfprobe)) { $env:FFPROBE_PATH = $configuredFfprobe }
 
   $nodePath = Resolve-Executable -EnvironmentName "MEDIA_STUDIO_NODE_PATH" -DefaultName "node.exe"
+  $global:LASTEXITCODE = 0
   $nodeVersionText = (& $nodePath -p "process.versions.node" 2>$null | Select-Object -First 1)
-  if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($nodeVersionText)) {
+  $nodeExitCode = $global:LASTEXITCODE
+  if ($nodeExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($nodeVersionText)) {
     throw "Node.js could not be started: $nodePath"
   }
   $nodeVersion = [version]($nodeVersionText.Trim().Split("-")[0])

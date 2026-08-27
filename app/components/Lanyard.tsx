@@ -2,6 +2,7 @@
 "use client";
 
 import { Canvas, extend, useFrame, useThree } from "@react-three/fiber";
+import { useGLTF, useTexture } from "@react-three/drei";
 import {
   BallCollider,
   CuboidCollider,
@@ -17,104 +18,151 @@ import "./lanyard.css";
 
 extend({ MeshLineGeometry, MeshLineMaterial });
 
-function createCardTexture(side: "front" | "back") {
-  if (typeof document === "undefined") return null;
-  const canvas = document.createElement("canvas");
-  canvas.width = 900;
-  canvas.height = 1260;
-  const context = canvas.getContext("2d");
-  if (!context) return null;
+const CARD_MODEL_URL = "/media/lanyard/card.glb";
+const LANYARD_TEXTURE_URL = "/media/lanyard/lanyard.png";
+const CONTACT_PORTRAIT_URL = "/media/contact/liuker-avatar.png";
+const FRONT_UV_RECT = { x: 0, y: 0, w: 0.5, h: 0.755 };
+const BACK_UV_RECT = { x: 0.5, y: 0, w: 0.5, h: 0.757 };
 
-  const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
-  if (side === "front") {
-    gradient.addColorStop(0, "#11131a");
-    gradient.addColorStop(0.58, "#17101f");
-    gradient.addColorStop(1, "#7f123f");
-  } else {
-    gradient.addColorStop(0, "#7f00ff");
-    gradient.addColorStop(0.55, "#c20ca7");
-    gradient.addColorStop(1, "#ff6c43");
-  }
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, canvas.width, canvas.height);
-
-  context.globalAlpha = 0.18;
-  context.fillStyle = "#ffffff";
-  for (let x = 26; x < canvas.width; x += 32) {
-    for (let y = 26; y < canvas.height; y += 32) {
-      context.beginPath();
-      context.arc(x, y, 1.5, 0, Math.PI * 2);
-      context.fill();
-    }
-  }
-  context.globalAlpha = 1;
-
-  context.fillStyle = "rgba(255,255,255,.94)";
-  context.font = "700 54px Kanit, Arial";
-  context.letterSpacing = "10px";
-  context.fillText("LIUKER", 68, 105);
-
-  if (side === "front") {
-    context.font = "900 132px Kanit, Arial";
-    context.letterSpacing = "-6px";
-    context.fillText("VIDEO", 60, 500);
-    context.fillText("CREATOR", 60, 630);
-    context.fillStyle = "rgba(255,255,255,.62)";
-    context.font = "500 25px Kanit, Arial";
-    context.letterSpacing = "4px";
-    context.fillText("DIRECTION · EDIT · MOTION", 68, 760);
-    context.fillStyle = "rgba(255,255,255,.9)";
-    context.font = "600 30px Kanit, Arial";
-    context.letterSpacing = "2px";
-    context.fillText("PORTFOLIO / 2026", 68, 1122);
-    context.strokeStyle = "rgba(255,255,255,.35)";
-    context.strokeRect(68, 920, 760, 1);
-  } else {
-    context.font = "900 112px Kanit, Arial";
-    context.letterSpacing = "-4px";
-    context.fillText("LET'S", 60, 500);
-    context.fillText("CREATE", 60, 610);
-    context.fillStyle = "rgba(255,255,255,.82)";
-    context.font = "500 27px Kanit, Arial";
-    context.letterSpacing = "3px";
-    context.fillText("THE NEXT FRAME", 68, 730);
-    context.font = "600 24px Kanit, Arial";
-    context.fillText("DRAG · FLIP · CONNECT", 68, 1122);
-  }
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 8;
-  texture.needsUpdate = true;
-  return texture;
+function drawCover(
+  context: CanvasRenderingContext2D,
+  image: CanvasImageSource,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  const imageWidth = image.width || width;
+  const imageHeight = image.height || height;
+  const scale = Math.max(width / imageWidth, height / imageHeight);
+  const drawWidth = imageWidth * scale;
+  const drawHeight = imageHeight * scale;
+  context.drawImage(
+    image,
+    x + (width - drawWidth) / 2,
+    y + (height - drawHeight) / 2,
+    drawWidth,
+    drawHeight,
+  );
 }
 
-function createBandTexture() {
-  if (typeof document === "undefined") return null;
-  const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 128;
-  const context = canvas.getContext("2d");
-  if (!context) return null;
-  const gradient = context.createLinearGradient(0, 0, canvas.width, 0);
-  gradient.addColorStop(0, "#4c00ff");
-  gradient.addColorStop(0.45, "#bc0eb4");
-  gradient.addColorStop(1, "#ff6e42");
+function drawFrontFace(
+  context: CanvasRenderingContext2D,
+  portrait: CanvasImageSource,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  context.save();
+  context.beginPath();
+  context.rect(x, y, width, height);
+  context.clip();
+  context.fillStyle = "#f2f0eb";
+  context.fillRect(x, y, width, height);
+
+  const margin = width * 0.06;
+  const photoHeight = height * 0.76;
+  context.save();
+  context.beginPath();
+  context.roundRect(x + margin, y + margin, width - margin * 2, photoHeight, width * 0.035);
+  context.clip();
+  drawCover(context, portrait, x + margin, y + margin, width - margin * 2, photoHeight);
+  const photoShade = context.createLinearGradient(0, y + photoHeight * 0.72, 0, y + photoHeight + margin);
+  photoShade.addColorStop(0, "rgba(5, 6, 16, 0)");
+  photoShade.addColorStop(1, "rgba(5, 6, 16, 0.45)");
+  context.fillStyle = photoShade;
+  context.fillRect(x + margin, y + margin, width - margin * 2, photoHeight);
+  context.restore();
+
+  context.fillStyle = "#11131a";
+  context.font = `800 ${Math.round(width * 0.09)}px Kanit, Arial`;
+  context.letterSpacing = `${Math.round(width * 0.014)}px`;
+  context.fillText("LIUKER", x + margin, y + height * 0.89);
+  context.fillStyle = "rgba(17, 19, 26, 0.58)";
+  context.font = `600 ${Math.round(width * 0.031)}px Kanit, Arial`;
+  context.letterSpacing = `${Math.round(width * 0.006)}px`;
+  context.fillText("VIDEO CREATOR · PORTFOLIO 2026", x + margin, y + height * 0.945);
+  context.restore();
+}
+
+function drawBackFace(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  context.save();
+  context.beginPath();
+  context.rect(x, y, width, height);
+  context.clip();
+  context.fillStyle = "#f2f0eb";
+  context.fillRect(x, y, width, height);
+
+  const gradient = context.createLinearGradient(x, y, x + width, y + height);
+  gradient.addColorStop(0, "rgba(79, 33, 142, 0.08)");
+  gradient.addColorStop(0.56, "rgba(182, 0, 168, 0.22)");
+  gradient.addColorStop(1, "rgba(255, 106, 0, 0.2)");
   context.fillStyle = gradient;
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = "rgba(255,255,255,.9)";
-  context.font = "700 38px Kanit, Arial";
-  context.letterSpacing = "12px";
-  context.fillText("LIUKER · LIUKER · LIUKER", 20, 80);
+  context.fillRect(x, y, width, height);
+
+  context.fillStyle = "#11131a";
+  context.font = `900 ${Math.round(width * 0.16)}px Kanit, Arial`;
+  context.letterSpacing = `${Math.round(width * -0.01)}px`;
+  context.fillText("LIUKER", x + width * 0.08, y + height * 0.46);
+  context.fillStyle = "rgba(17, 19, 26, 0.6)";
+  context.font = `600 ${Math.round(width * 0.04)}px Kanit, Arial`;
+  context.letterSpacing = `${Math.round(width * 0.012)}px`;
+  context.fillText("DIRECTION · EDIT · MOTION", x + width * 0.08, y + height * 0.55);
+  context.strokeStyle = "rgba(17, 19, 26, 0.22)";
+  context.lineWidth = Math.max(1, width * 0.003);
+  context.beginPath();
+  context.moveTo(x + width * 0.08, y + height * 0.72);
+  context.lineTo(x + width * 0.92, y + height * 0.72);
+  context.stroke();
+  context.restore();
+}
+
+function createLiukerCardMap(baseMap: THREE.Texture, portrait: THREE.Texture) {
+  const baseImage = baseMap?.image;
+  const portraitImage = portrait?.image;
+  if (!baseImage || !portraitImage || typeof document === "undefined") return baseMap;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = baseImage.width;
+  canvas.height = baseImage.height;
+  const context = canvas.getContext("2d");
+  if (!context) return baseMap;
+  context.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+
+  const front = {
+    x: FRONT_UV_RECT.x * canvas.width,
+    y: FRONT_UV_RECT.y * canvas.height,
+    width: FRONT_UV_RECT.w * canvas.width,
+    height: FRONT_UV_RECT.h * canvas.height,
+  };
+  const back = {
+    x: BACK_UV_RECT.x * canvas.width,
+    y: BACK_UV_RECT.y * canvas.height,
+    width: BACK_UV_RECT.w * canvas.width,
+    height: BACK_UV_RECT.h * canvas.height,
+  };
+  drawFrontFace(context, portraitImage, front.x, front.y, front.width, front.height);
+  drawBackFace(context, back.x, back.y, back.width, back.height);
+
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(-3, 1);
+  texture.flipY = baseMap.flipY;
+  texture.anisotropy = 16;
   texture.needsUpdate = true;
   return texture;
 }
 
 function Band({ isMobile = false, lanyardWidth = 0.78 }) {
+  const ropeSegmentLength = 0.78;
+  const cardAttachmentY = 1.5;
+  const cardMinimumY = 0;
   const band = useRef();
   const fixed = useRef();
   const j1 = useRef();
@@ -124,14 +172,18 @@ function Band({ isMobile = false, lanyardWidth = 0.78 }) {
   const [dragged, drag] = useState(false);
   const [hovered, hover] = useState(false);
   const { size } = useThree();
-  const frontTexture = useMemo(() => createCardTexture("front"), []);
-  const backTexture = useMemo(() => createCardTexture("back"), []);
-  const bandTexture = useMemo(() => createBandTexture(), []);
+  const { nodes, materials } = useGLTF(CARD_MODEL_URL);
+  const portraitTexture = useTexture(CONTACT_PORTRAIT_URL);
+  const bandTexture = useTexture(LANYARD_TEXTURE_URL);
+  const cardMap = useMemo(
+    () => createLiukerCardMap(materials.base.map, portraitTexture),
+    [materials.base.map, portraitTexture],
+  );
   const curve = useMemo(() => {
     const nextCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.5, -3.15, 0),
-      new THREE.Vector3(0.35, -2.1, 0),
-      new THREE.Vector3(0.15, -1.05, 0),
+      new THREE.Vector3(0.5, -2.34, 0),
+      new THREE.Vector3(0.35, -1.56, 0),
+      new THREE.Vector3(0.15, -0.78, 0),
       new THREE.Vector3(0, 0, 0),
     ]);
     nextCurve.curveType = "centripetal";
@@ -149,10 +201,10 @@ function Band({ isMobile = false, lanyardWidth = 0.78 }) {
     linearDamping: 4,
   };
 
-  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 1.05]);
-  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 1.05]);
-  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1.05]);
-  useSphericalJoint(j3, card, [[0, 0, 0], [0, 1.88, 0]]);
+  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], ropeSegmentLength]);
+  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], ropeSegmentLength]);
+  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], ropeSegmentLength]);
+  useSphericalJoint(j3, card, [[0, 0, 0], [0, cardAttachmentY, 0]]);
 
   useEffect(() => {
     if (!hovered) return;
@@ -162,11 +214,16 @@ function Band({ isMobile = false, lanyardWidth = 0.78 }) {
     };
   }, [hovered, dragged]);
 
+  useEffect(() => {
+    bandTexture.colorSpace = THREE.SRGBColorSpace;
+    bandTexture.wrapS = bandTexture.wrapT = THREE.RepeatWrapping;
+    bandTexture.repeat.set(-4, 1);
+    bandTexture.needsUpdate = true;
+  }, [bandTexture]);
+
   useEffect(() => () => {
-    frontTexture?.dispose();
-    backTexture?.dispose();
-    bandTexture?.dispose();
-  }, [frontTexture, backTexture, bandTexture]);
+    if (cardMap !== materials.base.map) cardMap?.dispose();
+  }, [cardMap, materials.base.map]);
 
   useEffect(() => {
     band.current?.geometry.setPoints(curve.getPoints(isMobile ? 18 : 34));
@@ -180,12 +237,24 @@ function Band({ isMobile = false, lanyardWidth = 0.78 }) {
       [card, j1, j2, j3, fixed].forEach((ref) => ref.current?.wakeUp());
       card.current?.setNextKinematicTranslation({
         x: vec.x - dragged.x,
-        y: vec.y - dragged.y,
+        y: Math.max(vec.y - dragged.y, cardMinimumY),
         z: vec.z - dragged.z,
       });
     }
 
     if (!fixed.current || !j1.current || !j2.current || !j3.current || !card.current) return;
+    const cardTranslation = card.current.translation();
+    if (!dragged && cardTranslation.y < cardMinimumY) {
+      const velocity = card.current.linvel();
+      card.current.setTranslation(
+        { x: cardTranslation.x, y: cardMinimumY, z: cardTranslation.z },
+        true,
+      );
+      card.current.setLinvel(
+        { x: velocity.x, y: Math.max(0, velocity.y), z: velocity.z },
+        true,
+      );
+    }
     [j1, j2].forEach((ref) => {
       if (!ref.current.lerped) {
         ref.current.lerped = new THREE.Vector3().copy(ref.current.translation());
@@ -230,23 +299,25 @@ function Band({ isMobile = false, lanyardWidth = 0.78 }) {
   return (
     <group position={[0, 4.3, 0]}>
       <RigidBody ref={fixed} {...segmentProps} type="fixed" />
-      <RigidBody position={[0.15, -1.05, 0]} ref={j1} {...segmentProps}>
+      <RigidBody position={[0.15, -0.78, 0]} ref={j1} {...segmentProps}>
         <BallCollider args={[0.1]} />
       </RigidBody>
-      <RigidBody position={[0.35, -2.1, 0]} ref={j2} {...segmentProps}>
+      <RigidBody position={[0.35, -1.56, 0]} ref={j2} {...segmentProps}>
         <BallCollider args={[0.1]} />
       </RigidBody>
-      <RigidBody position={[0.5, -3.15, 0]} ref={j3} {...segmentProps}>
+      <RigidBody position={[0.5, -2.34, 0]} ref={j3} {...segmentProps}>
         <BallCollider args={[0.1]} />
       </RigidBody>
       <RigidBody
-        position={[0.65, -5.15, 0]}
+        position={[0.65, -3.84, 0]}
         ref={card}
         {...segmentProps}
         type={dragged ? "kinematicPosition" : "dynamic"}
       >
-        <CuboidCollider args={[1.34, 1.86, 0.1]} />
+        <CuboidCollider args={[0.8, 1.125, 0.01]} />
         <group
+          scale={2.25}
+          position={[0, -1.2, -0.05]}
           onPointerOver={() => hover(true)}
           onPointerOut={() => hover(false)}
           onPointerUp={(event) => {
@@ -258,28 +329,23 @@ function Band({ isMobile = false, lanyardWidth = 0.78 }) {
             drag(new THREE.Vector3().copy(event.point).sub(vec.copy(card.current.translation())));
           }}
         >
-          <mesh castShadow receiveShadow>
-            <boxGeometry args={[2.7, 3.75, 0.18, 4, 4, 1]} />
+          <mesh geometry={nodes.card.geometry} castShadow receiveShadow>
             <meshPhysicalMaterial
-              color="#11131a"
-              clearcoat={isMobile ? 0.35 : 0.9}
-              clearcoatRoughness={0.2}
-              roughness={0.36}
-              metalness={0.32}
+              map={cardMap}
+              map-anisotropy={16}
+              clearcoat={isMobile ? 0.25 : 1}
+              clearcoatRoughness={0.15}
+              roughness={0.78}
+              metalness={0.58}
             />
           </mesh>
-          <mesh position={[0, 0, 0.096]}>
-            <planeGeometry args={[2.58, 3.63]} />
-            <meshBasicMaterial map={frontTexture} toneMapped={false} />
-          </mesh>
-          <mesh position={[0, 0, -0.096]} rotation={[0, Math.PI, 0]}>
-            <planeGeometry args={[2.58, 3.63]} />
-            <meshBasicMaterial map={backTexture} toneMapped={false} />
-          </mesh>
-          <mesh position={[0, 2.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
-            <torusGeometry args={[0.25, 0.07, 12, 36]} />
-            <meshStandardMaterial color="#c8cbd2" metalness={0.9} roughness={0.2} />
-          </mesh>
+          <mesh
+            geometry={nodes.clip.geometry}
+            material={materials.metal}
+            material-roughness={0.3}
+            castShadow
+          />
+          <mesh geometry={nodes.clamp.geometry} material={materials.metal} castShadow />
         </group>
       </RigidBody>
       <mesh ref={band}>
@@ -290,7 +356,7 @@ function Band({ isMobile = false, lanyardWidth = 0.78 }) {
           resolution={[size.width, size.height]}
           useMap={Boolean(bandTexture)}
           map={bandTexture}
-          repeat={[-3, 1]}
+          repeat={[-4, 1]}
           lineWidth={lanyardWidth}
           transparent
         />
@@ -298,6 +364,8 @@ function Band({ isMobile = false, lanyardWidth = 0.78 }) {
     </group>
   );
 }
+
+useGLTF.preload(CARD_MODEL_URL);
 
 export default function Lanyard({
   active = true,

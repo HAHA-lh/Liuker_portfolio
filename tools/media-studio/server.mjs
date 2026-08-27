@@ -18,6 +18,7 @@ const posterDirectory = path.join(projectsDirectory, "photo");
 const heroPosterDirectory = path.join(publicRoot, "media", "posters");
 const showreelDirectory = path.join(publicRoot, "media", "showreel");
 const csvPath = path.join(projectRoot, "content", "projects.csv");
+const portfolioGroupsPath = path.join(projectRoot, "content", "portfolio-groups.json");
 const mediaConfigPath = path.join(projectRoot, "app", "hero-media.ts");
 const workRoot = path.join(projectRoot, ".media-studio");
 const uploadRoot = path.join(workRoot, "uploads");
@@ -39,6 +40,7 @@ let mutationTail = Promise.resolve();
 await Promise.all([
   fsp.access(path.join(projectRoot, "package.json")),
   fsp.access(csvPath),
+  fsp.access(portfolioGroupsPath),
   fsp.access(mediaConfigPath),
 ]).catch(() => {
   throw new Error(`MEDIA_STUDIO_PROJECT_ROOT 不是有效的 LIUKER 项目目录：${projectRoot}`);
@@ -99,11 +101,56 @@ function decodeMetadata(header) {
     roleZh: source.roleZh ?? source.role_zh,
     roleEn: source.roleEn ?? source.role_en,
     templateSlug: source.templateSlug ?? source.template_slug,
+    portfolioGroup: source.portfolioGroup ?? source.portfolio_group,
     previewStart: source.previewStart ?? source.preview_start,
     previewDuration: source.previewDuration ?? source.preview_duration,
     posterTime: source.posterTime ?? source.poster_time,
     updateExistingMetadata: source.updateExistingMetadata ?? source.update_existing_metadata ?? false,
   };
+}
+
+async function readPortfolioGroups() {
+  const source = await fsp.readFile(portfolioGroupsPath, "utf8");
+  const groups = JSON.parse(source);
+  if (!Array.isArray(groups) || !groups.length) throw new Error("作品方向配置为空");
+  const ids = new Set();
+  const projectSlugs = new Set();
+  for (const group of groups) {
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(group?.id || "")) throw new Error("作品方向 ID 无效");
+    if (ids.has(group.id)) throw new Error(`作品方向 ID 重复：${group.id}`);
+    if (!Array.isArray(group.projectSlugs)) throw new Error(`作品方向 ${group.id} 缺少 projectSlugs`);
+    for (const slug of group.projectSlugs) {
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error(`作品方向 ${group.id} 包含无效 slug：${slug}`);
+      if (projectSlugs.has(slug)) throw new Error(`项目同时属于多个作品方向：${slug}`);
+      projectSlugs.add(slug);
+    }
+    ids.add(group.id);
+  }
+  return { source, groups };
+}
+
+function portfolioGroupForSlug(groups, slug) {
+  return groups.find((group) => group.projectSlugs.includes(slug)) || null;
+}
+
+function assignProjectToGroup(groups, slug, groupId, { force = false } = {}) {
+  const current = portfolioGroupForSlug(groups, slug);
+  if (current && !force) return groups;
+  return groups.map((group) => ({
+    ...group,
+    projectSlugs: [
+      ...group.projectSlugs.filter((projectSlug) => projectSlug !== slug),
+      ...(group.id === groupId ? [slug] : []),
+    ],
+  }));
+}
+
+function validatePortfolioGroup(groups, groupId) {
+  const normalized = String(groupId || "").trim();
+  if (!groups.some((group) => group.id === normalized)) {
+    throw new Error(`请选择有效的作品方向：${normalized || "未选择"}`);
+  }
+  return normalized;
 }
 
 function validateTimingMetadata(metadata) {
@@ -121,7 +168,14 @@ async function resolveUploadMetadata(source) {
   const workflow = String(source.workflow || "ingest").toLowerCase();
   if (workflow !== "replace") {
     validateProjectMetadata(source);
-    return { ...source, workflow: "ingest", targetType: "project", targetId: source.slug };
+    const { groups } = await readPortfolioGroups();
+    return {
+      ...source,
+      portfolioGroup: validatePortfolioGroup(groups, source.portfolioGroup),
+      workflow: "ingest",
+      targetType: "project",
+      targetId: source.slug,
+    };
   }
 
   const targetType = String(source.targetType || "").toLowerCase();
@@ -143,9 +197,10 @@ async function resolveUploadMetadata(source) {
   }
 
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(targetId)) throw new Error("项目替换目标无效");
-  const { records } = await readProjects(csvPath);
+  const [{ records }, { groups }] = await Promise.all([readProjects(csvPath), readPortfolioGroups()]);
   const existing = records.find((record) => record.slug.trim() === targetId);
   if (!existing) throw new Error(`找不到要替换的项目：${targetId}`);
+  const portfolioGroup = portfolioGroupForSlug(groups, targetId);
   const metadata = {
     ...source,
     workflow: "replace",
@@ -153,6 +208,7 @@ async function resolveUploadMetadata(source) {
     targetId,
     slug: targetId,
     templateSlug: existing.template_slug,
+    portfolioGroup: portfolioGroup?.id || groups[0].id,
     titleZh: existing.title_zh,
     titleEn: existing.title_en,
     categoryZh: existing.category_zh,
@@ -324,6 +380,7 @@ async function withMutationLock(callback) {
 async function publishJob(job, staged) {
   return withMutationLock(async () => {
     const snapshot = await readProjects(csvPath);
+    const groupSnapshot = await readPortfolioGroups();
     const backupDirectory = path.join(job.workspace, "backup");
     const destinations = {
       preview: path.join(projectsDirectory, `${job.metadata.slug}-preview.mp4`),
@@ -333,6 +390,7 @@ async function publishJob(job, staged) {
     };
     const moves = [];
     let csvChanged = false;
+    let groupsChanged = false;
     try {
       moves.push(await moveWithBackup(staged.preview, destinations.preview, backupDirectory));
       moves.push(await moveWithBackup(staged.full, destinations.full, backupDirectory));
@@ -354,14 +412,31 @@ async function publishJob(job, staged) {
       const update = upsertProject(snapshot.records, job.metadata, assets);
       await writeCsvAtomic(csvPath, snapshot.headers, update.records);
       csvChanged = true;
+      const existingGroup = portfolioGroupForSlug(groupSnapshot.groups, job.metadata.slug);
+      const shouldMoveGroup = update.mode === "added"
+        || !existingGroup
+        || job.metadata.updateExistingMetadata === true
+        || String(job.metadata.updateExistingMetadata).toLowerCase() === "true";
+      const nextGroups = assignProjectToGroup(
+        groupSnapshot.groups,
+        job.metadata.slug,
+        job.metadata.portfolioGroup,
+        { force: shouldMoveGroup },
+      );
+      if (JSON.stringify(nextGroups) !== JSON.stringify(groupSnapshot.groups)) {
+        await writeTextAtomic(portfolioGroupsPath, `${JSON.stringify(nextGroups, null, 2)}\n`);
+        groupsChanged = true;
+      }
       await runProcess(process.execPath, [path.join(projectRoot, "scripts", "sync-projects.mjs")]);
       return {
         ...assets,
         mode: update.mode,
         order: Number(update.order),
+        portfolioGroup: portfolioGroupForSlug(nextGroups, job.metadata.slug)?.id || null,
         avif: staged.avif ? publicPath(destinations.avif) : null,
       };
     } catch (error) {
+      if (groupsChanged) await writeTextAtomic(portfolioGroupsPath, groupSnapshot.source).catch(() => undefined);
       if (csvChanged) {
         await writeTextAtomic(csvPath, snapshot.csv);
         await runProcess(process.execPath, [path.join(projectRoot, "scripts", "sync-projects.mjs")]).catch(() => undefined);
@@ -747,7 +822,7 @@ function projectAvifPath(cover) {
 }
 
 async function getReplacementTargets() {
-  const { records } = await readProjects(csvPath);
+  const [{ records }, { groups }] = await Promise.all([readProjects(csvPath), readPortfolioGroups()]);
   const special = [
     {
       id: "hero",
@@ -775,28 +850,44 @@ async function getReplacementTargets() {
       currentAssets: { video: "/media/showreel/LIUKER_Showreel_2026_web.mp4" },
     },
   ];
-  const projects = records.map((record) => ({
-    id: record.slug,
-    targetId: record.slug,
-    type: "project",
-    targetType: "project",
-    order: Number(record.order),
-    slug: record.slug,
-    label: record.title_zh,
-    titleZh: record.title_zh,
-    titleEn: record.title_en,
-    year: record.year,
-    enabled: String(record.enabled).toUpperCase() !== "FALSE",
-    description: `${record.category_zh} · ${record.year}`,
-    impact: "只替换该项目的预览视频、完整视频和封面，保留现有标题、顺序与详情资料。",
-    currentAssets: {
-      preview: record.preview_video,
-      full: record.full_video,
-      cover: record.cover,
-      avif: projectAvifPath(record.cover),
-    },
+  const projects = records.map((record) => {
+    const group = portfolioGroupForSlug(groups, record.slug);
+    return {
+      id: record.slug,
+      targetId: record.slug,
+      type: "project",
+      targetType: "project",
+      order: Number(record.order),
+      slug: record.slug,
+      label: record.title_zh,
+      titleZh: record.title_zh,
+      titleEn: record.title_en,
+      year: record.year,
+      portfolioGroup: group?.id || null,
+      portfolioGroupIndex: group?.index || null,
+      portfolioGroupTitle: group?.title?.zh || group?.label || null,
+      portfolioPath: group ? `/portfolio/${group.id}` : null,
+      enabled: String(record.enabled).toUpperCase() !== "FALSE",
+      description: `${group?.title?.zh ? `${group.title.zh} · ` : ""}${record.category_zh} · ${record.year}`,
+      impact: "只替换该项目在对应二级作品页、播放弹窗和案例详情页使用的预览视频、完整视频与封面；保留作品方向、标题、顺序和详情资料。",
+      currentAssets: {
+        preview: record.preview_video,
+        full: record.full_video,
+        cover: record.cover,
+        avif: projectAvifPath(record.cover),
+      },
+    };
+  });
+  const groupSummaries = groups.map((group) => ({
+    id: group.id,
+    index: group.index,
+    titleZh: group.title?.zh || group.label || group.id,
+    titleEn: group.title?.en || group.label || group.id,
+    label: group.label,
+    path: `/portfolio/${group.id}`,
+    projectCount: group.projectSlugs.length,
   }));
-  return { special, projects, targets: [...special, ...projects] };
+  return { special, projects, groups: groupSummaries, targets: [...special, ...projects] };
 }
 
 async function runAudit() {
@@ -855,16 +946,34 @@ const server = http.createServer(async (request, response) => {
       } else if (request.method === "GET" && url.pathname === "/api/jobs") {
         sendJson(response, 200, { jobs: [...jobs.values()].map(serializeJob).reverse() });
       } else if (request.method === "GET" && url.pathname === "/api/projects") {
-        const data = await readProjects(csvPath);
+        const [data, groupData] = await Promise.all([readProjects(csvPath), readPortfolioGroups()]);
         sendJson(response, 200, {
-          projects: data.records.map((record) => ({
-            order: Number(record.order),
-            slug: record.slug,
-            titleZh: record.title_zh,
-            titleEn: record.title_en,
-            year: record.year,
-            enabled: String(record.enabled).toUpperCase() !== "FALSE",
+          groups: groupData.groups.map((group) => ({
+            id: group.id,
+            index: group.index,
+            titleZh: group.title?.zh || group.label || group.id,
+            titleEn: group.title?.en || group.label || group.id,
+            label: group.label,
+            path: `/portfolio/${group.id}`,
+            projectCount: group.projectSlugs.length,
           })),
+          projects: data.records.map((record) => {
+            const group = portfolioGroupForSlug(groupData.groups, record.slug);
+            return {
+              order: Number(record.order),
+              slug: record.slug,
+              titleZh: record.title_zh,
+              titleEn: record.title_en,
+              categoryZh: record.category_zh,
+              categoryEn: record.category_en,
+              year: record.year,
+              enabled: String(record.enabled).toUpperCase() !== "FALSE",
+              portfolioGroup: group?.id || null,
+              portfolioGroupIndex: group?.index || null,
+              portfolioGroupTitle: group?.title?.zh || group?.label || "未分组",
+              portfolioPath: group ? `/portfolio/${group.id}` : null,
+            };
+          }),
         });
       } else if (request.method === "GET" && url.pathname === "/api/replacement-targets") {
         sendJson(response, 200, await getReplacementTargets());

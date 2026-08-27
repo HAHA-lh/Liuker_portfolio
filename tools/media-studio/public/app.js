@@ -8,6 +8,7 @@
     uploadIndex: -1,
     jobs: [],
     projects: [],
+    portfolioGroups: [],
     replacementTargets: [],
     replacementType: "project",
     replacementTargetId: "",
@@ -64,7 +65,8 @@
     refreshProjects: document.querySelector("#refresh-projects"),
     projectsList: document.querySelector("#projects-list"),
     projectCount: document.querySelector("#project-count"),
-    projectUpdated: document.querySelector("#project-updated"),
+    groupCount: document.querySelector("#group-count"),
+    portfolioGroup: document.querySelector("#portfolio-group"),
     runAudit: document.querySelector("#run-audit"),
     auditResult: document.querySelector("#audit-result"),
     auditResultTitle: document.querySelector("#audit-result-title"),
@@ -142,6 +144,7 @@
       role_zh: String(data.get("role_zh") || "").trim(),
       role_en: String(data.get("role_en") || "").trim(),
       template_slug: String(data.get("template_slug") || "afterglow"),
+      portfolio_group: String(data.get("portfolio_group") || "").trim(),
       preview_start: Number(data.get("preview_start") || 0),
       preview_duration: Number(data.get("preview_duration") || 8),
       featured: data.get("featured") === "on",
@@ -198,8 +201,8 @@
   const replacementTypeCopy = {
     project: {
       label: "作品项目",
-      description: "替换项目卡片预览、弹窗和详情页使用的视频素材。",
-      impact: "会重新生成 720P 预览、1080P 完整视频及 WebP/AVIF 封面；项目标题、分类、年份和详情资料保持不变。",
+      description: "替换对应二级作品页的卡片预览、播放弹窗和详情页使用的视频素材。",
+      impact: "会重新生成 720P 预览、1080P 完整视频及 WebP/AVIF 封面；作品方向、项目标题、分类、年份和详情资料保持不变。",
     },
     hero: {
       label: "首屏交互",
@@ -224,6 +227,26 @@
     cover: "WebP 项目封面",
     avif: "AVIF 项目封面",
   };
+
+  function normalizePortfolioGroups(payload) {
+    return normalizeList(payload, ["groups", "portfolioGroups", "items"]).map((group, index) => ({
+      ...group,
+      id: String(group.id || ""),
+      index: String(group.index || index + 1).padStart(2, "0"),
+      titleZh: group.titleZh || group.title_zh || group.title?.zh || group.label || group.id,
+      titleEn: group.titleEn || group.title_en || group.title?.en || group.label || group.id,
+      path: group.path || `/portfolio/${group.id}`,
+    })).filter((group) => group.id);
+  }
+
+  function syncPortfolioGroupSelect() {
+    if (!els.portfolioGroup || !state.portfolioGroups.length) return;
+    const current = els.portfolioGroup.value;
+    els.portfolioGroup.innerHTML = state.portfolioGroups.map((group) => (
+      `<option value="${escapeHtml(group.id)}">${escapeHtml(`${group.index} · ${group.titleZh}`)}</option>`
+    )).join("");
+    if (state.portfolioGroups.some((group) => group.id === current)) els.portfolioGroup.value = current;
+  }
 
   function normalizeReplacementTargets(payload) {
     const directTargets = normalizeList(payload, ["targets", "replacementTargets", "items", "results"]);
@@ -300,7 +323,10 @@
     els.replacementTarget.innerHTML = targets.length
       ? targets.map((target) => {
           const order = target.type === "project" && target.order ? `${String(target.order).padStart(2, "0")} · ` : "";
-          return `<option value="${escapeHtml(target.id)}"${target.id === state.replacementTargetId ? " selected" : ""}>${escapeHtml(order + target.label)}</option>`;
+          const group = target.type === "project" && target.portfolioGroupTitle
+            ? `${target.portfolioGroupIndex || "--"} ${target.portfolioGroupTitle} / `
+            : "";
+          return `<option value="${escapeHtml(target.id)}"${target.id === state.replacementTargetId ? " selected" : ""}>${escapeHtml(group + order + target.label)}</option>`;
         }).join("")
       : `<option value="">${state.replacementTargets.length ? "此类型暂时没有可替换位置" : "正在读取网站素材…"}</option>`;
   }
@@ -311,7 +337,9 @@
     if (!target) return;
 
     const typeCopy = replacementTypeCopy[target.type] || replacementTypeCopy.project;
-    els.replacementTargetKind.textContent = typeCopy.label;
+    els.replacementTargetKind.textContent = target.type === "project" && target.portfolioGroupTitle
+      ? `${typeCopy.label} · ${target.portfolioGroupIndex || "--"} ${target.portfolioGroupTitle}`
+      : typeCopy.label;
     els.replacementTargetName.textContent = target.label;
     els.replacementTargetId.textContent = target.type === "project" ? target.slug || target.id : target.id;
     els.replacementTargetDescription.textContent = target.description;
@@ -402,6 +430,11 @@
       const response = await fetch("/api/replacement-targets", { headers: tokenHeaders(), cache: "no-store" });
       const payload = await parseResponse(response);
       state.replacementTargets = normalizeReplacementTargets(payload);
+      const groups = normalizePortfolioGroups(payload);
+      if (groups.length) {
+        state.portfolioGroups = groups;
+        syncPortfolioGroupSelect();
+      }
       renderReplacement();
       setConnection("online", "本地服务已连接");
       if (!quiet) showToast("可替换视频位置已刷新", "success");
@@ -829,24 +862,45 @@
       const enabled = String(project.enabled ?? "true").toLowerCase();
       return project.enabled !== false && enabled !== "false" && enabled !== "0";
     }).length);
-    els.projectUpdated.textContent = new Intl.DateTimeFormat("zh-CN", { month: "2-digit", day: "2-digit" }).format(new Date());
+    els.groupCount.textContent = String(state.portfolioGroups.length);
 
     if (!projects.length) {
       els.projectsList.innerHTML = '<div class="empty-state"><p>还没有读取到项目</p><small>确认本地服务和 projects.csv 可用</small></div>';
       return;
     }
 
-    els.projectsList.innerHTML = projects.map((project, index) => {
-      const order = String(project.order ?? index + 1).padStart(2, "0");
-      const title = project.title_zh || project.titleZh || project.title_en || project.slug || "未命名项目";
-      const subtitle = [project.category_zh || project.categoryZh || project.category_en, project.year].filter(Boolean).join(" · ");
-      const slug = project.slug || "";
+    const knownGroupIds = new Set(state.portfolioGroups.map((group) => group.id));
+    const groups = [
+      ...state.portfolioGroups,
+      ...(projects.some((project) => !knownGroupIds.has(project.portfolioGroup))
+        ? [{ id: "", index: "--", titleZh: "未分组", path: "", projectCount: 0 }]
+        : []),
+    ];
+    els.projectsList.innerHTML = groups.map((group) => {
+      const groupProjects = projects.filter((project) => (project.portfolioGroup || "") === group.id);
+      if (!groupProjects.length && group.id === "") return "";
+      const groupLink = group.path
+        ? `<a class="project-group-link" href="http://localhost:3000${escapeHtml(group.path)}" target="_blank" rel="noreferrer" aria-label="打开 ${escapeHtml(group.titleZh)} 作品页">打开方向 ↗</a>`
+        : '<span class="project-group-warning">需要分配方向</span>';
       return `
-        <article class="project-item">
-          <span class="project-order">${escapeHtml(order)}</span>
-          <div class="project-name"><strong>${escapeHtml(title)}</strong><span>${escapeHtml(subtitle || slug)}</span></div>
-          <a class="project-link" href="http://localhost:3000/work/${encodeURIComponent(slug)}" target="_blank" rel="noreferrer" aria-label="在网站打开 ${escapeHtml(title)}">↗</a>
-        </article>`;
+        <section class="project-group">
+          <header class="project-group-head">
+            <div><span>${escapeHtml(group.index)} / ${escapeHtml(group.titleZh)}</span><strong>${groupProjects.length} 个项目</strong></div>
+            ${groupLink}
+          </header>
+          ${groupProjects.map((project, index) => {
+            const order = String(project.order ?? index + 1).padStart(2, "0");
+            const title = project.title_zh || project.titleZh || project.title_en || project.slug || "未命名项目";
+            const subtitle = [project.category_zh || project.categoryZh || project.category_en, project.year].filter(Boolean).join(" · ");
+            const slug = project.slug || "";
+            return `
+              <article class="project-item${project.enabled === false ? " is-disabled" : ""}">
+                <span class="project-order">${escapeHtml(order)}</span>
+                <div class="project-name"><strong>${escapeHtml(title)}</strong><span>${escapeHtml(subtitle || slug)}</span></div>
+                <a class="project-link" href="http://localhost:3000/work/${encodeURIComponent(slug)}" target="_blank" rel="noreferrer" aria-label="在网站打开 ${escapeHtml(title)}">↗</a>
+              </article>`;
+          }).join("")}
+        </section>`;
     }).join("");
   }
 
@@ -857,6 +911,9 @@
       const response = await fetch("/api/projects", { headers: tokenHeaders(), cache: "no-store" });
       const payload = await parseResponse(response);
       state.projects = normalizeList(payload, ["projects", "items", "results"]);
+      const groups = normalizePortfolioGroups(payload);
+      if (groups.length) state.portfolioGroups = groups;
+      syncPortfolioGroupSelect();
       renderProjects();
       setConnection("online", "本地服务已连接");
       if (!quiet) showToast("网站项目已刷新", "success");
