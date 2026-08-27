@@ -2,6 +2,8 @@
   "use strict";
 
   const token = typeof window.__MEDIA_STUDIO_TOKEN__ === "string" ? window.__MEDIA_STUDIO_TOKEN__ : "";
+  const sessionReloadKey = "liuker-media-studio-session-reload";
+  let sessionReloadScheduled = false;
   const state = {
     queue: [],
     uploading: false,
@@ -168,6 +170,34 @@
     els.connectionPill.classList.toggle("is-online", mode === "online");
     els.connectionPill.classList.toggle("is-offline", mode === "offline");
     els.connectionText.textContent = message;
+    if (mode === "online") {
+      try {
+        window.sessionStorage.removeItem(sessionReloadKey);
+      } catch {
+        // The page can still operate when session storage is unavailable.
+      }
+    }
+  }
+
+  function reloadForExpiredSession() {
+    if (sessionReloadScheduled) return;
+    sessionReloadScheduled = true;
+
+    let recentlyReloaded = false;
+    try {
+      const previousReload = Number(window.sessionStorage.getItem(sessionReloadKey) || 0);
+      recentlyReloaded = Date.now() - previousReload < 10_000;
+      if (!recentlyReloaded) window.sessionStorage.setItem(sessionReloadKey, String(Date.now()));
+    } catch {
+      // A single in-memory reload guard still prevents duplicate reload requests.
+    }
+
+    if (recentlyReloaded) {
+      sessionReloadScheduled = false;
+      return;
+    }
+    setConnection("offline", "本地服务已重启，正在重新连接");
+    window.setTimeout(() => window.location.reload(), 120);
   }
 
   function tokenHeaders(extra = {}) {
@@ -184,6 +214,9 @@
       const message = typeof payload === "string"
         ? payload
         : payload?.error || payload?.message || `请求失败（${response.status}）`;
+      if (response.status === 403 && message.includes("工作台会话无效")) {
+        reloadForExpiredSession();
+      }
       throw new Error(message);
     }
     return payload;
