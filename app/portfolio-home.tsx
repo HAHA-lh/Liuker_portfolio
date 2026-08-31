@@ -5,6 +5,7 @@ import {
   ArrowUpRight,
   BriefcaseBusiness,
   Play,
+  Search,
   X,
 } from "lucide-react";
 import {
@@ -20,6 +21,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ComponentType,
@@ -27,7 +29,7 @@ import {
   type HTMLAttributes,
   type ReactNode,
 } from "react";
-import { siteContent, t } from "./content";
+import { projects, siteContent, t } from "./content";
 import ClickSpark from "./components/ClickSpark";
 import DotField from "./components/DotField";
 import GlassSurface from "./components/GlassSurface";
@@ -37,6 +39,7 @@ import ScrollExpand from "./components/ScrollExpand";
 import StaggeredMenu from "./components/StaggeredMenu";
 import TextPressure from "./components/TextPressure";
 import VariableProximity from "./components/VariableProximity";
+import WarpText from "./components/WarpText";
 import {
   getPreparedHeroVideoSource,
   HERO_FRAME_READY_EVENT,
@@ -107,11 +110,13 @@ function FadeIn({
   children,
   delay = 0,
   y = 28,
+  once = true,
   className,
 }: {
   children: React.ReactNode;
   delay?: number;
   y?: number;
+  once?: boolean;
   className?: string;
 }) {
   const reduced = useReducedMotion();
@@ -120,7 +125,7 @@ function FadeIn({
       className={className}
       initial={reduced ? false : { opacity: 0, y }}
       whileInView={reduced ? undefined : { opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "40px" }}
+      viewport={{ once, margin: "40px" }}
       transition={{ duration: 0.7, delay, ease }}
     >
       {children}
@@ -427,6 +432,13 @@ function Header() {
           <span className="brand-orb" />
           {siteContent.name}
         </Link>
+        <nav className="nav-links header-inline-links" aria-label={language === "zh" ? "主页导航" : "Homepage navigation"}>
+          {menuItems.slice(1).map((item) => (
+            <a key={item.link} href={item.link} aria-label={item.ariaLabel}>
+              {item.label}
+            </a>
+          ))}
+        </nav>
       </motion.header>
       <StaggeredMenu
         items={menuItems}
@@ -532,6 +544,14 @@ function ShowreelModal({ open, onClose }: { open: boolean; onClose: () => void }
 function PortfolioIndex() {
   const { language } = useLanguage();
   const reduced = useReducedMotion();
+  const [activeGroupIndex, setActiveGroupIndex] = useState(0);
+  const heading = language === "zh" ? "作品集展示" : "Selected work";
+
+  const moveActiveGroup = (currentIndex: number, direction: -1 | 1) => {
+    setActiveGroupIndex(
+      (currentIndex + direction + portfolioGroups.length) % portfolioGroups.length,
+    );
+  };
 
   return (
     <section
@@ -540,37 +560,44 @@ function PortfolioIndex() {
       aria-label={language === "zh" ? "作品集分类" : "Portfolio categories"}
     >
       <div className="portfolio-index-lead">
-        <div>
-          <div className="eyebrow">
-            {language === "zh" ? "作品集分类 · 选择方向" : "Portfolio index · Choose a direction"}
-          </div>
-        </div>
-        <p>
-          {language === "zh"
-            ? "先选择作品方向，再进入对应的视频项目。每个方向都保留播放与案例详情入口。"
-            : "Choose a discipline, then explore its video projects with playback and case-study access."}
-        </p>
+        <WarpText
+          text={heading}
+          className="portfolio-warp-heading"
+          color="#f3f5f8"
+          warpStrength={0.12}
+          warpScale={1.55}
+          speed={0.48}
+          pointerInfluence={0.36}
+          pointerStrength={0.5}
+          refraction={0.022}
+          ripple
+          fontSize="clamp(4.5rem, 10vw, 11rem)"
+          fontWeight={900}
+          letterSpacing="-0.075em"
+          lineHeight={0.88}
+        />
       </div>
 
-      <div className="portfolio-group-grid">
+      <div
+        className="portfolio-group-grid accordion-portfolio-gallery"
+        role="list"
+        aria-label={language === "zh" ? "五大作品方向" : "Five portfolio directions"}
+      >
         {portfolioGroups.map((group, groupIndex) => {
           const groupProjects = getProjectsForPortfolioGroup(group);
           const previewProjects = groupProjects.slice(0, 3);
           const entranceDelay = groupIndex * 0.14;
+          const isActive = groupIndex === activeGroupIndex;
 
           return (
             <motion.div
               key={group.id}
-              className="portfolio-group-card-frame"
+              className={`portfolio-group-card-frame${isActive ? " is-active" : ""}${groupIndex < activeGroupIndex ? " is-before" : " is-after"}`}
               initial={
                 reduced
                   ? false
                   : {
                       opacity: 0,
-                      y: 96,
-                      scale: 0.94,
-                      rotateX: 7,
-                      clipPath: "inset(18% 0 0 0 round 2.4rem)",
                     }
               }
               whileInView={
@@ -578,28 +605,40 @@ function PortfolioIndex() {
                   ? undefined
                   : {
                       opacity: 1,
-                      y: 0,
-                      scale: 1,
-                      rotateX: 0,
-                      clipPath: "inset(0% 0 0 0 round 0rem)",
                     }
               }
               viewport={{ once: true, amount: 0.18 }}
-              transition={{ duration: 0.88, delay: entranceDelay, ease }}
+              transition={{ duration: 0.62, delay: entranceDelay, ease }}
               style={{ transformOrigin: "50% 100%" }}
+              role="listitem"
             >
               <Link
                 href={`/portfolio/${group.id}`}
-                className={`portfolio-group-card portfolio-group-card-${groupIndex + 1}`}
+                className={`portfolio-group-card portfolio-group-card-${groupIndex + 1}${isActive ? " is-active" : ""}`}
                 aria-label={`${language === "zh" ? "进入" : "Open"} ${t(group.title, language)}`}
+                aria-current={isActive ? "true" : undefined}
+                onMouseEnter={() => setActiveGroupIndex(groupIndex)}
+                onFocus={() => setActiveGroupIndex(groupIndex)}
+                onClick={(event) => {
+                  if (!isActive) {
+                    event.preventDefault();
+                    setActiveGroupIndex(groupIndex);
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+                    event.preventDefault();
+                    moveActiveGroup(groupIndex, 1);
+                  }
+                  if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+                    event.preventDefault();
+                    moveActiveGroup(groupIndex, -1);
+                  }
+                }}
               >
-                <motion.span
+                <span
                   className="portfolio-group-media"
                   aria-hidden="true"
-                  initial={reduced ? false : { opacity: 0.42, scale: 1.13, y: 30 }}
-                  whileInView={reduced ? undefined : { opacity: 1, scale: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.18 }}
-                  transition={{ duration: 1.08, delay: entranceDelay + 0.1, ease }}
                 >
                   {previewProjects.map((project, imageIndex) => (
                     <span className={`portfolio-group-image image-${imageIndex + 1}`} key={project.slug}>
@@ -607,27 +646,22 @@ function PortfolioIndex() {
                     </span>
                   ))}
                   <span className="portfolio-group-scrim" />
-                </motion.span>
+                </span>
 
-                <motion.span
-                  className="portfolio-group-content"
-                  initial={reduced ? false : { opacity: 0, y: 38 }}
-                  whileInView={reduced ? undefined : { opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.18 }}
-                  transition={{ duration: 0.72, delay: entranceDelay + 0.28, ease }}
-                >
+                <span className="portfolio-group-rail-title" aria-hidden="true">
+                  <span>{group.index}</span>
+                  <strong>{t(group.title, language)}</strong>
+                </span>
+
+                <span className="portfolio-group-content">
                   <span className="portfolio-group-meta">
-                    <span>{group.index} / 03</span>
+                    <span>{group.index} / 05</span>
                     <span>{String(groupProjects.length).padStart(2, "0")} {language === "zh" ? "个项目" : "projects"}</span>
                   </span>
                   <span className="portfolio-group-label">{group.label}</span>
                   <span className="portfolio-group-title">{t(group.title, language)}</span>
                   <span className="portfolio-group-description">{t(group.description, language)}</span>
-                  <span className="portfolio-group-action">
-                    {language === "zh" ? "进入二级作品页" : "Open collection"}
-                    <ArrowUpRight size={18} />
-                  </span>
-                </motion.span>
+                </span>
               </Link>
             </motion.div>
           );
@@ -895,12 +929,6 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
               </h1>
             </GradientText>
           </motion.div>
-          <motion.span
-            className="demo-stamp"
-            style={{ opacity: reduced ? 1 : overlayOpacity }}
-          >
-            Demo<br />Portfolio
-          </motion.span>
           <motion.div
             className="hero-bottom"
             style={{ opacity: reduced ? 1 : overlayOpacity, y: reduced ? 0 : overlayY }}
@@ -943,6 +971,7 @@ function ScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void }) {
 
 function ExperienceTimeline() {
   const { language } = useLanguage();
+  const reduced = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -953,7 +982,7 @@ function ExperienceTimeline() {
   return (
     <section ref={sectionRef} id="experience" className="experience-section">
       <div className="container-wide">
-        <FadeIn>
+        <FadeIn once={false}>
           <div className="eyebrow">
             <InlineEditable
               storageKey={`liuker-experience-kicker-${language}`}
@@ -982,18 +1011,27 @@ function ExperienceTimeline() {
 
         <div className="career-timeline">
           <div className="career-line" aria-hidden="true">
-            <motion.span style={{ scaleY: lineScale }} />
+            <motion.span
+              className="career-line-segment career-line-segment-top"
+              style={{ scaleY: reduced ? 1 : lineScale }}
+            />
+            <motion.span
+              className="career-line-segment career-line-segment-bottom"
+              style={{ scaleY: reduced ? 1 : lineScale }}
+            />
           </div>
           {siteContent.experience.map((item, index) => (
-            <motion.article
+            <article
               className="career-event"
               key={`${item.year}-${index}`}
-              initial={{ opacity: 0, y: 42 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-10%" }}
-              transition={{ duration: 0.7, delay: index * 0.08, ease }}
             >
-              <div className="career-year">
+              <motion.div
+                className="career-year"
+                initial={reduced ? false : { opacity: 0, x: index % 2 === 0 ? 34 : -34 }}
+                whileInView={reduced ? undefined : { opacity: 1, x: 0 }}
+                viewport={{ once: false, margin: "-12%" }}
+                transition={{ duration: 0.62, delay: index * 0.13 + 0.1, ease }}
+              >
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <InlineEditable
                   as="strong"
@@ -1001,9 +1039,47 @@ function ExperienceTimeline() {
                   value={item.year}
                   ariaLabel={language === "zh" ? "点击编辑年份" : "Click to edit year"}
                 />
-              </div>
-              <i className="career-node" aria-hidden="true" />
-              <div className="career-card">
+              </motion.div>
+              <motion.i
+                className="career-node"
+                aria-hidden="true"
+                initial={reduced ? false : { opacity: 0, scale: 0 }}
+                whileInView={reduced ? undefined : { opacity: 1, scale: 1 }}
+                viewport={{ once: false, margin: "-12%" }}
+                transition={reduced
+                  ? { duration: 0 }
+                  : {
+                      type: "spring",
+                      stiffness: 260,
+                      damping: 15,
+                      delay: index * 0.13 + 0.04,
+                    }}
+              />
+              <motion.div
+                className="career-card"
+                style={{ transformOrigin: index % 2 === 0 ? "0% 50%" : "100% 50%" }}
+                initial={reduced
+                  ? false
+                  : {
+                      opacity: 0,
+                      scaleX: 0.02,
+                      scaleY: 0.72,
+                      x: index % 2 === 0 ? -22 : 22,
+                    }}
+                whileInView={reduced
+                  ? undefined
+                  : { opacity: 1, scaleX: 1, scaleY: 1, x: 0 }}
+                viewport={{ once: false, margin: "-12%" }}
+                transition={reduced
+                  ? { duration: 0 }
+                  : {
+                      type: "spring",
+                      stiffness: 112,
+                      damping: 17,
+                      mass: 0.82,
+                      delay: index * 0.13 + 0.16,
+                    }}
+              >
                 <span className="career-card-label">
                   {language === "zh" ? "经历占位" : "Experience placeholder"}
                 </span>
@@ -1019,8 +1095,8 @@ function ExperienceTimeline() {
                   value={t(item.note, language)}
                   ariaLabel={language === "zh" ? "点击编辑经历说明" : "Click to edit experience note"}
                 />
-              </div>
-            </motion.article>
+              </motion.div>
+            </article>
           ))}
         </div>
 
@@ -1074,9 +1150,149 @@ function ExperienceTimeline() {
   );
 }
 
+function FooterSearch() {
+  const { language } = useLanguage();
+  const [query, setQuery] = useState("");
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const matches = useMemo(() => {
+    if (!normalizedQuery) return [];
+
+    return projects
+      .filter((project) =>
+        [
+          project.title.zh,
+          project.title.en,
+          project.category.zh,
+          project.category.en,
+          project.role.zh,
+          project.role.en,
+          project.year,
+          ...project.tools,
+        ]
+          .join(" ")
+          .toLocaleLowerCase()
+          .includes(normalizedQuery),
+      )
+      .slice(0, 8);
+  }, [normalizedQuery]);
+
+  const copy = language === "zh"
+    ? {
+        eyebrow: "LIUKER / 作品检索",
+        title: "搜索我的作品",
+        note: "输入项目名称、作品类型、年份或制作工具，快速找到对应案例。",
+        placeholder: "例如：AIGC、2025、Cinema 4D",
+        clear: "清除搜索内容",
+        result: `找到 ${matches.length} 个匹配项目`,
+        empty: "没有找到匹配项目，换一个更短的关键词试试。",
+        collections: "作品分类",
+        navigation: "快速导航",
+        about: "关于",
+        experience: "经历与技能",
+        contact: "联系",
+        open: "查看案例",
+        description: "影像、AIGC 与动态设计作品集。",
+      }
+    : {
+        eyebrow: "LIUKER / WORK SEARCH",
+        title: "Search my work",
+        note: "Find a project by title, discipline, year or production tool.",
+        placeholder: "Try AIGC, 2025 or Cinema 4D",
+        clear: "Clear search",
+        result: `${matches.length} matching projects`,
+        empty: "No matching project. Try a shorter keyword.",
+        collections: "Collections",
+        navigation: "Navigate",
+        about: "About",
+        experience: "Experience",
+        contact: "Contact",
+        open: "View case",
+        description: "A portfolio of film, AIGC and motion design work.",
+      };
+
+  return (
+    <div className="footer-search-shell">
+      <section className="footer-search-banner" aria-labelledby="footer-search-title">
+        <div className="footer-search-backdrop" aria-hidden="true" />
+        <div className="footer-search-copy">
+          <span>{copy.eyebrow}</span>
+          <h2 id="footer-search-title">{copy.title}</h2>
+          <p>{copy.note}</p>
+          <label className="footer-search-field">
+            <Search size={18} aria-hidden="true" />
+            <span className="sr-only">{copy.title}</span>
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={copy.placeholder}
+              autoComplete="off"
+            />
+            {query ? (
+              <button type="button" onClick={() => setQuery("")} aria-label={copy.clear}>
+                <X size={17} />
+              </button>
+            ) : null}
+          </label>
+        </div>
+      </section>
+
+      {normalizedQuery ? (
+        <div className="footer-search-results" aria-live="polite">
+          <div className="footer-search-results-head">
+            <span>{matches.length ? copy.result : copy.empty}</span>
+            <span>SEARCH / {query}</span>
+          </div>
+          {matches.length ? (
+            <div className="footer-search-result-grid">
+              {matches.map((project, index) => (
+                <Link
+                  className="footer-search-result"
+                  href={`/work/${project.slug}`}
+                  key={project.slug}
+                  aria-label={`${copy.open}: ${t(project.title, language)}`}
+                >
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <strong>{t(project.title, language)}</strong>
+                  <small>{t(project.category, language)} · {project.year}</small>
+                  <ArrowUpRight size={18} aria-hidden="true" />
+                </Link>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="footer-directory">
+        <div className="footer-directory-brand">
+          <strong>LIUKER</strong>
+          <p>{copy.description}</p>
+        </div>
+        <div>
+          <span>{copy.collections}</span>
+          {portfolioGroups.map((group) => (
+            <Link href={`/portfolio/${group.id}`} key={group.id}>
+              {t(group.title, language)}
+            </Link>
+          ))}
+        </div>
+        <div>
+          <span>{copy.navigation}</span>
+          <a href="#about">{copy.about}</a>
+          <a href="#experience">{copy.experience}</a>
+          <a href="#contact">{copy.contact}</a>
+        </div>
+        <div className="footer-directory-meta">
+          <span>PORTFOLIO / 2026</span>
+          <span>© 2026 LIUKER</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ContactSection() {
   const { language } = useLanguage();
-  const reduceMotion = useReducedMotion();
   return (
     <footer id="contact" className="contact-section lanyard-contact-section">
       <div className="contact-glow" aria-hidden="true" />
@@ -1105,36 +1321,6 @@ function ContactSection() {
             <BriefcaseBusiness size={16} />
             {language === "zh" ? "等待真实联系方式" : "Awaiting real contact details"}
           </span>
-          <motion.figure
-            className="contact-reference-portrait"
-            initial={
-              reduceMotion
-                ? false
-                : { opacity: 0, y: 54, clipPath: "inset(18% 0 0 0 round 28px)" }
-            }
-            whileInView={{
-              opacity: 1,
-              y: 0,
-              clipPath: "inset(0% 0 0 0 round 28px)",
-            }}
-            viewport={{ once: true, amount: 0.25 }}
-            transition={{ duration: 0.85, ease }}
-          >
-            <span className="contact-reference-label" aria-hidden="true">
-              LIUKER / DIGITAL PORTRAIT
-            </span>
-            <img
-              src="/media/contact/liuker-avatar.png"
-              alt={
-                language === "zh"
-                  ? "LIUKER 虚拟人物形象参考图"
-                  : "LIUKER digital character portrait"
-              }
-              loading="lazy"
-              decoding="async"
-              draggable={false}
-            />
-          </motion.figure>
           <div className="footer-line">
             <span>© 2026 {siteContent.name}</span>
             <span>{language === "zh" ? "首版框架 · 所有内容均为演示" : "V1 Framework · All content is demo"}</span>
@@ -1148,6 +1334,7 @@ function ContactSection() {
           </ViewportMount>
         </div>
       </div>
+      <FooterSearch />
     </footer>
   );
 }

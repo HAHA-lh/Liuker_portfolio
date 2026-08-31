@@ -1,7 +1,12 @@
 import { projects, type LocalizedText, type Project } from "./content";
 import portfolioGroupRows from "../content/portfolio-groups.json";
 
-export type PortfolioGroupId = "film-post" | "aigc" | "live-gifts";
+export type PortfolioGroupId =
+  | "film-post"
+  | "aigc"
+  | "live-gifts"
+  | "event-live"
+  | "character-design";
 
 export type PortfolioGroup = {
   id: PortfolioGroupId;

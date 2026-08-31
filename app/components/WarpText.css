@@ -1,0 +1,32 @@
+.warp-text {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 220px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.warp-text canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.warp-text__fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #f0f3f7;
+  font: 900 clamp(4rem, 9vw, 10rem) / 0.9 Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  letter-spacing: -0.07em;
+  transition: opacity 180ms ease;
+}
+
+.warp-text.is-ready .warp-text__fallback {
+  opacity: 0;
+}
+
