@@ -29,6 +29,7 @@ type StaggeredMenuProps = {
   closeOnClickAway?: boolean;
   footer?: ReactNode;
   glassButton?: boolean;
+  scrollStretchButton?: boolean;
 };
 
 export default function StaggeredMenu({
@@ -42,11 +43,13 @@ export default function StaggeredMenu({
   closeOnClickAway = true,
   footer,
   glassButton = false,
+  scrollStretchButton = false,
 }: StaggeredMenuProps) {
   const [open, setOpen] = useState(false);
   const openRef = useRef(false);
   const busyRef = useRef(false);
   const panelRef = useRef<HTMLElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const layersRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const iconRef = useRef<HTMLSpanElement>(null);
@@ -213,6 +216,36 @@ export default function StaggeredMenu({
   }, [open]);
 
   useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper || !scrollStretchButton) return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let frame = 0;
+
+    const updateWidth = () => {
+      frame = 0;
+      const distance = Math.max(240, window.innerHeight * 0.62);
+      const linear = Math.min(1, Math.max(0, window.scrollY / distance));
+      const progress = reducedMotion.matches && linear > 0 ? 1 : 1 - Math.pow(1 - linear, 3);
+      wrapper.style.setProperty("--sm-toggle-width", `${(5.75 + progress * 1.55).toFixed(3)}rem`);
+    };
+    const requestUpdate = () => {
+      if (!frame) frame = window.requestAnimationFrame(updateWidth);
+    };
+
+    updateWidth();
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    window.addEventListener("resize", requestUpdate);
+    reducedMotion.addEventListener("change", requestUpdate);
+    return () => {
+      window.removeEventListener("scroll", requestUpdate);
+      window.removeEventListener("resize", requestUpdate);
+      reducedMotion.removeEventListener("change", requestUpdate);
+      if (frame) window.cancelAnimationFrame(frame);
+      wrapper.style.removeProperty("--sm-toggle-width");
+    };
+  }, [scrollStretchButton]);
+
+  useEffect(() => {
     if (!open) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") closeMenu();
@@ -244,6 +277,7 @@ export default function StaggeredMenu({
 
   return (
     <div
+      ref={wrapperRef}
       className="staggered-menu-wrapper"
       data-position={position}
       data-open={open || undefined}
@@ -271,7 +305,7 @@ export default function StaggeredMenu({
 
       <div className="staggered-menu-header">
         {glassButton ? (
-          <GlassSurface className="sm-toggle-glass" width="auto" height="2.7rem" borderRadius={50} backgroundOpacity={0.1} displace={0.5}>
+          <GlassSurface className="sm-toggle-glass" width="var(--sm-toggle-width, 5.75rem)" height="2.7rem" borderRadius={50} backgroundOpacity={0.1} displace={0.5}>
             {toggleButton}
           </GlassSurface>
         ) : toggleButton}

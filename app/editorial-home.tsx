@@ -15,6 +15,7 @@ import { EditorialHeader } from "./components/EditorialHeader";
 import { BorderGlowLink } from "./components/BorderGlowLink";
 import { ExperienceHeading } from "./components/ExperienceHeading";
 import { EditorialFocus } from "./components/EditorialFocus";
+import LoadingScreen from "./components/LoadingScreen";
 import { CounterMediaReveal, DualLayerHeading, MediaScrollExit, ScrollParallax, SectionTransition, SplitLineReveal, mediaDirections, motionContext, scrubMotion } from "./components/EditorialMotion";
 import { ShowreelDialog } from "./components/ShowreelDialog";
 import { projects, siteContent, t } from "./content";
@@ -64,6 +65,7 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
   const loadRequestedRef = useRef(false);
   const [videoSource, setVideoSource] = useState<string | null>(null);
   const [frameReady, setFrameReady] = useState(false);
+  const [siteReady, setSiteReady] = useState(false);
   const reducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -71,7 +73,15 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
   });
   const progressScale = useTransform(scrollYProgress, [0, 1], [0.03, 1]);
 
+  useEffect(() => {
+    const markSiteReady = () => setSiteReady(true);
+    document.addEventListener("liuker:site-ready", markSiteReady);
+    if (document.documentElement.dataset.siteReady === "true") markSiteReady();
+    return () => document.removeEventListener("liuker:site-ready", markSiteReady);
+  }, []);
+
   useLayoutEffect(() => {
+    if (!siteReady) return;
     const root = sectionRef.current;
     if (!root) return;
     return motionContext(root, mobile => {
@@ -95,7 +105,7 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
         .to(outlines, { color: "#ee5b78", duration: 0.12 }, 0.2)
         .to(outlines, { color: "#f7f3ed", duration: 0.2 }, 0.32);
     });
-  }, []);
+  }, [siteReady]);
 
   const requestVideo = useCallback(() => {
     if (loadRequestedRef.current) return;
@@ -401,7 +411,8 @@ export function EditorialHome() {
 
   return (
     <main id="top" className="editorial-site editorial-motion-home">
-      <EditorialHeader />
+      <LoadingScreen />
+      <EditorialHeader stretchMenuButton />
 
       <EditorialScrollHero onOpenShowreel={() => setShowreelOpen(true)} />
 

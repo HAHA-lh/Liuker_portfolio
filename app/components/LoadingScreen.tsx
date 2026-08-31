@@ -18,7 +18,7 @@ const MIN_REPEAT_VISIT_MS = 320;
 const MAX_WAIT_MS = 18000;
 const READY_HOLD_MS = 260;
 const EXIT_MS = 760;
-const SESSION_KEY = "liuker-loader-ack:v2";
+const SESSION_KEY = "liuker-loader-ack:v3";
 const SCORE_WEIGHT: Record<ReadinessScore, number> = {
   poster: 0.15,
   font: 0.1,
@@ -257,23 +257,19 @@ export default function LoadingScreen() {
       aria-busy={!ready}
       aria-label={language === "zh" ? "页面加载中" : "Loading page"}
     >
-      <span className="liuker-loader-glow liuker-loader-glow-a" aria-hidden="true" />
-      <span className="liuker-loader-glow liuker-loader-glow-b" aria-hidden="true" />
-      <div className="liuker-loader-grid" aria-hidden="true" />
-
       <div className="liuker-loader-stage">
-        <div className="liuker-loader-brand">
-          <div className="liuker-loader-orb" aria-hidden="true">
-            <span className="liuker-loader-ring liuker-loader-ring-a" />
-            <span className="liuker-loader-ring liuker-loader-ring-b" />
-            <span className="liuker-loader-dot" />
-            <span className="liuker-loader-dot-pulse" />
-          </div>
-          <span className="liuker-loader-name">LIUKER</span>
-          <span className="liuker-loader-divider" aria-hidden="true" />
-          <span className="liuker-loader-role">
-            {language === "zh" ? "视频创作者 · 动态设计" : "VIDEO CREATOR · MOTION DESIGN"}
-          </span>
+        <div className="liuker-loader-art" aria-hidden="true">
+          <picture>
+            <source media="(prefers-reduced-motion: reduce)" srcSet="/media/loading/liuker-loading-still.png" />
+            <img
+              src="/media/loading/liuker-loading.gif"
+              alt=""
+              width="800"
+              height="600"
+              decoding="async"
+              fetchPriority="high"
+            />
+          </picture>
         </div>
 
         <div className="liuker-loader-progress">
@@ -291,23 +287,6 @@ export default function LoadingScreen() {
             <span className="liuker-loader-progress-label">{label}</span>
             <span className="liuker-loader-progress-subtitle">{subtitle}</span>
           </div>
-        </div>
-
-        <div className="liuker-loader-corner liuker-loader-corner-tl" aria-hidden="true">
-          <span>LIUKER / 01</span>
-          <span>{language === "zh" ? "关键素材预载" : "CRITICAL PRELOAD"}</span>
-        </div>
-        <div className="liuker-loader-corner liuker-loader-corner-tr" aria-hidden="true">
-          <span>{language === "zh" ? "首屏交互" : "HERO INTERACTION"}</span>
-          <span>2026</span>
-        </div>
-        <div className="liuker-loader-corner liuker-loader-corner-bl" aria-hidden="true">
-          <span>{language === "zh" ? "视频缓存" : "VIDEO CACHE"}</span>
-          <span>{language === "zh" ? "加载后进入" : "ENTER WHEN READY"}</span>
-        </div>
-        <div className="liuker-loader-corner liuker-loader-corner-br" aria-hidden="true">
-          <span>{streamFallback ? "STREAM" : "BUFFER"}</span>
-          <span>{Math.round(progress).toString().padStart(3, "0")}</span>
         </div>
       </div>
     </div>

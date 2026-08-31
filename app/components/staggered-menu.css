@@ -73,7 +73,11 @@
 }
 
 /* Glass Surface owns the material; the original button still owns all input. */
-.sm-toggle-glass { flex: none; pointer-events: auto; }
+.sm-toggle-glass {
+  flex: none;
+  pointer-events: auto;
+  transition: width 180ms linear, opacity 260ms ease-out, transform 260ms ease-out;
+}
 .sm-toggle-glass .sm-toggle,
 .staggered-menu-wrapper[data-open] .sm-toggle-glass .sm-toggle {
   height: 100%;

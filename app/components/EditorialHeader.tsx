@@ -30,7 +30,7 @@ function LanguageSwitch() {
   );
 }
 
-export function EditorialHeader() {
+export function EditorialHeader({ stretchMenuButton = false }: { stretchMenuButton?: boolean }) {
   const { language } = useLanguage();
   const { theme } = useTheme();
   const menuItems = [
@@ -75,6 +75,7 @@ export function EditorialHeader() {
       </header>
       <StaggeredMenu
         glassButton
+        scrollStretchButton={stretchMenuButton}
         items={menuItems}
         position="right"
         colors={["#ff5c7c", "#7b4dff"]}

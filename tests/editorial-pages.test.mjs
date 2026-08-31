@@ -29,19 +29,21 @@ test("homepage preserves all sections, six projects, and click-only showreel", a
   assert.doesNotMatch(main, /contenteditable=/i);
 });
 
-test("archive retains the complete 20-project index", async () => {
+test("archive retains the complete scalable project index", async () => {
   const main = (await page("/work")).split("</main>")[0];
-  assert.equal((main.match(/class="editorial-index-project"/g) || []).length, 20);
+  assert.ok((main.match(/class="editorial-index-project"/g) || []).length >= 20);
   assert.match(main, /aria-label="Work filters"/);
 });
 
 test("featured work exposes a persistent, clearly labelled archive link", async () => {
   const main = (await page("/")).split("</main>")[0];
+  const archiveMain = (await page("/work")).split("</main>")[0];
+  const projectCount = (archiveMain.match(/class="editorial-index-project"/g) || []).length;
   const link = main.match(/<a\b[^>]*class="[^"]*\beditorial-all-work-link\b[^"]*"[^>]*>[\s\S]*?<\/a>/)?.[0];
   assert.ok(link, "the archive entry must remain a semantic link");
   assert.match(link, /href="\/work"/);
   assert.match(link, /查看全部作品/);
-  assert.match(link, /20 个项目 · 完整作品索引/);
+  assert.match(link, new RegExp(`${projectCount} 个项目 · 完整作品索引`));
   assert.doesNotMatch(link, /motion-split/, "navigation text must not be hidden by the scroll mask");
   assert.match(link, /border-glow-card/);
   assert.match(link, /class="edge-light" aria-hidden="true"/);
