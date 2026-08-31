@@ -30,7 +30,7 @@ the public portfolio, new paid service, or source-media migration.
 ## Vercel edge rules
 
 The three definitions in `firewall/` match the project-level rules applied on
-2026-08-31, active configuration version 3. They cover cached media and previous
+2026-08-31, active configuration version 4. They cover cached media and previous
 deployments within this project as well as the main domain:
 
 1. `rule_liuker_block_automated_media_clients_T882bm`: deny listed automated UAs.
@@ -39,6 +39,10 @@ deployments within this project as well as the main domain:
 3. `rule_liuker_limit_abnormal_media_bursts_zqNf2r`: 600 media requests per IP per
    60-second fixed window **per Vercel region**, then HTTP 429. A generous limit
    avoids penalizing ordinary preload/seek requests and shared networks.
+
+The direct-video rule checks both an explicitly non-same-origin Fetch Metadata
+header and an absent header: Vercel's `neq` comparison does not match a missing
+header. Keep the separate `nex` condition group when editing this rule.
 
 Hobby includes three custom rules, one rate-limit rule, and 1,000,000 allowed
 rate-limit requests. No plan change was made. The limit is request-based, not a
