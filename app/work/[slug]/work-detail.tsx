@@ -1,45 +1,29 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import type { CSSProperties } from "react";
 import LazyVideo from "../../components/LazyVideo";
 import { EditorialHeader } from "../../components/EditorialHeader";
+import { CounterMediaReveal, MediaScrollExit, SplitLineReveal } from "../../components/EditorialMotion";
 import { t, type Project } from "../../content";
 import { useLanguage } from "../../language";
-
-function DetailReveal({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  const reducedMotion = useReducedMotion();
-  return (
-    <motion.div
-      className={className}
-      initial={reducedMotion ? false : { opacity: 0, y: 30 }}
-      whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.16 }}
-      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-    >
-      {children}
-    </motion.div>
-  );
-}
 
 export function WorkDetail({ project, nextProject }: { project: Project; nextProject: Project }) {
   const { language } = useLanguage();
 
   return (
-    <main className="editorial-site editorial-detail">
+    <main className="editorial-site editorial-detail editorial-motion-pages">
       <EditorialHeader />
       <header className="editorial-detail-hero">
         <Link href="/work" className="editorial-back-link">
-          <ArrowLeft size={17} /> {language === "zh" ? "全部作品" : "All work"}
+          <ArrowLeft size={17} /> <SplitLineReveal>{language === "zh" ? "全部作品" : "All work"}</SplitLineReveal>
         </Link>
         <div className="editorial-detail-title-row">
-          <p className="editorial-overline">{t(project.category, language)} / {project.year}</p>
-          <h1>{t(project.title, language)}</h1>
+          <p className="editorial-overline"><SplitLineReveal>{`${t(project.category, language)} / ${project.year}`}</SplitLineReveal></p>
+          <h1><SplitLineReveal>{t(project.title, language)}</SplitLineReveal></h1>
         </div>
         <div className="editorial-detail-intro">
-          <p>{t(project.summary, language)}</p>
+          <p><SplitLineReveal>{t(project.summary, language)}</SplitLineReveal></p>
           <dl>
             <div><dt>{language === "zh" ? "职责" : "Role"}</dt><dd>{t(project.role, language)}</dd></div>
             <div><dt>{language === "zh" ? "时长" : "Runtime"}</dt><dd>{project.duration}</dd></div>
@@ -48,23 +32,25 @@ export function WorkDetail({ project, nextProject }: { project: Project; nextPro
         </div>
       </header>
 
-      <section className="editorial-detail-poster" style={{ background: project.visual } as CSSProperties}>
+      <MediaScrollExit className="editorial-detail-poster">
+        <CounterMediaReveal direction="bottom" background={project.visual}>
         {project.poster ? <img src={project.poster} alt="" fetchPriority="high" /> : null}
-      </section>
+        </CounterMediaReveal>
+      </MediaScrollExit>
 
       <section className="editorial-detail-story">
-        <DetailReveal className="editorial-detail-story-row">
-          <span>01 / CONCEPT</span>
-          <p>{t(project.challenge, language)}</p>
-        </DetailReveal>
-        <DetailReveal className="editorial-detail-story-row">
-          <span>02 / PROCESS</span>
-          <p>{t(project.process, language)}</p>
-        </DetailReveal>
-        <DetailReveal className="editorial-detail-story-row">
-          <span>03 / RESULT</span>
-          <p>{t(project.result, language)}</p>
-        </DetailReveal>
+        <div className="editorial-detail-story-row">
+          <span><SplitLineReveal>01 / CONCEPT</SplitLineReveal></span>
+          <p><SplitLineReveal>{t(project.challenge, language)}</SplitLineReveal></p>
+        </div>
+        <div className="editorial-detail-story-row">
+          <span><SplitLineReveal>02 / PROCESS</SplitLineReveal></span>
+          <p><SplitLineReveal>{t(project.process, language)}</SplitLineReveal></p>
+        </div>
+        <div className="editorial-detail-story-row">
+          <span><SplitLineReveal>03 / RESULT</SplitLineReveal></span>
+          <p><SplitLineReveal>{t(project.result, language)}</SplitLineReveal></p>
+        </div>
       </section>
 
       <section className="editorial-detail-frames">
@@ -73,9 +59,11 @@ export function WorkDetail({ project, nextProject }: { project: Project; nextPro
           <h2>{language === "zh" ? "精选画面" : "Selected Frames"}</h2>
         </div>
         <div className="editorial-frame-grid">
-          <div className="editorial-frame editorial-frame-wide" style={{ background: project.visual }}>
+          <MediaScrollExit className="editorial-frame editorial-frame-wide">
+            <CounterMediaReveal direction="left" background={project.visual}>
             {project.poster ? <img src={project.poster} alt="" loading="lazy" decoding="async" /> : null}
-          </div>
+            </CounterMediaReveal>
+          </MediaScrollExit>
           <div className="editorial-frame editorial-frame-color" style={{ background: project.visual }} aria-hidden="true" />
         </div>
       </section>

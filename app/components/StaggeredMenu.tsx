@@ -1,6 +1,7 @@
 "use client";
 
 import { gsap } from "gsap";
+import GlassSurface from "./GlassSurface";
 import {
   useCallback,
   useEffect,
@@ -27,6 +28,7 @@ type StaggeredMenuProps = {
   accentColor?: string;
   closeOnClickAway?: boolean;
   footer?: ReactNode;
+  glassButton?: boolean;
 };
 
 export default function StaggeredMenu({
@@ -39,6 +41,7 @@ export default function StaggeredMenu({
   accentColor = "#b600a8",
   closeOnClickAway = true,
   footer,
+  glassButton = false,
 }: StaggeredMenuProps) {
   const [open, setOpen] = useState(false);
   const openRef = useRef(false);
@@ -220,6 +223,25 @@ export default function StaggeredMenu({
     };
   }, [closeMenu, open]);
 
+  const toggleButton = (
+    <button
+      ref={buttonRef}
+      type="button"
+      className="sm-toggle"
+      aria-label={open ? "Close menu" : "Open menu"}
+      aria-expanded={open}
+      aria-controls="staggered-menu-panel"
+      onClick={toggleMenu}
+      style={{ color: open ? openMenuButtonColor : menuButtonColor }}
+    >
+      <span className="sm-toggle-text">{open ? "Close" : "Menu"}</span>
+      <span ref={iconRef} className="sm-icon" aria-hidden="true">
+        <span className="sm-icon-line" />
+        <span className="sm-icon-line sm-icon-line-v" />
+      </span>
+    </button>
+  );
+
   return (
     <div
       className="staggered-menu-wrapper"
@@ -248,22 +270,11 @@ export default function StaggeredMenu({
       </div>
 
       <div className="staggered-menu-header">
-        <button
-          ref={buttonRef}
-          type="button"
-          className="sm-toggle"
-          aria-label={open ? "Close menu" : "Open menu"}
-          aria-expanded={open}
-          aria-controls="staggered-menu-panel"
-          onClick={toggleMenu}
-          style={{ color: open ? openMenuButtonColor : menuButtonColor }}
-        >
-          <span className="sm-toggle-text">{open ? "Close" : "Menu"}</span>
-          <span ref={iconRef} className="sm-icon" aria-hidden="true">
-            <span className="sm-icon-line" />
-            <span className="sm-icon-line sm-icon-line-v" />
-          </span>
-        </button>
+        {glassButton ? (
+          <GlassSurface className="sm-toggle-glass" width="auto" height="2.7rem" borderRadius={50} backgroundOpacity={0.1} displace={0.5}>
+            {toggleButton}
+          </GlassSurface>
+        ) : toggleButton}
       </div>
 
       <aside

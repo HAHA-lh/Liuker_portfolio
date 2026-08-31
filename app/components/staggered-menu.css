@@ -72,6 +72,22 @@
   text-transform: uppercase;
 }
 
+/* Glass Surface owns the material; the original button still owns all input. */
+.sm-toggle-glass { flex: none; pointer-events: auto; }
+.sm-toggle-glass .sm-toggle,
+.staggered-menu-wrapper[data-open] .sm-toggle-glass .sm-toggle {
+  height: 100%;
+  border: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.sm-toggle-glass .sm-toggle:focus-visible { outline: none; }
+.staggered-menu-header .sm-toggle-glass:focus-within { outline: 2px solid var(--sm-accent); outline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) {
+  .staggered-menu-header .sm-toggle-glass { transition: none; transform: none; }
+}
+
 .sm-icon {
   position: relative;
   display: inline-grid;

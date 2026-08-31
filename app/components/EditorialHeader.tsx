@@ -74,6 +74,7 @@ export function EditorialHeader() {
         </Link>
       </header>
       <StaggeredMenu
+        glassButton
         items={menuItems}
         position="right"
         colors={["#ff5c7c", "#7b4dff"]}

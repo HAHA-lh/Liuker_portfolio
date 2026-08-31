@@ -1,10 +1,10 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import { ArrowUpRight, Grid2X2, List } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EditorialHeader } from "../components/EditorialHeader";
+import { CounterMediaReveal, MediaScrollExit, SplitLineReveal, mediaDirections } from "../components/EditorialMotion";
 import { projects, t, type Project } from "../content";
 import { useLanguage } from "../language";
 import { portfolioGroups } from "../portfolio-groups";
@@ -32,7 +32,6 @@ function projectFilter(project: Project): Exclude<WorkFilter, "all"> {
 
 export function WorkIndex() {
   const { language } = useLanguage();
-  const reducedMotion = useReducedMotion();
   const [activeFilter, setActiveFilter] = useState<WorkFilter>("all");
   const [view, setView] = useState<WorkView>("grid");
   const visibleProjects = useMemo(
@@ -41,15 +40,15 @@ export function WorkIndex() {
   );
 
   return (
-    <main className="editorial-site editorial-work-page">
+    <main className="editorial-site editorial-work-page editorial-motion-pages">
       <EditorialHeader />
       <header className="editorial-work-index-head">
-        <p className="editorial-overline">LIUKER / ARCHIVE</p>
-        <h1>{language === "zh" ? "作品" : "Work"}</h1>
+        <p className="editorial-overline"><SplitLineReveal>LIUKER / ARCHIVE</SplitLineReveal></p>
+        <h1><SplitLineReveal>{language === "zh" ? "作品" : "Work"}</SplitLineReveal></h1>
         <p className="editorial-work-index-intro">
-          {language === "zh"
+          <SplitLineReveal>{language === "zh"
             ? "影像、AI/CGI 与动态设计项目的统一索引。"
-            : "A unified index of film, AI/CGI and motion projects."}
+            : "A unified index of film, AI/CGI and motion projects."}</SplitLineReveal>
         </p>
       </header>
 
@@ -61,6 +60,7 @@ export function WorkIndex() {
                 key={filter.id}
                 type="button"
                 className={activeFilter === filter.id ? "is-active" : ""}
+                aria-pressed={activeFilter === filter.id}
                 onClick={() => setActiveFilter(filter.id)}
               >
                 {filter.label}
@@ -77,27 +77,28 @@ export function WorkIndex() {
           </div>
         </div>
 
-        <motion.div
+        <div
           key={`${activeFilter}-${view}`}
           className={`editorial-work-results is-${view}`}
-          initial={reducedMotion ? false : { opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
         >
           {visibleProjects.map((project, index) => (
             <Link className="editorial-index-project" href={`/work/${project.slug}`} key={project.slug}>
-              <div className="editorial-index-media" style={{ background: project.visual }}>
+              {view === "grid" ? <MediaScrollExit className="editorial-index-media">
+                <CounterMediaReveal direction={mediaDirections[index % 4]} background={project.visual}>
+                  {project.poster ? <img src={project.poster} alt="" loading="lazy" decoding="async" /> : null}
+                </CounterMediaReveal>
+              </MediaScrollExit> : <div className="editorial-index-media" style={{ background: project.visual }}>
                 {project.poster ? <img src={project.poster} alt="" loading="lazy" decoding="async" /> : null}
-              </div>
-              <span className="editorial-index-number">{String(index + 1).padStart(2, "0")}</span>
+              </div>}
+              <span className="editorial-index-number"><SplitLineReveal>{String(index + 1).padStart(2, "0")}</SplitLineReveal></span>
               <div className="editorial-index-copy">
-                <h2>{t(project.title, language)}</h2>
-                <p>{t(project.category, language)} · {project.year}</p>
+                <h2><SplitLineReveal>{t(project.title, language)}</SplitLineReveal></h2>
+                <p><SplitLineReveal>{`${t(project.category, language)} · ${project.year}`}</SplitLineReveal></p>
               </div>
               <ArrowUpRight className="editorial-index-arrow" size={25} />
             </Link>
           ))}
-        </motion.div>
+        </div>
       </section>
     </main>
   );

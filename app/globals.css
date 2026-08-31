@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
 :root {
+  --brand-red: #ee5b78;
+  --motion-fast: 0.32s;
+  --motion-medium: 0.78s;
+  --motion-slow: 1.4s;
   --ink: #0c0c0c;
   --paper: #f2f0e9;
   --mist: #d7e2ea;
