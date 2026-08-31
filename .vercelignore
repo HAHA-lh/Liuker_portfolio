@@ -1,0 +1,11 @@
+.git
+.github
+.codex-analysis
+.media-studio
+.next
+.vinext
+dist
+node_modules
+outputs
+tools/media-studio
+work
