@@ -8,4 +8,5 @@ dist
 node_modules
 outputs
 tools/media-studio
-work
+# Ignore local scratch output only; keep the app/work routes in deployments.
+/work/
