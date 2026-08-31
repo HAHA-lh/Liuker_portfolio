@@ -1,0 +1,13 @@
+{
+  "action": "rules.insert",
+  "value": {
+    "name": "LIUKER - block automated media clients",
+    "description": "Deny common download clients and AI crawlers on media, before cached assets are served.",
+    "active": true,
+    "conditionGroup": [{ "conditions": [
+      { "type": "path", "op": "pre", "value": "/media/" },
+      { "type": "user_agent", "op": "re", "value": "(curl|wget|python-requests|python-urllib|aiohttp|scrapy|httpclient|libwww-perl|go-http-client|okhttp|axios|aria2|yt-dlp|youtube-dl|httrack|gptbot|chatgpt-user|oai-searchbot|claudebot|claude-user|claude-searchbot|anthropic-ai|ccbot|bytespider|amazonbot|meta-externalagent|perplexitybot|perplexity-user|diffbot|semrushbot|ahrefsbot|mj12bot|dotbot)" }
+    ] }],
+    "action": { "mitigate": { "action": "deny" } }
+  }
+}

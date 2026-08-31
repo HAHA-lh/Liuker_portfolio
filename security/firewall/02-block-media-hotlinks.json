@@ -1,0 +1,21 @@
+{
+  "action": "rules.insert",
+  "value": {
+    "name": "LIUKER - block media hotlinks and direct video",
+    "description": "Reject cross-site embedding and video requests without playback context; keep full preloads and Range seeking.",
+    "active": true,
+    "conditionGroup": [
+      { "conditions": [
+        { "type": "path", "op": "pre", "value": "/media/" },
+        { "type": "header", "key": "sec-fetch-site", "op": "eq", "value": "cross-site" },
+        { "type": "header", "key": "referer", "op": "re", "neg": true, "value": "^https://(liuker\\.space|www\\.liuker\\.space|liuker-portfolio\\.vercel\\.app|liukerspace-liuker\\.vercel\\.app)(/|$)" }
+      ] },
+      { "conditions": [
+        { "type": "path", "op": "re", "value": "^/media/.*\\.(mp4|webm|mov|m4v|m3u8|mpd|m4s|ts)$" },
+        { "type": "header", "key": "referer", "op": "nex" },
+        { "type": "header", "key": "sec-fetch-site", "op": "neq", "value": "same-origin" }
+      ] }
+    ],
+    "action": { "mitigate": { "action": "deny" } }
+  }
+}

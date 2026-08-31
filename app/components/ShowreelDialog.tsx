@@ -60,6 +60,7 @@ export function ShowreelDialog({ open, onClose }: { open: boolean; onClose: () =
               ref={videoRef}
               src={SHOWREEL_VIDEO_SRC}
               controls
+              controlsList="nodownload"
               autoPlay
               playsInline
               preload="metadata"

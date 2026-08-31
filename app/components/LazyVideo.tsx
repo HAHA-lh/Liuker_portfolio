@@ -75,5 +75,6 @@ export default function LazyVideo({
     };
   }, [playWhenVisible, preloadWhenVisible, rootMargin, src, unloadOnExit]);
 
-  return <video ref={videoRef} preload="none" {...videoProps} data-lazy-video />;
+  // This removes the browser's download affordance, not access to the media.
+  return <video ref={videoRef} preload="none" controlsList="nodownload" {...videoProps} data-lazy-video />;
 }

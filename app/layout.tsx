@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import "@fontsource/kanit/300.css";
 import "@fontsource/kanit/400.css";
 import "@fontsource/kanit/500.css";
@@ -14,11 +13,8 @@ import { LanguageProvider } from "./language";
 import { ThemeProvider } from "./theme";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const requestHeaders = await headers();
-  const host =
-    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
-  const protocol = requestHeaders.get("x-forwarded-proto") ?? "https";
-  const origin = host ? `${protocol}://${host}` : "http://localhost:3000";
+  // Share metadata must not trust arbitrary forwarded host/protocol headers.
+  const origin = "https://liuker.space";
 
   return {
     title: "LIUKER — Video Creator",
