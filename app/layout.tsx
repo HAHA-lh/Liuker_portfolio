@@ -8,9 +8,9 @@ import "@fontsource/kanit/700.css";
 import "@fontsource/kanit/800.css";
 import "@fontsource/kanit/900.css";
 import "./globals.css";
+import "./editorial.css";
 import { LanguageProvider } from "./language";
 import { ThemeProvider } from "./theme";
-import DotField from "./components/DotField";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "LIUKER — Video Creator",
     description:
-      "A bilingual demo portfolio for a video creator, director and motion designer.",
+      "Film, motion design and AI/CGI work by LIUKER.",
     openGraph: {
       title: "LIUKER — Video Creator",
       description: "Selected moving-image work, process and experience.",
@@ -55,21 +55,6 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <LanguageProvider>
-            <div className="site-dot-background" aria-hidden="true">
-              <DotField
-                dotRadius={1.5}
-                dotSpacing={18}
-                cursorRadius={520}
-                bulgeStrength={74}
-                glowRadius={240}
-                sparkle
-                waveAmplitude={1.15}
-                pauseWhenSelectorVisible=".hero-stage"
-                gradientFrom="rgba(190, 50, 178, 0.28)"
-                gradientTo="rgba(255, 123, 58, 0.19)"
-                glowColor="rgba(105, 73, 255, 0.22)"
-              />
-            </div>
             {children}
           </LanguageProvider>
         </ThemeProvider>
