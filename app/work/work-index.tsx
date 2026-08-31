@@ -8,26 +8,23 @@ import { CounterMediaReveal, MediaScrollExit, SplitLineReveal, mediaDirections }
 import { projects, t, type Project } from "../content";
 import { useLanguage } from "../language";
 import { portfolioGroups } from "../portfolio-groups";
+import archive from "../../content/work-archive.json";
 
-type WorkFilter = "all" | "film" | "ai-cgi" | "motion";
+type WorkFilter = string;
 type WorkView = "grid" | "list";
 
 const filters: { id: WorkFilter; label: string }[] = [
   { id: "all", label: "ALL" },
-  { id: "film", label: "FILM" },
-  { id: "ai-cgi", label: "AI / CGI" },
-  { id: "motion", label: "MOTION" },
+  ...archive.categories,
 ];
 
 const groupBySlug = new Map(
   portfolioGroups.flatMap((group) => group.projectSlugs.map((slug) => [slug, group.id] as const)),
 );
 
-function projectFilter(project: Project): Exclude<WorkFilter, "all"> {
+function projectFilter(project: Project): string {
   const group = groupBySlug.get(project.slug);
-  if (group === "film-post") return "film";
-  if (group === "aigc" || group === "character-design") return "ai-cgi";
-  return "motion";
+  return archive.categories.find((category) => category.groupIds.includes(group || ""))?.id || "unassigned";
 }
 
 export function WorkIndex() {

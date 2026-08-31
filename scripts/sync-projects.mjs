@@ -1,10 +1,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { contentRevision } from "./lib/content-revision.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const sourcePath = path.join(projectRoot, "content", "projects.csv");
 const outputPath = path.join(projectRoot, "app", "project-rows.generated.ts");
+const groupsPath = path.join(projectRoot, "content", "portfolio-groups.json");
+const archivePath = path.join(projectRoot, "content", "work-archive.json");
+const contentStatePath = path.join(projectRoot, "public", "media", "content-state.json");
 
 function parseCsv(text) {
   const rows = [];
@@ -69,7 +73,10 @@ function normalizeCover(value) {
   return normalizeAsset(value).replace(/\.(?:jpe?g|png)$/i, ".webp");
 }
 
-const csvText = (await fs.readFile(sourcePath, "utf8")).replace(/^\uFEFF/, "");
+const [csvSource, groupsSource, archiveSource] = await Promise.all([
+  fs.readFile(sourcePath, "utf8"), fs.readFile(groupsPath, "utf8"), fs.readFile(archivePath, "utf8"),
+]);
+const csvText = csvSource.replace(/^\uFEFF/, "");
 const [headerRow, ...dataRows] = parseCsv(csvText);
 const headers = headerRow.map((header) => header.trim());
 const requiredHeaders = [
@@ -125,6 +132,15 @@ const records = dataRows.map((cells, rowIndex) => {
     fullVideo: normalizeAsset(source.full_video),
     cover: normalizeCover(source.cover),
     visual: source.visual.trim(),
+    summaryZh: (source.summary_zh || "").trim(),
+    summaryEn: (source.summary_en || "").trim(),
+    challengeZh: (source.challenge_zh || "").trim(),
+    challengeEn: (source.challenge_en || "").trim(),
+    processZh: (source.process_zh || "").trim(),
+    processEn: (source.process_en || "").trim(),
+    resultZh: (source.result_zh || "").trim(),
+    resultEn: (source.result_en || "").trim(),
+    tools: (source.tools || "").split("|").map((item) => item.trim()).filter(Boolean),
     featured: asBoolean(source.featured),
     enabled: asBoolean(source.enabled, true),
   };
@@ -146,4 +162,15 @@ if (duplicateSlugs.length) {
 
 const output = `// This file is generated from content/projects.csv. Do not edit it directly.\n\nexport const projectRows = ${JSON.stringify(enabledRows, null, 2)} as const;\n`;
 await fs.writeFile(outputPath, output, "utf8");
+const revision = contentRevision({ projectsCsv: csvSource, groupsJson: groupsSource, archiveJson: archiveSource });
+const groups = JSON.parse(groupsSource);
+const archive = JSON.parse(archiveSource);
+const contentState = {
+  revision,
+  projectCount: enabledRows.length,
+  groups: groups.map((group) => ({ id: group.id, index: group.index, title: group.title, label: group.label })),
+  categories: archive.categories,
+};
+await fs.mkdir(path.dirname(contentStatePath), { recursive: true });
+await fs.writeFile(contentStatePath, `${JSON.stringify(contentState, null, 2)}\n`, "utf8");
 console.log(`已同步 ${enabledRows.length} 个作品：content/projects.csv → app/project-rows.generated.ts`);

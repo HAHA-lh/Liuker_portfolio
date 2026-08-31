@@ -1,0 +1,88 @@
+{
+  "revision": "9e484d4568adddfbe9c15b67ee132de2a2c883bdcfa85a7f5d37b13ac7ca121e",
+  "projectCount": 42,
+  "groups": [
+    {
+      "id": "film-post",
+      "index": "01",
+      "title": {
+        "zh": "传统广告宣传片",
+        "en": "COMMERCIAL FILMS"
+      },
+      "label": "Commercial / Brand / Post"
+    },
+    {
+      "id": "aigc",
+      "index": "02",
+      "title": {
+        "zh": "AIGC视频制作",
+        "en": "AIGC VIDEO"
+      },
+      "label": "AI / CGI / Video Lab"
+    },
+    {
+      "id": "live-gifts",
+      "index": "03",
+      "title": {
+        "zh": "直播礼物",
+        "en": "LIVE GIFTS"
+      },
+      "label": "Motion / Reward / Live"
+    },
+    {
+      "id": "event-live",
+      "index": "04",
+      "title": {
+        "zh": "赛事直播",
+        "en": "EVENT LIVE"
+      },
+      "label": "Event / Broadcast / Package"
+    },
+    {
+      "id": "character-design",
+      "index": "05",
+      "title": {
+        "zh": "角色设计",
+        "en": "CHARACTER DESIGN"
+      },
+      "label": "Character / IP / Motion"
+    }
+  ],
+  "categories": [
+    {
+      "id": "advertisement",
+      "label": "ADVERTISEMENT",
+      "groupIds": [
+        "film-post"
+      ]
+    },
+    {
+      "id": "ai-cgi",
+      "label": "AI / CGI",
+      "groupIds": [
+        "aigc"
+      ]
+    },
+    {
+      "id": "live-gifts",
+      "label": "LIVE GIFTS",
+      "groupIds": [
+        "live-gifts"
+      ]
+    },
+    {
+      "id": "esports",
+      "label": "ESPORTS",
+      "groupIds": [
+        "event-live"
+      ]
+    },
+    {
+      "id": "character-design",
+      "label": "CHARACTER DESIGN",
+      "groupIds": [
+        "character-design"
+      ]
+    }
+  ]
+}

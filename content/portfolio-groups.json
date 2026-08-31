@@ -2,7 +2,10 @@
   {
     "id": "film-post",
     "index": "01",
-    "title": { "zh": "传统广告宣传片", "en": "COMMERCIAL FILMS" },
+    "title": {
+      "zh": "传统广告宣传片",
+      "en": "COMMERCIAL FILMS"
+    },
     "label": "Commercial / Brand / Post",
     "description": {
       "zh": "传统品牌广告与宣传片，从创意、剪辑到调色，以完整后期流程构建清晰有力的叙事。",
@@ -11,65 +14,99 @@
     "projectSlugs": [
       "afterglow",
       "neon-pulse",
+      "quiet-tides",
       "kinetic-type",
+      "orbital-form",
       "nocturne",
       "echo-cuts",
+      "glimmer-sequence",
+      "gravity-study",
       "city-breath",
+      "liquid-type",
+      "spectrum-memory",
+      "outline-of-wind",
+      "pixel-tides",
+      "night-signal",
+      "loop-garden",
       "last-frame"
     ]
   },
   {
     "id": "aigc",
     "index": "02",
-    "title": { "zh": "AIGC视频制作", "en": "AIGC VIDEO" },
+    "title": {
+      "zh": "AIGC视频制作",
+      "en": "AIGC VIDEO"
+    },
     "label": "AI / CGI / Video Lab",
     "description": {
       "zh": "以生成式影像、三维合成与视觉实验完成视频制作，拓展内容生产与画面表达的边界。",
       "en": "Generative imagery, CGI compositing and visual experiments developed into complete video work."
     },
     "projectSlugs": [
-      "orbital-form",
-      "gravity-study",
-      "spectrum-memory",
-      "outline-of-wind",
-      "material-study"
+      "1"
     ]
   },
   {
     "id": "live-gifts",
     "index": "03",
-    "title": { "zh": "直播礼物", "en": "LIVE GIFTS" },
+    "title": {
+      "zh": "直播礼物",
+      "en": "LIVE GIFTS"
+    },
     "label": "Motion / Reward / Live",
     "description": {
       "zh": "围绕直播场景打造高识别、强节奏的动态礼物，让互动瞬间更有情绪和记忆点。",
       "en": "High-impact motion rewards designed for expressive, memorable live interactions."
     },
     "projectSlugs": [
-      "glimmer-sequence",
-      "liquid-type",
-      "pixel-tides",
-      "night-signal",
-      "loop-garden"
+      "project-2026-08-31-01",
+      "8",
+      "588-2",
+      "project-2026-08-31-07",
+      "project-2026-08-31-09",
+      "project-2026-08-31-11",
+      "2",
+      "project-2026-08-31-15",
+      "project-2026-08-31-17",
+      "project-2026-08-31-19",
+      "3",
+      "project-2026-08-31-23",
+      "project-2026-08-31-25",
+      "project-2026-08-31-27",
+      "2-2",
+      "project-2026-08-31-31",
+      "project-2026-08-31-33",
+      "project-2026-08-31-35",
+      "2-3",
+      "project-2026-08-31-39",
+      "project-2026-08-31-41",
+      "pv"
     ]
   },
   {
     "id": "event-live",
     "index": "04",
-    "title": { "zh": "赛事直播", "en": "EVENT LIVE" },
+    "title": {
+      "zh": "赛事直播",
+      "en": "EVENT LIVE"
+    },
     "label": "Event / Broadcast / Package",
     "description": {
       "zh": "围绕赛事与直播场景制作片头、包装和播出内容，强化现场节奏、信息传达与品牌识别。",
       "en": "Openers, broadcast packages and live content designed for pace, clarity and event identity."
     },
     "projectSlugs": [
-      "quiet-tides",
       "morning-haze"
     ]
   },
   {
     "id": "character-design",
     "index": "05",
-    "title": { "zh": "角色设计", "en": "CHARACTER DESIGN" },
+    "title": {
+      "zh": "角色设计",
+      "en": "CHARACTER DESIGN"
+    },
     "label": "Character / IP / Motion",
     "description": {
       "zh": "从角色造型、视觉设定到动态呈现，建立可用于内容传播与品牌表达的角色形象。",

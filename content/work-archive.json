@@ -1,0 +1,10 @@
+{
+  "path": "/work",
+  "categories": [
+    { "id": "advertisement", "label": "ADVERTISEMENT", "groupIds": ["film-post"] },
+    { "id": "ai-cgi", "label": "AI / CGI", "groupIds": ["aigc"] },
+    { "id": "live-gifts", "label": "LIVE GIFTS", "groupIds": ["live-gifts"] },
+    { "id": "esports", "label": "ESPORTS", "groupIds": ["event-live"] },
+    { "id": "character-design", "label": "CHARACTER DESIGN", "groupIds": ["character-design"] }
+  ]
+}
