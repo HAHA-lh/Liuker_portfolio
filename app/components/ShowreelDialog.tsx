@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { SHOWREEL_VIDEO_SRC } from "../hero-media";
+import { MEDIA_PRIORITY, SHOWREEL_VIDEO_SRC, unlockMediaPriority } from "../hero-media";
 import { useLanguage } from "../language";
 
 export function ShowreelDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -13,6 +13,8 @@ export function ShowreelDialog({ open, onClose }: { open: boolean; onClose: () =
 
   useEffect(() => {
     if (!open) return;
+    unlockMediaPriority(MEDIA_PRIORITY.showreel);
+    const video = videoRef.current;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
@@ -22,7 +24,7 @@ export function ShowreelDialog({ open, onClose }: { open: boolean; onClose: () =
     return () => {
       document.body.classList.remove("modal-open");
       window.removeEventListener("keydown", onKeyDown);
-      videoRef.current?.pause();
+      video?.pause();
     };
   }, [onClose, open]);
 
@@ -64,6 +66,7 @@ export function ShowreelDialog({ open, onClose }: { open: boolean; onClose: () =
               autoPlay
               playsInline
               preload="metadata"
+              onLoadedData={() => unlockMediaPriority(MEDIA_PRIORITY.archive)}
             />
           </motion.div>
         </motion.div>

@@ -50,6 +50,17 @@
 .editorial-motion-home .editorial-project-media { overflow: visible; background: transparent; }
 .editorial-motion-home .editorial-project-media::after { content: none; }
 .editorial-motion-home .editorial-project-media img { transition: none; }
+.editorial-motion-home .editorial-project-media .priority-preview-video {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 320ms ease;
+}
+.editorial-motion-home .editorial-project-media .priority-preview-video.is-playing { opacity: 1; }
 .editorial-motion-home .editorial-project-link:hover .editorial-project-media img { transform: none; }
 .editorial-motion-home .editorial-project-link:hover { transform: none; }
 .editorial-motion-home .editorial-project-title-block h3 { letter-spacing: inherit; line-height: 1.08; }

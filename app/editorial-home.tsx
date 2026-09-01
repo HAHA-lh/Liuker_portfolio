@@ -15,17 +15,19 @@ import { EditorialHeader } from "./components/EditorialHeader";
 import { BorderGlowLink } from "./components/BorderGlowLink";
 import { ExperienceHeading } from "./components/ExperienceHeading";
 import { EditorialFocus } from "./components/EditorialFocus";
+import { PriorityPreviewVideo } from "./components/PriorityPreviewVideo";
 import LoadingScreen from "./components/LoadingScreen";
 import { CounterMediaReveal, DualLayerHeading, MediaScrollExit, ScrollParallax, SectionTransition, SplitLineReveal, mediaDirections, motionContext, scrubMotion } from "./components/EditorialMotion";
 import { ShowreelDialog } from "./components/ShowreelDialog";
 import { projects, siteContent, t } from "./content";
 import {
   getPreparedHeroVideoSource,
-  HERO_FRAME_READY_EVENT,
+  MEDIA_PRIORITY,
   HERO_MEDIA_PREPARED_EVENT,
   HERO_POSTER_AVIF,
   HERO_POSTER_WEBP,
   selectHeroVideoSource,
+  markHeroFrameReady,
 } from "./hero-media";
 import { useLanguage } from "./language";
 import { useTheme } from "./theme";
@@ -115,7 +117,7 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
 
   const notifyFrameReady = useCallback(() => {
     setFrameReady(true);
-    document.dispatchEvent(new Event(HERO_FRAME_READY_EVENT));
+    markHeroFrameReady();
   }, []);
 
   const markNextPresentedFrame = useCallback((video: ScrubbableVideo) => {
@@ -400,7 +402,11 @@ export function EditorialHome() {
   });
   const closeShowreel = useCallback(() => setShowreelOpen(false), []);
   const selectedProjects = useMemo(() => {
-    const featured = projects.filter((project) => project.featured);
+    const featured = projects.filter((project) => project.featured).sort((left, right) => {
+      const leftOrder = left.featuredOrder ?? Number.MAX_SAFE_INTEGER;
+      const rightOrder = right.featuredOrder ?? Number.MAX_SAFE_INTEGER;
+      return leftOrder - rightOrder;
+    });
     const remaining = projects.filter((project) => !project.featured);
     return [...featured, ...remaining].slice(0, 6);
   }, []);
@@ -456,6 +462,13 @@ export function EditorialHome() {
                   <CounterMediaReveal direction={mediaDirections[index % 4]} background={project.visual}>
                   {project.poster ? (
                     <img src={project.poster} alt="" loading="lazy" decoding="async" />
+                  ) : null}
+                  {project.previewVideo ? (
+                    <PriorityPreviewVideo
+                      src={project.previewVideo}
+                      poster={project.poster || undefined}
+                      releaseNextPriority={index === 0 ? MEDIA_PRIORITY.capabilities : undefined}
+                    />
                   ) : null}
                   </CounterMediaReveal>
                 </MediaScrollExit>

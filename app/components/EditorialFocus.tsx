@@ -4,6 +4,11 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Link from "next/link";
 import { useLayoutEffect, useRef } from "react";
+import {
+  MEDIA_PRIORITY,
+  unlockMediaPriority,
+  whenMediaPriorityReady,
+} from "../hero-media";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -66,10 +71,21 @@ export function EditorialFocus({ items, title, viewLabel }: EditorialFocusProps)
         const animatedTargets = [heading, headingIndex, ...copies, ...mediaMasks, ...mediaContents];
         const listenerCleanups: Array<() => void> = [];
         let activeIndex = -1;
+        let capabilityPriorityReady = false;
+        let capabilityNearViewport = false;
 
         const hydrateVideo = (video: HTMLVideoElement) => {
           if (video.getAttribute("src") || !video.dataset.src) return;
           video.src = video.dataset.src;
+          video.load();
+        };
+
+        const releaseVideo = (video: HTMLVideoElement) => {
+          video.pause();
+          video.closest<HTMLElement>(".motion-focus-media-stage")?.classList.remove("is-video-ready");
+          if (!video.getAttribute("src")) return;
+          video.removeAttribute("src");
+          video.preload = "none";
           video.load();
         };
 
@@ -87,8 +103,11 @@ export function EditorialFocus({ items, title, viewLabel }: EditorialFocusProps)
 
           videos.forEach((video) => {
             const videoIndex = Number(video.dataset.index);
-            if (videoIndex === activeIndex || videoIndex === activeIndex + 1) hydrateVideo(video);
-            if (videoIndex === activeIndex && shouldPlay && document.visibilityState === "visible") {
+            const canUseNetwork = capabilityPriorityReady && capabilityNearViewport;
+            const shouldKeepLoaded = Math.abs(videoIndex - activeIndex) <= 1;
+            if (canUseNetwork && shouldKeepLoaded) hydrateVideo(video);
+            else if (!shouldKeepLoaded) releaseVideo(video);
+            if (canUseNetwork && videoIndex === activeIndex && shouldPlay && document.visibilityState === "visible") {
               void video.play().catch(() => undefined);
             } else {
               video.pause();
@@ -100,14 +119,43 @@ export function EditorialFocus({ items, title, viewLabel }: EditorialFocusProps)
           const stage = video.closest<HTMLElement>(".motion-focus-media-stage");
           if (!stage) return;
           const showVideo = () => stage.classList.add("is-video-ready");
-          const showPoster = () => stage.classList.remove("is-video-ready");
+          const releaseShowreel = () => unlockMediaPriority(MEDIA_PRIORITY.showreel);
+          const showPoster = () => {
+            stage.classList.remove("is-video-ready");
+            releaseShowreel();
+          };
           video.addEventListener("playing", showVideo);
+          video.addEventListener("loadeddata", releaseShowreel, { once: true });
           video.addEventListener("error", showPoster);
           listenerCleanups.push(() => {
             video.removeEventListener("playing", showVideo);
+            video.removeEventListener("loadeddata", releaseShowreel);
             video.removeEventListener("error", showPoster);
           });
         });
+
+        const proximityObserver = new IntersectionObserver(
+          ([entry]) => {
+            capabilityNearViewport = entry.isIntersecting;
+            if (capabilityNearViewport) {
+              // Direct anchors and very fast scrolling should never leave the
+              // requested section waiting behind speculative off-screen work.
+              unlockMediaPriority(MEDIA_PRIORITY.capabilities);
+              syncActive(Math.max(0, activeIndex), true, true);
+            } else {
+              videos.forEach(releaseVideo);
+            }
+          },
+          { rootMargin: "900px 0px", threshold: 0.01 },
+        );
+        proximityObserver.observe(root);
+        listenerCleanups.push(() => proximityObserver.disconnect());
+
+        const stopPriorityWait = whenMediaPriorityReady(MEDIA_PRIORITY.capabilities, () => {
+          capabilityPriorityReady = true;
+          if (capabilityNearViewport) syncActive(Math.max(0, activeIndex), true, true);
+        });
+        listenerCleanups.push(stopPriorityWait);
 
         links.forEach((link) => {
           const cursor = link.querySelector<HTMLElement>(".motion-focus-cursor");
@@ -216,10 +264,7 @@ export function EditorialFocus({ items, title, viewLabel }: EditorialFocusProps)
           listenerCleanups.forEach((cleanup) => cleanup());
           animatedTargets.forEach((target) => target.style.removeProperty("will-change"));
           videos.forEach((video) => {
-            video.pause();
-            video.removeAttribute("src");
-            video.load();
-            video.closest<HTMLElement>(".motion-focus-media-stage")?.classList.remove("is-video-ready");
+            releaseVideo(video);
           });
           root.removeAttribute("data-motion-enhanced");
           panels.forEach((panel) => {

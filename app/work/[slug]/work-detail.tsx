@@ -80,7 +80,8 @@ export function WorkDetail({ project, nextProject }: { project: Project; nextPro
             controls
             playsInline
             preloadWhenVisible="metadata"
-            rootMargin="700px 0px"
+            rootMargin="180px 0px"
+            unloadOnExit
           />
         </div>
       </section>

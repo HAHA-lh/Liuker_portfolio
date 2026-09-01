@@ -13,6 +13,17 @@ export const SHOWREEL_VIDEO_SRC =
 
 export const HERO_MEDIA_PREPARED_EVENT = "liuker:hero-media-prepared";
 export const HERO_FRAME_READY_EVENT = "liuker:hero-frame-ready";
+export const MEDIA_PRIORITY_EVENT = "liuker:media-priority";
+
+export const MEDIA_PRIORITY = {
+  hero: 0,
+  selected: 1,
+  capabilities: 2,
+  showreel: 3,
+  archive: 4,
+} as const;
+
+export type MediaPriority = (typeof MEDIA_PRIORITY)[keyof typeof MEDIA_PRIORITY];
 
 type NavigatorWithPerformanceHints = Navigator & {
   deviceMemory?: number;
@@ -31,7 +42,43 @@ type PreparedHeroMedia = {
 declare global {
   interface Window {
     __LIUKER_PREPARED_HERO_MEDIA__?: PreparedHeroMedia;
+    __LIUKER_HERO_FRAME_READY__?: boolean;
+    __LIUKER_MEDIA_PRIORITY__?: MediaPriority;
   }
+}
+
+export function currentMediaPriority() {
+  if (typeof window === "undefined") return MEDIA_PRIORITY.hero;
+  return window.__LIUKER_MEDIA_PRIORITY__ ?? MEDIA_PRIORITY.hero;
+}
+
+export function unlockMediaPriority(priority: MediaPriority) {
+  if (typeof window === "undefined" || currentMediaPriority() >= priority) return;
+  window.__LIUKER_MEDIA_PRIORITY__ = priority;
+  document.dispatchEvent(new CustomEvent<number>(MEDIA_PRIORITY_EVENT, { detail: priority }));
+}
+
+export function whenMediaPriorityReady(priority: MediaPriority, callback: () => void) {
+  if (typeof window === "undefined") return () => undefined;
+  if (currentMediaPriority() >= priority) {
+    callback();
+    return () => undefined;
+  }
+  const onPriority = (event: Event) => {
+    if ((event as CustomEvent<number>).detail < priority) return;
+    document.removeEventListener(MEDIA_PRIORITY_EVENT, onPriority);
+    callback();
+  };
+  document.addEventListener(MEDIA_PRIORITY_EVENT, onPriority);
+  return () => document.removeEventListener(MEDIA_PRIORITY_EVENT, onPriority);
+}
+
+export function markHeroFrameReady() {
+  if (typeof window === "undefined") return;
+  const isFirstReadyFrame = !window.__LIUKER_HERO_FRAME_READY__;
+  window.__LIUKER_HERO_FRAME_READY__ = true;
+  unlockMediaPriority(MEDIA_PRIORITY.selected);
+  if (isFirstReadyFrame) document.dispatchEvent(new Event(HERO_FRAME_READY_EVENT));
 }
 
 export function selectHeroVideoSource() {
