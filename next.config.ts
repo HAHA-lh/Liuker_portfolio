@@ -12,8 +12,15 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
           // Baseline restrictions without breaking Next's inline hydration,
-          // animation styles, WebGL, or the hero's in-memory video Blob.
+          // animation styles, WebGL, or native same-origin media streaming.
           { key: "Content-Security-Policy", value: "base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'" },
+        ],
+      },
+      {
+        source: "/media/:path*",
+        has: [{ type: "query", key: "v", value: ".+" }],
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
         ],
       },
       {

@@ -3423,15 +3423,15 @@ html[data-site-loading="true"] body {
   }
 }
 
-/* Reference-driven loader: the supplied 75-frame artwork stays central while
-   the lightweight UI below it reports the real hero-video download progress. */
+/* Reference-driven loader: lightweight H.264 artwork stays central while the
+   UI below it reports poster and first-frame readiness. */
 .liuker-loader {
   background: #000;
   color: #dce8ff;
   transition:
-    opacity 680ms cubic-bezier(0.65, 0, 0.35, 1),
-    transform 680ms cubic-bezier(0.65, 0, 0.35, 1),
-    filter 680ms cubic-bezier(0.65, 0, 0.35, 1);
+    opacity 420ms cubic-bezier(0.65, 0, 0.35, 1),
+    transform 420ms cubic-bezier(0.65, 0, 0.35, 1),
+    filter 420ms cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 .liuker-loader-stage {
@@ -3445,6 +3445,7 @@ html[data-site-loading="true"] body {
 
 .liuker-loader-art,
 .liuker-loader-art picture,
+.liuker-loader-art video,
 .liuker-loader-art img {
   display: block;
   width: 100%;
@@ -3456,12 +3457,16 @@ html[data-site-loading="true"] body {
   inset: 0;
   opacity: 0;
   transform: scale(0.96);
-  animation: loader-reference-enter 680ms 60ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: loader-reference-enter 420ms 40ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.liuker-loader-art video,
 .liuker-loader-art img {
   object-fit: contain;
 }
+
+.liuker-loader-motion { display: block; }
+.liuker-loader-still { display: none !important; }
 
 @keyframes loader-reference-enter {
   to { opacity: 1; transform: scale(1); }
@@ -3476,7 +3481,7 @@ html[data-site-loading="true"] body {
   gap: 0.65rem;
   opacity: 0;
   transform: translate3d(-50%, 8px, 0);
-  animation: loader-reference-progress 620ms 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: loader-reference-progress 380ms 120ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes loader-reference-progress {
@@ -3519,7 +3524,7 @@ html[data-site-loading="true"] body {
 .liuker-loader.phase-exit {
   opacity: 0;
   transform: scale(1.025);
-  filter: blur(12px);
+  filter: blur(6px);
 }
 
 @media (max-width: 640px) {
@@ -3547,6 +3552,8 @@ html[data-site-loading="true"] body {
 
   .liuker-loader-art { transform: none !important; }
   .liuker-loader-progress { transform: translateX(-50%) !important; }
+  .liuker-loader-motion { display: none !important; }
+  .liuker-loader-still { display: block !important; }
 }
 
 /* Final homepage layout pass: gallery grid, editorial feature and compact footer. */
