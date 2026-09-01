@@ -113,8 +113,8 @@ export const projectRows = [
     "resultZh": "",
     "resultEn": "",
     "tools": [],
-    "featured": false,
-    "featuredOrder": null,
+    "featured": true,
+    "featuredOrder": 6,
     "enabled": true
   },
   {
@@ -171,8 +171,8 @@ export const projectRows = [
     "resultZh": "",
     "resultEn": "",
     "tools": [],
-    "featured": true,
-    "featuredOrder": 6,
+    "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
