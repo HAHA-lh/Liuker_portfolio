@@ -142,6 +142,7 @@ const records = dataRows.map((cells, rowIndex) => {
     resultEn: (source.result_en || "").trim(),
     tools: (source.tools || "").split("|").map((item) => item.trim()).filter(Boolean),
     featured: asBoolean(source.featured),
+    featuredOrder: Number.parseInt(source.featured_order, 10) || null,
     enabled: asBoolean(source.enabled, true),
   };
 });

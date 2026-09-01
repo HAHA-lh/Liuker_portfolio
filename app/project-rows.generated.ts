@@ -27,6 +27,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": true,
+    "featuredOrder": 1,
     "enabled": true
   },
   {
@@ -54,7 +55,8 @@ export const projectRows = [
     "resultZh": "",
     "resultEn": "",
     "tools": [],
-    "featured": true,
+    "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -83,6 +85,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": true,
+    "featuredOrder": 3,
     "enabled": true
   },
   {
@@ -110,7 +113,8 @@ export const projectRows = [
     "resultZh": "",
     "resultEn": "",
     "tools": [],
-    "featured": true,
+    "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -139,6 +143,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": true,
+    "featuredOrder": 5,
     "enabled": true
   },
   {
@@ -167,6 +172,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": true,
+    "featuredOrder": 6,
     "enabled": true
   },
   {
@@ -195,6 +201,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -223,6 +230,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -251,6 +259,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -279,6 +288,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -307,6 +317,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -335,6 +346,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -363,6 +375,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -391,6 +404,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -419,6 +433,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -447,6 +462,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -475,6 +491,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -502,7 +519,8 @@ export const projectRows = [
     "resultZh": "",
     "resultEn": "",
     "tools": [],
-    "featured": false,
+    "featured": true,
+    "featuredOrder": 2,
     "enabled": true
   },
   {
@@ -531,6 +549,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -559,6 +578,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -587,6 +607,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -615,6 +636,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -643,6 +665,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -671,6 +694,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -699,6 +723,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -727,6 +752,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -755,6 +781,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -783,6 +810,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -811,6 +839,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -839,6 +868,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -867,6 +897,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -895,6 +926,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -923,6 +955,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -951,6 +984,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -979,6 +1013,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -1007,6 +1042,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -1035,6 +1071,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -1063,6 +1100,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -1091,6 +1129,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -1119,6 +1158,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -1147,6 +1187,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -1175,6 +1216,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   },
   {
@@ -1203,6 +1245,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": true,
+    "featuredOrder": 4,
     "enabled": true
   },
   {
@@ -1231,6 +1274,7 @@ export const projectRows = [
     "resultEn": "",
     "tools": [],
     "featured": false,
+    "featuredOrder": null,
     "enabled": true
   }
 ] as const;

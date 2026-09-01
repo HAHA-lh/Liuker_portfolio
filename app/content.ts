@@ -24,6 +24,7 @@ export type Project = {
   poster: string;
   visual: string;
   featured: boolean;
+  featuredOrder: number | null;
 };
 
 const media = {
@@ -109,7 +110,7 @@ export const siteContent = {
   ],
 } as const;
 
-const baseProjects: Project[] = [
+const baseProjects: Array<Omit<Project, "featuredOrder">> = [
   {
     slug: "afterglow",
     title: { zh: "余晖", en: "Afterglow" },
@@ -322,6 +323,7 @@ export const projects: Project[] = projectRows.map((row) => {
     poster: row.cover || template.poster,
     visual: row.visual || template.visual,
     featured: row.featured,
+    featuredOrder: row.featuredOrder,
   };
 });
 
