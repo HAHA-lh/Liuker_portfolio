@@ -96,29 +96,156 @@
 .editorial-motion-home a:focus-visible, .editorial-motion-home button:focus-visible { outline: 2px solid var(--brand-red); outline-offset: 5px; }
 .editorial-motion-home .editorial-project-link:focus-visible .motion-text-line { transform: none !important; }
 
-/* Same four disciplines, one quiet fixed editorial window. */
-.editorial-motion-home .motion-focus { height: 280svh; padding-block: 0; }
-.motion-focus-sticky { position: sticky; top: 0; height: 100svh; padding-block: clamp(6rem, 12svh, 10rem) 3rem; }
-.motion-focus-sticky .editorial-section-head { margin-bottom: clamp(2rem, 5svh, 4rem); }
-.motion-focus-heading {
-  --focus-heading-fade: 145%;
-  display: block;
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(var(--focus-heading-fade) - 40%), transparent var(--focus-heading-fade));
-  mask-image: linear-gradient(to bottom, #000 calc(var(--focus-heading-fade) - 40%), transparent var(--focus-heading-fade));
+/* Capabilities: one continuous desktop story, a complete static list everywhere else. */
+.editorial-motion-home .motion-focus { height: auto; padding-block: clamp(6rem, 10vw, 10rem); }
+.motion-focus-sticky { position: relative; height: auto; padding-block: 0; }
+.motion-focus-head.editorial-section-head { align-items: end; margin-bottom: clamp(3rem, 6vw, 6rem); }
+.motion-focus-heading { display: block; max-width: 13ch; text-wrap: balance; }
+.motion-focus-window { display: grid; gap: clamp(3.5rem, 7vw, 7rem); }
+.motion-focus-panel {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(220px, .62fr) minmax(0, 1.38fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 6rem);
+  padding-block: clamp(2rem, 4vw, 4rem);
+  border-bottom: 1px solid var(--line);
 }
-.motion-focus-window { position: relative; height: 42svh; min-height: 240px; }
-.motion-focus-panel { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 4vw; pointer-events: none; }
-.motion-focus-label { overflow: hidden; padding-block: .15em; }
-.motion-focus-label-inner { font-size: clamp(2.5rem, 5vw, 6rem); font-weight: 500; line-height: 1.08; letter-spacing: -.05em; }
-.motion-focus-media { aspect-ratio: 16 / 10; height: auto; max-height: 42svh; }
-.motion-focus-progress { display: flex; gap: 1rem; margin-top: 2rem; }
-.motion-focus-step { flex: 1; max-width: 90px; padding-top: 1rem; border-top: 1px solid var(--line); font-size: .7rem; letter-spacing: .15em; color: var(--text-muted); transition: color var(--motion-fast), border-color var(--motion-fast); }
-.motion-focus-step.is-current { border-color: var(--brand-red); color: var(--brand-red); }
-.editorial-motion-home .motion-focus:not([data-motion-enhanced]) { height: auto; padding-block: 5rem; }
-.motion-focus:not([data-motion-enhanced]) .motion-focus-sticky { position: static; height: auto; padding-block: 0; }
-.motion-focus:not([data-motion-enhanced]) .motion-focus-window { height: auto; }
-.motion-focus:not([data-motion-enhanced]) .motion-focus-panel { position: relative; padding-block: 1.5rem; border-bottom: 1px solid var(--line); }
-.motion-focus:not([data-motion-enhanced]) .motion-focus-progress { display: none; }
+.motion-focus-copy-clip { min-width: 0; overflow: hidden; }
+.motion-focus-copy { display: grid; align-content: center; min-width: 0; }
+.motion-focus-panel-index,
+.motion-focus-subtitle,
+.motion-focus-project { font-size: .6875rem; line-height: 1.35; letter-spacing: .15em; text-transform: uppercase; }
+.motion-focus-panel-index { margin-bottom: clamp(2rem, 4svh, 3.5rem); color: var(--text-muted); }
+.motion-focus-subtitle { margin-bottom: .9rem; color: var(--brand-red); }
+.motion-focus-copy h3 {
+  max-width: 7ch;
+  font-size: clamp(2.8rem, 5.4vw, 7rem);
+  font-weight: 600;
+  line-height: .88;
+  letter-spacing: -.06em;
+}
+.motion-focus-project { margin-top: clamp(1.5rem, 3svh, 2.5rem); color: var(--text-muted); text-transform: none; }
+.motion-focus-media-link { display: block; min-width: 0; color: inherit; text-decoration: none; }
+.motion-focus-media-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: 260px;
+  overflow: hidden;
+  background: transparent;
+}
+.motion-focus-media-mask,
+.motion-focus-media-content,
+.motion-focus-media-parallax { position: relative; width: 100%; height: 100%; }
+.motion-focus-media-mask { overflow: hidden; }
+.motion-focus-media-content {
+  background-color: color-mix(in srgb, var(--mist) 5%, var(--ink));
+  transform-origin: center;
+}
+.motion-focus-media-parallax { overflow: hidden; }
+.motion-focus-poster,
+.motion-focus-image,
+.motion-focus-video {
+  position: absolute;
+  inset: -1.5%;
+  display: block;
+  width: 103%;
+  height: 103%;
+  object-fit: cover;
+  transition: transform 700ms cubic-bezier(.2, .75, .2, 1), opacity 280ms ease;
+}
+.motion-focus-poster { z-index: 0; }
+.motion-focus-image { z-index: 1; }
+.motion-focus-video { z-index: 2; opacity: 0; }
+.motion-focus-media-stage.is-video-ready .motion-focus-video { opacity: 1; }
+.motion-focus-media-link:is(:hover, :focus-visible) :is(.motion-focus-poster, .motion-focus-image, .motion-focus-video) { transform: scale(1.018); }
+.motion-focus-cursor { display: none; }
+.motion-focus-progress { display: none; }
+
+@media (min-width: 1024px) {
+  .editorial-motion-home .motion-focus[data-motion-enhanced] { height: 460svh; padding-block: 0; }
+  .motion-focus[data-motion-enhanced] .motion-focus-sticky {
+    position: sticky;
+    top: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    height: 100svh;
+    padding-block: clamp(5.5rem, 8svh, 8rem) clamp(1.5rem, 3svh, 3rem);
+  }
+  .motion-focus[data-motion-enhanced] .motion-focus-head { margin-bottom: clamp(1.1rem, 2.2svh, 2.25rem); }
+  .motion-focus[data-motion-enhanced] .motion-focus-heading {
+    max-width: 12ch;
+    font-size: clamp(4rem, 7.4vw, 8.5rem);
+    line-height: .82;
+    letter-spacing: -.07em;
+  }
+  .motion-focus[data-motion-enhanced] .motion-focus-window { position: relative; display: block; min-height: 0; }
+  .motion-focus[data-motion-enhanced] .motion-focus-panel {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: minmax(250px, .64fr) minmax(0, 1.36fr);
+    align-items: center;
+    gap: clamp(2rem, 3.5vw, 5rem);
+    padding: 0;
+    border: 0;
+    pointer-events: none;
+  }
+  .motion-focus[data-motion-enhanced] .motion-focus-panel.is-current .motion-focus-media-link { pointer-events: auto; }
+  .motion-focus[data-motion-enhanced] .motion-focus-copy-clip {
+    display: flex;
+    align-items: center;
+    height: clamp(240px, 36svh, 470px);
+  }
+  .motion-focus[data-motion-enhanced] .motion-focus-copy { width: 100%; }
+  .motion-focus[data-motion-enhanced] .motion-focus-copy h3 { font-size: clamp(4rem, 6vw, 7.6rem); }
+  .motion-focus[data-motion-enhanced] .motion-focus-media-link {
+    justify-self: end;
+    width: min(58vw, 980px);
+    height: clamp(330px, 52svh, 700px);
+  }
+  .motion-focus[data-motion-enhanced] .motion-focus-panel:nth-child(2n) .motion-focus-media-link { margin-right: min(-2vw, -1.25rem); }
+  .motion-focus[data-motion-enhanced] .motion-focus-media-stage { height: 100%; min-height: 0; aspect-ratio: auto; }
+  .motion-focus[data-motion-enhanced] .motion-focus-media-link { cursor: none; }
+  .motion-focus[data-motion-enhanced] .motion-focus-cursor {
+    position: absolute;
+    z-index: 5;
+    top: 0;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: 6.25rem;
+    height: 6.25rem;
+    border-radius: 50%;
+    background: var(--brand-red);
+    color: #111;
+    font-size: .625rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    opacity: 0;
+    scale: .76;
+    transform: translate(-50%, -50%);
+    transition: opacity 180ms ease, scale 240ms ease;
+    pointer-events: none;
+  }
+  .motion-focus[data-motion-enhanced] .motion-focus-media-link.is-pointer-active .motion-focus-cursor { opacity: 1; scale: 1; }
+  .motion-focus[data-motion-enhanced] .motion-focus-progress {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(1rem, 2vw, 2.5rem);
+    margin-top: clamp(.75rem, 1.6svh, 1.5rem);
+    padding-top: 1rem;
+  }
+  .motion-focus-progress-track { position: absolute; top: 0; left: 0; width: 100%; height: 1px; background: var(--line); overflow: hidden; }
+  .motion-focus-progress-fill { display: block; width: 100%; height: 100%; background: var(--brand-red); transform: scaleX(0); transform-origin: left; }
+  .motion-focus-step { display: flex; align-items: baseline; gap: .65rem; min-width: 0; color: var(--text-muted); transition: color var(--motion-fast); }
+  .motion-focus-step > span { font-size: .6875rem; font-weight: 600; letter-spacing: .15em; }
+  .motion-focus-step small { overflow: hidden; font-size: .5625rem; letter-spacing: .1em; text-overflow: ellipsis; white-space: nowrap; }
+  .motion-focus-step.is-current { color: var(--brand-red); }
+}
 
 /* Portrait / foreground / graphic / quiet outlined background. */
 .editorial-motion-home .editorial-about { position: relative; isolation: isolate; }
@@ -179,11 +306,9 @@
   .editorial-motion-home .editorial-work-feed { gap: 3.5rem; }
   .editorial-motion-home .editorial-project-meta { grid-template-columns: 24px minmax(0, 1fr); }
   .editorial-motion-home .editorial-project-cta { grid-column: 2; }
-  .motion-focus-sticky { padding-top: 6rem; }
-  .motion-focus-window { height: 54svh; }
-  .motion-focus-panel { grid-template-columns: 1fr; grid-template-rows: 16svh 1fr; gap: 1rem; align-items: start; }
-  .motion-focus-label-inner { font-size: clamp(2.5rem, 9vw, 4.5rem); }
-  .motion-focus-media { max-height: 33svh; aspect-ratio: 16 / 10; }
+  .motion-focus-panel { grid-template-columns: 1fr; gap: 1.5rem; align-items: start; }
+  .motion-focus-copy h3 { max-width: 8ch; font-size: clamp(2.8rem, 14vw, 5.5rem); }
+  .motion-focus-media-stage { min-height: 220px; }
   .editorial-motion-home .editorial-about-grid { grid-template-columns: 1fr; gap: 4rem; }
   .motion-about-image-stack { width: 80%; justify-self: end; }
   .motion-about-backtype { top: 35%; font-size: 28vw; }
@@ -193,7 +318,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .motion-focus-heading { -webkit-mask-image: none; mask-image: none; }
   .editorial-motion-home .editorial-scroll-hero { height: 100svh; }
   .editorial-motion-home .motion-focus { height: auto; padding-block: 5rem; }
   .motion-focus-sticky { position: static; height: auto; padding-block: 0; }

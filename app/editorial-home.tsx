@@ -36,10 +36,10 @@ const aboutCopy = {
 };
 
 const disciplines = [
-  { zh: "创意方向", en: "Creative Direction" },
-  { zh: "影像与剪辑", en: "Film / Edit" },
-  { zh: "AI 与 CGI", en: "AI / CGI" },
-  { zh: "动态设计", en: "Motion" },
+  { id: "01", zh: "创意方向", en: "CREATIVE DIRECTION", projectIndex: 0 },
+  { id: "02", zh: "影像与剪辑", en: "FILM / EDITING", projectIndex: 1 },
+  { id: "03", zh: "AI 与 CGI", en: "AI / CGI", projectIndex: 4 },
+  { id: "04", zh: "动态设计", en: "MOTION DESIGN", projectIndex: 8 },
 ];
 
 type ScrubbableVideo = HTMLVideoElement & {
@@ -404,9 +404,21 @@ export function EditorialHome() {
     const remaining = projects.filter((project) => !project.featured);
     return [...featured, ...remaining].slice(0, 6);
   }, []);
-  const focusItems = useMemo(() => disciplines.map((item, index) => {
-    const project = projects[[0, 1, 4, 8][index]];
-    return { title: item[language], poster: project.poster, visual: project.visual };
+  const focusItems = useMemo(() => disciplines.map((item) => {
+    const project = projects[item.projectIndex];
+    return {
+      id: item.id,
+      title: item.zh,
+      subtitle: item.en,
+      projectLabel: `${t(project.title, language)} · ${project.year}`,
+      href: `/work/${project.slug}`,
+      media: {
+        type: project.previewVideo ? "video" as const : "image" as const,
+        src: project.previewVideo || project.poster,
+        poster: project.poster,
+        background: project.visual,
+      },
+    };
   }), [language]);
 
   return (
@@ -464,7 +476,11 @@ export function EditorialHome() {
         </div>
       </section>
 
-      <EditorialFocus title={language === "zh" ? "能力展示：能做什么" : "Capabilities: What I Do"} items={focusItems} />
+      <EditorialFocus
+        title={language === "zh" ? "能力展示：能做什么" : "Capabilities: What I Do"}
+        items={focusItems}
+        viewLabel={language === "zh" ? "查看案例" : "VIEW CASE"}
+      />
 
       <section id="about" className="editorial-section editorial-about">
         <SectionTransition className="editorial-section-head">
