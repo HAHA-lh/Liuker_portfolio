@@ -9,6 +9,13 @@ import {
   unlockMediaPriority,
   whenMediaPriorityReady,
 } from "../hero-media";
+import {
+  playExclusivePreview,
+  readMediaRuntimePolicy,
+  releaseExclusivePreview,
+  subscribeMediaRuntimePolicy,
+  subscribePreviewScrollState,
+} from "../media-runtime";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -49,7 +56,7 @@ export function EditorialFocus({ items, title, viewLabel }: EditorialFocusProps)
         const panels = Array.from(root.querySelectorAll<HTMLElement>(".motion-focus-panel"));
         const videos = Array.from(root.querySelectorAll<HTMLVideoElement>(".motion-focus-video"));
         const links = panels.map((panel) => panel.querySelector<HTMLAnchorElement>(".motion-focus-media-link")!);
-        const pauseVideos = () => videos.forEach((video) => video.pause());
+        const pauseVideos = () => videos.forEach((video) => releaseExclusivePreview(video));
 
         if (!context.conditions?.desktop || context.conditions?.reduced) {
           root.removeAttribute("data-motion-enhanced");
@@ -73,6 +80,8 @@ export function EditorialFocus({ items, title, viewLabel }: EditorialFocusProps)
         let activeIndex = -1;
         let capabilityPriorityReady = false;
         let capabilityNearViewport = false;
+        let scrollIdle = true;
+        let mediaPolicy = readMediaRuntimePolicy();
 
         const hydrateVideo = (video: HTMLVideoElement) => {
           if (video.getAttribute("src") || !video.dataset.src) return;
@@ -81,7 +90,7 @@ export function EditorialFocus({ items, title, viewLabel }: EditorialFocusProps)
         };
 
         const releaseVideo = (video: HTMLVideoElement) => {
-          video.pause();
+          releaseExclusivePreview(video);
           video.closest<HTMLElement>(".motion-focus-media-stage")?.classList.remove("is-video-ready");
           if (!video.getAttribute("src")) return;
           video.removeAttribute("src");
@@ -103,14 +112,20 @@ export function EditorialFocus({ items, title, viewLabel }: EditorialFocusProps)
 
           videos.forEach((video) => {
             const videoIndex = Number(video.dataset.index);
-            const canUseNetwork = capabilityPriorityReady && capabilityNearViewport;
-            const shouldKeepLoaded = Math.abs(videoIndex - activeIndex) <= 1;
+            const canUseNetwork = capabilityPriorityReady && capabilityNearViewport && mediaPolicy.autoPlayPreviews;
+            const shouldKeepLoaded = videoIndex === activeIndex;
             if (canUseNetwork && shouldKeepLoaded) hydrateVideo(video);
             else if (!shouldKeepLoaded) releaseVideo(video);
-            if (canUseNetwork && videoIndex === activeIndex && shouldPlay && document.visibilityState === "visible") {
-              void video.play().catch(() => undefined);
+            if (
+              canUseNetwork &&
+              videoIndex === activeIndex &&
+              shouldPlay &&
+              scrollIdle &&
+              document.visibilityState === "visible"
+            ) {
+              void playExclusivePreview(video);
             } else {
-              video.pause();
+              releaseExclusivePreview(video);
             }
           });
         };
@@ -146,7 +161,7 @@ export function EditorialFocus({ items, title, viewLabel }: EditorialFocusProps)
               videos.forEach(releaseVideo);
             }
           },
-          { rootMargin: "900px 0px", threshold: 0.01 },
+          { rootMargin: "420px 0px", threshold: 0.01 },
         );
         proximityObserver.observe(root);
         listenerCleanups.push(() => proximityObserver.disconnect());
@@ -156,6 +171,20 @@ export function EditorialFocus({ items, title, viewLabel }: EditorialFocusProps)
           if (capabilityNearViewport) syncActive(Math.max(0, activeIndex), true, true);
         });
         listenerCleanups.push(stopPriorityWait);
+
+        const stopPolicyWatch = subscribeMediaRuntimePolicy((nextPolicy) => {
+          mediaPolicy = nextPolicy;
+          if (!mediaPolicy.autoPlayPreviews) videos.forEach(releaseVideo);
+          else if (capabilityNearViewport) syncActive(Math.max(0, activeIndex), true, true);
+        });
+        listenerCleanups.push(stopPolicyWatch);
+
+        const stopScrollWatch = subscribePreviewScrollState((idle) => {
+          scrollIdle = idle;
+          if (scrollIdle) syncActive(Math.max(0, activeIndex), true, true);
+          else pauseVideos();
+        });
+        listenerCleanups.push(stopScrollWatch);
 
         links.forEach((link) => {
           const cursor = link.querySelector<HTMLElement>(".motion-focus-cursor");
@@ -198,7 +227,7 @@ export function EditorialFocus({ items, title, viewLabel }: EditorialFocusProps)
         });
 
         const handleVisibility = () => {
-          if (document.visibilityState === "visible") syncActive(activeIndex, true, true);
+          if (document.visibilityState === "visible" && scrollIdle) syncActive(activeIndex, true, true);
           else pauseVideos();
         };
         document.addEventListener("visibilitychange", handleVisibility);
@@ -327,7 +356,7 @@ export function EditorialFocus({ items, title, viewLabel }: EditorialFocusProps)
                             muted
                             loop
                             playsInline
-                            preload="metadata"
+                            preload="none"
                             aria-hidden="true"
                           />
                         ) : (

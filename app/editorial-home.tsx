@@ -10,15 +10,14 @@ import {
 import { ArrowDown, ArrowUpRight, Play } from "lucide-react";
 import { gsap } from "gsap";
 import Link from "next/link";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { EditorialHeader } from "./components/EditorialHeader";
 import { BorderGlowLink } from "./components/BorderGlowLink";
 import { ExperienceHeading } from "./components/ExperienceHeading";
-import { EditorialFocus } from "./components/EditorialFocus";
+import type { FocusItem } from "./components/EditorialFocus";
 import { PriorityPreviewVideo } from "./components/PriorityPreviewVideo";
 import LoadingScreen from "./components/LoadingScreen";
 import { CounterMediaReveal, DualLayerHeading, MediaScrollExit, ScrollParallax, SectionTransition, SplitLineReveal, mediaDirections, motionContext, scrubMotion } from "./components/EditorialMotion";
-import { ShowreelDialog } from "./components/ShowreelDialog";
 import { projects, siteContent, t } from "./content";
 import {
   getPreparedHeroVideoSource,
@@ -30,7 +29,12 @@ import {
   markHeroFrameReady,
 } from "./hero-media";
 import { useLanguage } from "./language";
+import { mediaUrl } from "./media-delivery";
+import { readMediaRuntimePolicy, subscribeMediaRuntimePolicy } from "./media-runtime";
 import { useTheme } from "./theme";
+
+const LazyEditorialFocus = lazy(() => import("./components/EditorialFocus").then((module) => ({ default: module.EditorialFocus })));
+const LazyShowreelDialog = lazy(() => import("./components/ShowreelDialog").then((module) => ({ default: module.ShowreelDialog })));
 
 const aboutCopy = {
   zh: "我是 LIUKER，专注于影像、动态设计与 AI/CGI。工作横跨创意方向、剪辑、后期和三维视觉，把概念发展为能够被观看、记住并传播的画面。",
@@ -65,6 +69,7 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
   const presentedFrameRef = useRef<number | null>(null);
   const preciseSeekRef = useRef(false);
   const loadRequestedRef = useRef(false);
+  const seekIntervalRef = useRef(50);
   const [videoSource, setVideoSource] = useState<string | null>(null);
   const [frameReady, setFrameReady] = useState(false);
   const [siteReady, setSiteReady] = useState(false);
@@ -74,6 +79,14 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
     offset: ["start start", "end end"],
   });
   const progressScale = useTransform(scrollYProgress, [0, 1], [0.03, 1]);
+
+  useEffect(() => {
+    const updatePolicy = () => {
+      seekIntervalRef.current = readMediaRuntimePolicy().heroSeekIntervalMs;
+    };
+    updatePolicy();
+    return subscribeMediaRuntimePolicy(updatePolicy);
+  }, []);
 
   useEffect(() => {
     const markSiteReady = () => setSiteReady(true);
@@ -138,7 +151,7 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
 
     const precise = preciseSeekRef.current;
     preciseSeekRef.current = false;
-    if (!precise && timestamp - lastSeekAtRef.current < 34) return;
+    if (!precise && timestamp - lastSeekAtRef.current < seekIntervalRef.current) return;
 
     const targetTime = Math.min(
       Math.max(0.01, targetTimeRef.current),
@@ -289,6 +302,47 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
         </div>
       </div>
     </section>
+  );
+}
+
+function DeferredEditorialFocus({ items, title, viewLabel }: { items: FocusItem[]; title: string; viewLabel: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element || mounted) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setMounted(true);
+        observer.disconnect();
+      },
+      { rootMargin: "1200px 0px", threshold: 0.01 },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [mounted]);
+
+  const firstItem = items[0];
+  return (
+    <div ref={ref} className="deferred-focus-shell">
+      {mounted ? (
+        <Suspense fallback={<div className="deferred-focus-loading" aria-hidden="true" />}>
+          <LazyEditorialFocus title={title} items={items} viewLabel={viewLabel} />
+        </Suspense>
+      ) : (
+        <section id="services" className="editorial-section editorial-services motion-focus deferred-focus-placeholder">
+          <div className="editorial-section-head motion-focus-head">
+            <p className="editorial-index">02</p>
+            <h2>{title}</h2>
+          </div>
+          <div className="deferred-focus-preview" style={{ background: firstItem?.media.background }}>
+            {firstItem?.media.poster ? <img src={firstItem.media.poster} alt="" loading="lazy" decoding="async" /> : null}
+          </div>
+        </section>
+      )}
+    </div>
   );
 }
 
@@ -489,7 +543,7 @@ export function EditorialHome() {
         </div>
       </section>
 
-      <EditorialFocus
+      <DeferredEditorialFocus
         title={language === "zh" ? "能力展示：能做什么" : "Capabilities: What I Do"}
         items={focusItems}
         viewLabel={language === "zh" ? "查看案例" : "VIEW CASE"}
@@ -513,7 +567,7 @@ export function EditorialHome() {
               <MediaScrollExit className="editorial-about-portrait">
                 <CounterMediaReveal direction="center" background="linear-gradient(145deg, #08090f, #211035)">
             <img
-              src="/media/contact/footer-search-character.webp"
+              src={mediaUrl("/media/contact/footer-search-character.webp", "poster")}
               alt={language === "zh" ? "LIUKER 角色肖像" : "LIUKER character portrait"}
               loading="lazy"
               decoding="async"
@@ -561,7 +615,11 @@ export function EditorialHome() {
         </div>
       </footer>
 
-      <ShowreelDialog open={showreelOpen} onClose={closeShowreel} />
+      {showreelOpen ? (
+        <Suspense fallback={null}>
+          <LazyShowreelDialog open={showreelOpen} onClose={closeShowreel} />
+        </Suspense>
+      ) : null}
     </main>
   );
 }

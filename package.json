@@ -9,6 +9,7 @@
     "content:sync": "node scripts/sync-projects.mjs",
     "media:audit": "node scripts/audit-media.mjs",
     "media:prepare": "node scripts/prepare-video.mjs",
+    "media:optimize-previews": "node scripts/optimize-project-previews.mjs",
     "media:studio": "node tools/media-studio/server.mjs",
     "media:studio:app": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/media-studio/windows/Start-MediaStudio.ps1",
     "media:studio:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/media-studio/windows/Stop-MediaStudio.ps1",

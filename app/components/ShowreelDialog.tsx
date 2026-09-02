@@ -2,14 +2,15 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
-import { MEDIA_PRIORITY, SHOWREEL_VIDEO_SRC, unlockMediaPriority } from "../hero-media";
+import { useEffect, useRef, useState } from "react";
+import { MEDIA_PRIORITY, selectShowreelVideoSource, unlockMediaPriority } from "../hero-media";
 import { useLanguage } from "../language";
 
 export function ShowreelDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { language } = useLanguage();
   const closeRef = useRef<HTMLButtonElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoSource] = useState(() => selectShowreelVideoSource());
 
   useEffect(() => {
     if (!open) return;
@@ -60,7 +61,7 @@ export function ShowreelDialog({ open, onClose }: { open: boolean; onClose: () =
             </button>
             <video
               ref={videoRef}
-              src={SHOWREEL_VIDEO_SRC}
+              src={videoSource}
               controls
               controlsList="nodownload"
               autoPlay

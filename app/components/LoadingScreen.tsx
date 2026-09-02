@@ -2,28 +2,30 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  HERO_FRAME_READY_EVENT,
   HERO_MEDIA_PREPARED_EVENT,
   HERO_POSTER_AVIF,
+  MEDIA_PRIORITY,
   prepareHeroVideo,
+  unlockMediaPriority,
 } from "../hero-media";
 import { useLanguage } from "../language";
+import { mediaUrl } from "../media-delivery";
+import { readMediaRuntimePolicy } from "../media-runtime";
 
 type Phase = "enter" | "loading" | "ready" | "exit" | "done";
-type ReadinessScore = "poster" | "font" | "paint" | "video";
+type ReadinessScore = "poster" | "font" | "paint";
 
-const MIN_FIRST_VISIT_MS = 650;
+const MIN_FIRST_VISIT_MS = 450;
 const MIN_REPEAT_VISIT_MS = 0;
-const MAX_WAIT_MS = 2600;
-const READY_HOLD_MS = 90;
-const EXIT_MS = 420;
-const REPEAT_EXIT_MS = 160;
-const SESSION_KEY = "liuker-loader-ack:v4";
+const MAX_WAIT_MS = 900;
+const READY_HOLD_MS = 60;
+const EXIT_MS = 340;
+const REPEAT_EXIT_MS = 120;
+const SESSION_KEY = "liuker-loader-ack:v5";
 const SCORE_WEIGHT: Record<ReadinessScore, number> = {
-  poster: 0.15,
-  font: 0.1,
-  paint: 0.05,
-  video: 0.7,
+  poster: 0.62,
+  font: 0.13,
+  paint: 0.25,
 };
 
 function wait(ms: number) {
@@ -81,31 +83,10 @@ async function waitForFonts(signal: AbortSignal) {
   ]);
 }
 
-function waitForHeroFrame(timeoutMs: number, signal: AbortSignal) {
-  return new Promise<boolean>((resolve) => {
-    let settled = false;
-    const finish = (ready: boolean) => {
-      if (settled) return;
-      settled = true;
-      document.removeEventListener(HERO_FRAME_READY_EVENT, onReady);
-      signal.removeEventListener("abort", onAbort);
-      window.clearTimeout(timer);
-      resolve(ready);
-    };
-    const onReady = () => finish(true);
-    const onAbort = () => finish(false);
-    const timer = window.setTimeout(() => finish(false), timeoutMs);
-    document.addEventListener(HERO_FRAME_READY_EVENT, onReady, { once: true });
-    signal.addEventListener("abort", onAbort, { once: true });
-    if (signal.aborted) onAbort();
-  });
-}
-
 export default function LoadingScreen() {
   const { language } = useLanguage();
   const [phase, setPhase] = useState<Phase>("enter");
   const [progress, setProgress] = useState(2);
-  const [streamFallback, setStreamFallback] = useState(false);
   const cancelledRef = useRef(false);
 
   useEffect(() => {
@@ -140,7 +121,6 @@ export default function LoadingScreen() {
       poster: 0,
       font: 0,
       paint: 0,
-      video: 0,
     };
     let scrollRestored = false;
 
@@ -164,6 +144,7 @@ export default function LoadingScreen() {
       delete root.dataset.siteLoading;
       root.dataset.siteReady = "true";
       window.scrollTo(0, scrollY);
+      unlockMediaPriority(MEDIA_PRIORITY.selected);
       document.dispatchEvent(new Event("liuker:site-ready"));
     };
 
@@ -171,13 +152,23 @@ export default function LoadingScreen() {
       .then(() => updateScore("poster", 1));
     void waitForFonts(controller.signal).then(() => updateScore("font", 1));
     const paintTask = waitForPaint(controller.signal).then(() => updateScore("paint", 1));
-    const heroFrameTask = waitForHeroFrame(repeatVisit ? 700 : 1400, controller.signal);
-    const videoTask = prepareHeroVideo({
-      signal: controller.signal,
-    }).then(() => {
-      updateScore("video", 0.16);
-      document.dispatchEvent(new Event(HERO_MEDIA_PREPARED_EVENT));
-    });
+
+    const scheduleHeroPreparation = () => {
+      if (!readMediaRuntimePolicy().autoPrimeHero || controller.signal.aborted) return;
+      const prime = () => {
+        if (controller.signal.aborted) return;
+        void prepareHeroVideo({ signal: controller.signal }).then(() => {
+          if (!controller.signal.aborted) {
+            document.dispatchEvent(new Event(HERO_MEDIA_PREPARED_EVENT));
+          }
+        }).catch(() => undefined);
+      };
+      if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(prime, { timeout: 1200 });
+      } else {
+        globalThis.setTimeout(prime, 240);
+      }
+    };
 
     const run = async () => {
       const startedAt = performance.now();
@@ -187,24 +178,16 @@ export default function LoadingScreen() {
       });
 
       let timeoutId = 0;
-      const allCriticalAssets = Promise.all([
-        posterTask,
-        paintTask,
-        videoTask,
-        heroFrameTask,
-      ]).then(([, , , frameReady]) => frameReady);
-      const timeout = new Promise<false>((resolve) => {
-        timeoutId = window.setTimeout(() => resolve(false), MAX_WAIT_MS);
+      const allCriticalAssets = Promise.all([posterTask, paintTask]).then(() => true);
+      const timeout = new Promise<boolean>((resolve) => {
+        timeoutId = window.setTimeout(() => resolve(true), MAX_WAIT_MS);
       });
 
       try {
-        const frameReady = await Promise.race([allCriticalAssets, timeout]);
+        await Promise.race([allCriticalAssets, timeout]);
         window.clearTimeout(timeoutId);
-        if (frameReady) updateScore("video", 1);
-        else setStreamFallback(true);
       } catch {
         controller.abort();
-        setStreamFallback(true);
       } finally {
         window.cancelAnimationFrame(raf);
       }
@@ -230,6 +213,7 @@ export default function LoadingScreen() {
       }
       setPhase("done");
       restorePage();
+      scheduleHeroPreparation();
     };
 
     void run();
@@ -248,15 +232,15 @@ export default function LoadingScreen() {
     : `${Math.round(progress).toString().padStart(2, "0")}%`;
   const subtitle = language === "zh"
     ? ready
-      ? streamFallback ? "首屏将继续流式加载" : "首屏画面与交互已就绪"
+      ? "页面已就绪，视频将按需加载"
       : "正在准备首屏画面"
     : ready
-      ? streamFallback ? "Hero will continue streaming" : "Hero frame and interaction ready"
+      ? "Page ready, video loads on demand"
       : "Preparing the hero frame";
 
   return (
     <div
-      className={`liuker-loader phase-${phase}${streamFallback ? " is-stream-fallback" : ""}`}
+      className={`liuker-loader phase-${phase}`}
       role="status"
       aria-live="polite"
       aria-busy={!ready}
@@ -266,8 +250,8 @@ export default function LoadingScreen() {
         <div className="liuker-loader-art" aria-hidden="true">
           <video
             className="liuker-loader-motion"
-            src="/media/loading/liuker-loading-v2.mp4?v=20260901-fast"
-            poster="/media/loading/liuker-loading-still.png?v=20260901-fast"
+            src={mediaUrl("/media/loading/liuker-loading-v2.mp4", "interface")}
+            poster={mediaUrl("/media/loading/liuker-loading-still.png", "poster")}
             width="800"
             height="600"
             autoPlay
@@ -278,7 +262,7 @@ export default function LoadingScreen() {
           />
           <img
             className="liuker-loader-still"
-            src="/media/loading/liuker-loading-still.png?v=20260901-fast"
+            src={mediaUrl("/media/loading/liuker-loading-still.png", "poster")}
             alt=""
             width="800"
             height="600"

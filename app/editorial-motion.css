@@ -109,6 +109,17 @@
 
 /* Capabilities: one continuous desktop story, a complete static list everywhere else. */
 .editorial-motion-home .motion-focus { height: auto; padding-block: clamp(6rem, 10vw, 10rem); }
+.deferred-focus-shell { min-height: 100svh; }
+.deferred-focus-loading { min-height: 100svh; }
+.deferred-focus-placeholder { display: grid; align-content: center; min-height: 100svh; }
+.deferred-focus-preview {
+  position: relative;
+  overflow: hidden;
+  width: min(72vw, 1120px);
+  margin-inline: auto;
+  aspect-ratio: 16 / 9;
+}
+.deferred-focus-preview img { width: 100%; height: 100%; object-fit: cover; opacity: .72; }
 .motion-focus-sticky { position: relative; height: auto; padding-block: 0; }
 .motion-focus-head.editorial-section-head { align-items: end; margin-bottom: clamp(3rem, 6vw, 6rem); }
 .motion-focus-heading { display: block; max-width: 13ch; text-wrap: balance; }
@@ -175,6 +186,9 @@
 .motion-focus-progress { display: none; }
 
 @media (min-width: 1024px) {
+  .deferred-focus-shell,
+  .deferred-focus-loading,
+  .deferred-focus-placeholder { min-height: 460svh; }
   .editorial-motion-home .motion-focus[data-motion-enhanced] { height: 460svh; padding-block: 0; }
   .motion-focus[data-motion-enhanced] .motion-focus-sticky {
     position: sticky;

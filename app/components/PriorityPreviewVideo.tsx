@@ -7,6 +7,13 @@ import {
   whenMediaPriorityReady,
   type MediaPriority,
 } from "../hero-media";
+import {
+  playExclusivePreview,
+  readMediaRuntimePolicy,
+  releaseExclusivePreview,
+  subscribeMediaRuntimePolicy,
+  subscribePreviewScrollState,
+} from "../media-runtime";
 
 type PriorityPreviewVideoProps = {
   src: string;
@@ -22,7 +29,7 @@ export function PriorityPreviewVideo({
   poster,
   priority = MEDIA_PRIORITY.selected,
   releaseNextPriority,
-  rootMargin = "600px 0px",
+  rootMargin = "240px 0px",
   className = "",
 }: PriorityPreviewVideoProps) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -32,9 +39,11 @@ export function PriorityPreviewVideo({
     if (!video) return;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let mediaPolicy = readMediaRuntimePolicy();
     let priorityReady = false;
     let nearViewport = false;
     let visible = false;
+    let scrollIdle = true;
     let releaseTimer = 0;
 
     const releaseNext = () => {
@@ -43,12 +52,19 @@ export function PriorityPreviewVideo({
       unlockMediaPriority(releaseNextPriority);
     };
     const play = () => {
-      if (!visible || reducedMotion.matches || !video.getAttribute("src")) return;
-      void video.play().catch(() => undefined);
+      if (
+        !visible ||
+        !scrollIdle ||
+        !mediaPolicy.autoPlayPreviews ||
+        reducedMotion.matches ||
+        document.visibilityState !== "visible" ||
+        !video.getAttribute("src")
+      ) return;
+      void playExclusivePreview(video);
     };
     const release = () => {
       window.clearTimeout(releaseTimer);
-      video.pause();
+      releaseExclusivePreview(video);
       video.classList.remove("is-playing");
       if (!video.getAttribute("src")) return;
       video.removeAttribute("src");
@@ -56,7 +72,13 @@ export function PriorityPreviewVideo({
       video.load();
     };
     const attach = () => {
-      if (!priorityReady || !nearViewport || reducedMotion.matches || video.getAttribute("src")) return;
+      if (
+        !priorityReady ||
+        !nearViewport ||
+        !mediaPolicy.autoPlayPreviews ||
+        reducedMotion.matches ||
+        video.getAttribute("src")
+      ) return;
       video.preload = "metadata";
       video.src = src;
       video.load();
@@ -83,9 +105,9 @@ export function PriorityPreviewVideo({
       ([entry]) => {
         visible = entry.isIntersecting;
         if (visible) play();
-        else video.pause();
+        else releaseExclusivePreview(video);
       },
-      { threshold: 0.35 },
+      { threshold: 0.55 },
     );
     const stopWaiting = whenMediaPriorityReady(priority, () => {
       priorityReady = true;
@@ -95,6 +117,20 @@ export function PriorityPreviewVideo({
       if (reducedMotion.matches) release();
       else attach();
     };
+    const stopPolicyWatch = subscribeMediaRuntimePolicy((nextPolicy) => {
+      mediaPolicy = nextPolicy;
+      if (!mediaPolicy.autoPlayPreviews) release();
+      else attach();
+    });
+    const stopScrollWatch = subscribePreviewScrollState((idle) => {
+      scrollIdle = idle;
+      if (scrollIdle) play();
+      else releaseExclusivePreview(video);
+    });
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") play();
+      else releaseExclusivePreview(video);
+    };
 
     preloadObserver.observe(video);
     playbackObserver.observe(video);
@@ -102,15 +138,19 @@ export function PriorityPreviewVideo({
     video.addEventListener("playing", onPlaying);
     video.addEventListener("loadeddata", releaseNext, { once: true });
     video.addEventListener("error", onUnavailable, { once: true });
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
       stopWaiting();
+      stopPolicyWatch();
+      stopScrollWatch();
       preloadObserver.disconnect();
       playbackObserver.disconnect();
       reducedMotion.removeEventListener("change", onReducedMotion);
       video.removeEventListener("playing", onPlaying);
       video.removeEventListener("loadeddata", releaseNext);
       video.removeEventListener("error", onUnavailable);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       window.clearTimeout(releaseTimer);
       release();
     };
