@@ -8,9 +8,9 @@ export const HERO_VIDEO_1080P_SRC =
 export const HERO_VIDEO_720P_SRC =
   mediaUrl("/media/projects/home-hero-scrub-720p-v2.mp4", "hero");
 export const HERO_POSTER_WEBP =
-  mediaUrl("/media/posters/home-hero.webp", "poster");
+  mediaUrl("/media/posters/home-hero-hq-v2.webp", "poster");
 export const HERO_POSTER_AVIF =
-  mediaUrl("/media/posters/home-hero.avif", "poster");
+  mediaUrl("/media/posters/home-hero-hq-v2.avif", "poster");
 export const SHOWREEL_VIDEO_1080P_SRC =
   mediaUrl("/media/showreel/LIUKER_Showreel_2026_1080p-v2.mp4", "showreel");
 export const SHOWREEL_VIDEO_720P_SRC =

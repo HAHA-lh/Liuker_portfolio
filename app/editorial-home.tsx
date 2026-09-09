@@ -27,6 +27,7 @@ import {
   HERO_POSTER_WEBP,
   selectHeroVideoSource,
   markHeroFrameReady,
+  unlockMediaPriority,
 } from "./hero-media";
 import { useLanguage } from "./language";
 import { mediaUrl } from "./media-delivery";
@@ -210,6 +211,13 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
   }, []);
 
   useEffect(() => {
+    // Start the hero request during the short loader rather than waiting for
+    // idle time or the visitor's first scroll.
+    videoRef.current?.setAttribute("fetchpriority", "high");
+    if (readMediaRuntimePolicy().autoPrimeHero) requestVideo();
+  }, [requestVideo]);
+
+  useEffect(() => {
     const requestOnScroll = () => requestVideo();
     window.addEventListener("scroll", requestOnScroll, { passive: true, once: true });
     return () => window.removeEventListener("scroll", requestOnScroll);
@@ -261,7 +269,7 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
             src={videoSource ?? undefined}
             muted
             playsInline
-            preload={videoSource ? "metadata" : "none"}
+            preload={videoSource ? "auto" : "none"}
             onLoadedMetadata={registerDuration}
             onCanPlay={() => queueSeek(true)}
             onLoadedData={() => {
@@ -269,6 +277,7 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
               notifyFrameReady();
             }}
             onSeeked={notifyFrameReady}
+            onError={() => unlockMediaPriority(MEDIA_PRIORITY.selected)}
             disablePictureInPicture
             tabIndex={-1}
             aria-label="16 by 9 scroll-controlled showreel"

@@ -22,9 +22,9 @@ export function readMediaRuntimePolicy(): MediaRuntimePolicy {
   if (typeof window === "undefined") {
     return {
       mode: "constrained",
-      autoPrimeHero: false,
+      autoPrimeHero: true,
       autoPlayPreviews: false,
-      heroQuality: "720p",
+      heroQuality: "1080p",
       heroSeekIntervalMs: 60,
     };
   }
@@ -53,9 +53,9 @@ export function readMediaRuntimePolicy(): MediaRuntimePolicy {
   if (constrainedNetwork || constrainedDevice || compactViewport) {
     return {
       mode: "constrained",
-      autoPrimeHero: false,
+      autoPrimeHero: true,
       autoPlayPreviews: false,
-      heroQuality: "720p",
+      heroQuality: "1080p",
       heroSeekIntervalMs: 64,
     };
   }

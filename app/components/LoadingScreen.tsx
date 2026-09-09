@@ -2,15 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  HERO_MEDIA_PREPARED_EVENT,
   HERO_POSTER_AVIF,
-  MEDIA_PRIORITY,
-  prepareHeroVideo,
-  unlockMediaPriority,
 } from "../hero-media";
 import { useLanguage } from "../language";
 import { mediaUrl } from "../media-delivery";
-import { readMediaRuntimePolicy } from "../media-runtime";
 
 type Phase = "enter" | "loading" | "ready" | "exit" | "done";
 type ReadinessScore = "poster" | "font" | "paint";
@@ -144,7 +139,6 @@ export default function LoadingScreen() {
       delete root.dataset.siteLoading;
       root.dataset.siteReady = "true";
       window.scrollTo(0, scrollY);
-      unlockMediaPriority(MEDIA_PRIORITY.selected);
       document.dispatchEvent(new Event("liuker:site-ready"));
     };
 
@@ -152,23 +146,6 @@ export default function LoadingScreen() {
       .then(() => updateScore("poster", 1));
     void waitForFonts(controller.signal).then(() => updateScore("font", 1));
     const paintTask = waitForPaint(controller.signal).then(() => updateScore("paint", 1));
-
-    const scheduleHeroPreparation = () => {
-      if (!readMediaRuntimePolicy().autoPrimeHero || controller.signal.aborted) return;
-      const prime = () => {
-        if (controller.signal.aborted) return;
-        void prepareHeroVideo({ signal: controller.signal }).then(() => {
-          if (!controller.signal.aborted) {
-            document.dispatchEvent(new Event(HERO_MEDIA_PREPARED_EVENT));
-          }
-        }).catch(() => undefined);
-      };
-      if ("requestIdleCallback" in window) {
-        window.requestIdleCallback(prime, { timeout: 1200 });
-      } else {
-        globalThis.setTimeout(prime, 240);
-      }
-    };
 
     const run = async () => {
       const startedAt = performance.now();
@@ -213,7 +190,6 @@ export default function LoadingScreen() {
       }
       setPhase("done");
       restorePage();
-      scheduleHeroPreparation();
     };
 
     void run();
