@@ -17,6 +17,7 @@ import { ExperienceHeading } from "./components/ExperienceHeading";
 import type { FocusItem } from "./components/EditorialFocus";
 import { PriorityPreviewVideo } from "./components/PriorityPreviewVideo";
 import LoadingScreen from "./components/LoadingScreen";
+import SiteMotionFlow from "./components/SiteMotionFlow";
 import { CounterMediaReveal, DualLayerHeading, MediaScrollExit, ScrollParallax, SectionTransition, SplitLineReveal, mediaDirections, motionContext, scrubMotion } from "./components/EditorialMotion";
 import { projects, siteContent, t } from "./content";
 import {
@@ -255,7 +256,12 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
   }, [registerDuration, videoSource]);
 
   return (
-    <section ref={sectionRef} className="editorial-scroll-hero" aria-label="Scroll-controlled showreel">
+    <section
+      ref={sectionRef}
+      className="editorial-scroll-hero motion-chapter"
+      data-motion-chapter="hero"
+      aria-label="Scroll-controlled showreel"
+    >
       <div className="editorial-hero">
         <div
           className="editorial-hero-media-frame"
@@ -335,18 +341,18 @@ function DeferredEditorialFocus({ items, title, viewLabel }: { items: FocusItem[
 
   const firstItem = items[0];
   return (
-    <div ref={ref} className="deferred-focus-shell">
+    <div ref={ref} className="deferred-focus-shell motion-chapter" data-motion-chapter="services">
       {mounted ? (
         <Suspense fallback={<div className="deferred-focus-loading" aria-hidden="true" />}>
           <LazyEditorialFocus title={title} items={items} viewLabel={viewLabel} />
         </Suspense>
       ) : (
         <section id="services" className="editorial-section editorial-services motion-focus deferred-focus-placeholder">
-          <div className="editorial-section-head motion-focus-head">
+          <div className="editorial-section-head motion-focus-head motion-chapter-surface">
             <p className="editorial-index">02</p>
             <h2>{title}</h2>
           </div>
-          <div className="deferred-focus-preview" style={{ background: firstItem?.media.background }}>
+          <div className="deferred-focus-preview motion-flow-item" style={{ background: firstItem?.media.background }}>
             {firstItem?.media.poster ? <img src={firstItem.media.poster} alt="" loading="lazy" decoding="async" /> : null}
           </div>
         </section>
@@ -381,7 +387,7 @@ function ExperienceItem({
   );
 
   return (
-    <div ref={ref} className="editorial-experience-item">
+    <div ref={ref} className="editorial-experience-item motion-flow-item">
       <span className="editorial-experience-number">{String(index + 1).padStart(2, "0")}</span>
       <motion.p
         className="editorial-experience-year"
@@ -436,13 +442,13 @@ function ToolkitMarquee() {
     });
   }, []);
   return (
-    <div ref={ref} className="editorial-toolkit-marquee" aria-label="Toolkit">
-      <div className="editorial-toolkit-title">
+    <div ref={ref} className="editorial-toolkit-marquee motion-chapter" data-motion-chapter="toolkit" aria-label="Toolkit">
+      <div className="editorial-toolkit-title motion-chapter-surface">
         <span>05 / TOOLKIT</span>
         <h2><SplitLineReveal>TOOLS IN MOTION</SplitLineReveal></h2>
       </div>
       {toolkitRows.map((row, rowIndex) => (
-        <div className={`toolkit-marquee-row is-${rowIndex % 2 === 0 ? "left" : "right"}`} key={row.join("-")}>
+        <div className={`toolkit-marquee-row motion-flow-item is-${rowIndex % 2 === 0 ? "left" : "right"}`} key={row.join("-")}>
           <div className="toolkit-marquee-track">
             {[...row, ...row].map((tool, index) => (
               <span tabIndex={index < row.length ? 0 : -1} aria-hidden={index >= row.length || undefined} key={`${tool}-${index}`}>{tool}</span>
@@ -493,12 +499,13 @@ export function EditorialHome() {
   return (
     <main id="top" className="editorial-site editorial-motion-home">
       <LoadingScreen />
+      <SiteMotionFlow />
       <EditorialHeader stretchMenuButton />
 
       <EditorialScrollHero onOpenShowreel={() => setShowreelOpen(true)} />
 
-      <section id="selected-work" className="editorial-section editorial-selected">
-        <SectionTransition className="editorial-section-head">
+      <section id="selected-work" className="editorial-section editorial-selected motion-chapter" data-motion-chapter="selected-work">
+        <SectionTransition className="editorial-section-head motion-chapter-surface">
           <p className="editorial-index"><SplitLineReveal>01</SplitLineReveal></p>
           <h2>
             <DualLayerHeading>{language === "zh" ? "精选作品" : "Selected Works"}</DualLayerHeading>
@@ -517,7 +524,7 @@ export function EditorialHome() {
           {selectedProjects.map((project, index) => (
             <SectionTransition
               key={project.slug}
-              className={`editorial-project-row editorial-project-${(index % 3) + 1}`}
+              className={`editorial-project-row editorial-project-${(index % 3) + 1} motion-flow-item`}
               project
             >
               <Link href={`/work/${project.slug}`} className="editorial-project-link">
@@ -558,15 +565,15 @@ export function EditorialHome() {
         viewLabel={language === "zh" ? "查看案例" : "VIEW CASE"}
       />
 
-      <section id="about" className="editorial-section editorial-about">
-        <SectionTransition className="editorial-section-head">
+      <section id="about" className="editorial-section editorial-about motion-chapter" data-motion-chapter="about">
+        <SectionTransition className="editorial-section-head motion-chapter-surface">
           <p className="editorial-index"><SplitLineReveal>03</SplitLineReveal></p>
           <h2>
             <DualLayerHeading>{language === "zh" ? "关于我" : "About Me"}</DualLayerHeading>
           </h2>
         </SectionTransition>
-        <ScrollParallax className="motion-about-backtype" axis="x" distance={-5} decorative>LIUKER</ScrollParallax>
-        <div className="editorial-about-grid">
+        <ScrollParallax className="motion-about-backtype motion-flow-item" axis="x" distance={-5} decorative>LIUKER</ScrollParallax>
+        <div className="editorial-about-grid motion-flow-item">
           <ScrollParallax className="editorial-about-copy" distance={6}>
             <p><SplitLineReveal>{aboutCopy[language]}</SplitLineReveal></p>
           </ScrollParallax>
@@ -589,8 +596,8 @@ export function EditorialHome() {
         </div>
       </section>
 
-      <section ref={experienceRef} id="experience" className="editorial-section editorial-experience">
-        <div className="editorial-experience-label">
+      <section ref={experienceRef} id="experience" className="editorial-section editorial-experience motion-chapter" data-motion-chapter="experience">
+        <div className="editorial-experience-label motion-chapter-surface">
           <p className="editorial-index">04</p>
           <ExperienceHeading sectionRef={experienceRef} />
         </div>
@@ -606,19 +613,19 @@ export function EditorialHome() {
 
       <ToolkitMarquee />
 
-      <footer id="contact" className="editorial-contact">
-        <p className="editorial-overline"><SplitLineReveal>05 / CONTACT</SplitLineReveal></p>
-        <h2>
+      <footer id="contact" className="editorial-contact motion-chapter" data-motion-chapter="contact">
+        <p className="editorial-overline motion-flow-item"><SplitLineReveal>05 / CONTACT</SplitLineReveal></p>
+        <h2 className="motion-chapter-surface">
           <span className="motion-contact-line"><SplitLineReveal>LET&apos;S</SplitLineReveal></span>
           <span className="motion-contact-line"><SplitLineReveal>CREATE</SplitLineReveal></span>
           <span className="motion-contact-finale"><DualLayerHeading final className="motion-contact-next">THE NEXT</DualLayerHeading><DualLayerHeading final>FRAME.</DualLayerHeading></span>
         </h2>
-        <div className="editorial-contact-links" aria-label="Contact channels">
+        <div className="editorial-contact-links motion-flow-item" aria-label="Contact channels">
           {["EMAIL", "INSTAGRAM", "BEHANCE", "RED", "DOUYIN"].map((label) => (
             <span key={label}><SplitLineReveal>{label}</SplitLineReveal></span>
           ))}
         </div>
-        <div className="editorial-footer-line">
+        <div className="editorial-footer-line motion-flow-item">
           <span><SplitLineReveal>LIUKER / 2026</SplitLineReveal></span>
           <a href="#top" onClick={() => window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" })}><SplitLineReveal>BACK TO TOP</SplitLineReveal></a>
         </div>

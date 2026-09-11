@@ -5105,3 +5105,73 @@ html[data-site-loading="true"] body {
     will-change: auto;
   }
 }
+
+/* Unified homepage motion flow -------------------------------------------------
+   Each chapter receives the same reversible scroll values from SiteMotionFlow.
+   Local effects keep their personality, while entry, focus and hand-off now
+   share one rhythm across the page. */
+.motion-chapter {
+  position: relative;
+  --chapter-enter: 1;
+  --chapter-exit: 0;
+  --chapter-handoff: 0;
+  --chapter-opacity: 1;
+  --chapter-shift: 0px;
+  --chapter-scale: 1;
+  --chapter-rule-opacity: 0.8;
+  --chapter-tracking: 0em;
+  --chapter-media-light: 1;
+}
+
+.motion-chapter:not([data-motion-chapter="hero"])::before {
+  position: absolute;
+  z-index: 8;
+  top: 0;
+  left: clamp(1rem, 4vw, 4.5rem);
+  width: calc(100% - clamp(2rem, 8vw, 9rem));
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #8b19ff 16%, #db0e9f 52%, #ff7048 84%, transparent);
+  content: "";
+  opacity: var(--chapter-rule-opacity);
+  transform: scaleX(var(--chapter-enter));
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+.motion-chapter-surface {
+  opacity: var(--chapter-opacity);
+  translate: 0 var(--chapter-shift);
+  scale: var(--chapter-scale);
+  transform-origin: 50% 15%;
+}
+
+.motion-flow-item {
+  opacity: var(--flow-item-reveal, 1);
+  translate: 0 var(--flow-item-shift, 0px);
+  scale: var(--flow-item-scale, 1);
+}
+
+.motion-chapter[data-motion-active] .motion-chapter-surface,
+.motion-chapter[data-motion-active] .motion-flow-item {
+  will-change: opacity, translate, scale;
+}
+
+.editorial-selected .editorial-section-head,
+.editorial-about .editorial-section-head,
+.editorial-experience .editorial-experience-label,
+.editorial-contact h2 {
+  letter-spacing: var(--chapter-tracking);
+}
+
+.editorial-about .editorial-about-grid {
+  filter: brightness(var(--chapter-media-light));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-chapter:not([data-motion-chapter="hero"])::before,
+  .motion-chapter-surface,
+  .motion-flow-item,
+  .editorial-about .editorial-about-grid {
+    transition: none !important;
+  }
+}

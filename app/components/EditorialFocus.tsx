@@ -316,12 +316,12 @@ export function EditorialFocus({ items, title, viewLabel }: EditorialFocusProps)
   return (
     <section ref={ref} id="services" className="editorial-section editorial-services motion-focus">
       <div className="motion-focus-sticky">
-        <div className="editorial-section-head motion-focus-head">
+        <div className="editorial-section-head motion-focus-head motion-chapter-surface">
           <p className="editorial-index motion-focus-heading-index">02</p>
           <h2 className="motion-focus-heading">{title}</h2>
         </div>
 
-        <div className="motion-focus-window">
+        <div className="motion-focus-window motion-flow-item">
           {items.map((item, index) => (
             <article className="motion-focus-panel" key={item.id} data-index={item.id}>
               <div className="motion-focus-copy-clip">
@@ -378,7 +378,7 @@ export function EditorialFocus({ items, title, viewLabel }: EditorialFocusProps)
           ))}
         </div>
 
-        <div className="motion-focus-progress" aria-hidden="true">
+        <div className="motion-focus-progress motion-flow-item" aria-hidden="true">
           <span className="motion-focus-progress-track"><span className="motion-focus-progress-fill" /></span>
           {items.map((item) => (
             <span className="motion-focus-step" key={item.id}>
