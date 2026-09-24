@@ -6,6 +6,7 @@ import "@fontsource/kanit/900.css";
 import "./globals.css";
 import "./editorial.css";
 import "./editorial-motion.css";
+import "./reference-layout.css";
 import { LanguageProvider } from "./language";
 import { ThemeProvider } from "./theme";
 

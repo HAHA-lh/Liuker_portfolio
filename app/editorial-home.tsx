@@ -18,6 +18,10 @@ import type { FocusItem } from "./components/EditorialFocus";
 import { PriorityPreviewVideo } from "./components/PriorityPreviewVideo";
 import LoadingScreen from "./components/LoadingScreen";
 import SiteMotionFlow from "./components/SiteMotionFlow";
+import { ReferenceLayout } from "./components/ReferenceLayout";
+import { HeroSplitText } from "./components/HeroSplitText";
+import { CinemaViewfinder } from "./components/CinemaPilot";
+import { PenNote, PenMark } from "./components/Handwritten";
 import { CounterMediaReveal, DualLayerHeading, MediaScrollExit, ScrollParallax, SectionTransition, SplitLineReveal, mediaDirections, motionContext, scrubMotion } from "./components/EditorialMotion";
 import { projects, siteContent, t } from "./content";
 import {
@@ -101,6 +105,7 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
     if (!siteReady) return;
     const root = sectionRef.current;
     if (!root) return;
+    if (root.closest(".reference-home")) return;
     return motionContext(root, mobile => {
       const media = root.querySelector<HTMLElement>(".editorial-hero-media-frame")!;
       const mediaLayers = Array.from(media.querySelectorAll<HTMLElement>(".editorial-hero-media, video"));
@@ -289,18 +294,22 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
             aria-label="16 by 9 scroll-controlled showreel"
           />
           <div className="editorial-hero-shade" aria-hidden="true" />
+          <CinemaViewfinder />
         </div>
         <div
           className="editorial-hero-copy"
         >
           <p className="editorial-overline"><SplitLineReveal>LIUKER / PORTFOLIO 2026</SplitLineReveal></p>
           <h1 id="editorial-hero-title">
-            {["SHOW", "REEL"].map(line => (
+            {["BEYOND", "THE FRAME."].map(line => (
               <span className="motion-hero-word" key={line}>
-                <span className="motion-hero-word-inner"><DualLayerHeading controlled>{line}</DualLayerHeading></span>
+                <span className="motion-hero-word-inner"><HeroSplitText text={line} ready={siteReady} delay={line === "BEYOND" ? 0 : 0.16} /></span>
               </span>
             ))}
           </h1>
+          <p className="reference-hero-tagline"><HeroSplitText text={language === "zh" ? "创意，不止于画面。" : "Ideas beyond the frame."} ready={siteReady} delay={0.4} /></p>
+          <p className="reference-hero-micro">IDEAS　 PEOPLE　 CULTURE　 A BRIGHTER TOMORROW.</p>
+          <div className="pen-hero-note"><PenNote text="play it"/><PenMark kind="arrow"/></div>
           <div className="editorial-hero-foot">
             <p><SplitLineReveal>{t(siteContent.heroIntro, language)}</SplitLineReveal></p>
             <button type="button" className="editorial-play" onClick={onOpenShowreel}>
@@ -460,7 +469,7 @@ function ToolkitMarquee() {
   );
 }
 
-export function EditorialHome() {
+export function PreviousEditorialHome() {
   const { language } = useLanguage();
   const [showreelOpen, setShowreelOpen] = useState(false);
   const experienceRef = useRef<HTMLElement>(null);
@@ -637,5 +646,16 @@ export function EditorialHome() {
         </Suspense>
       ) : null}
     </main>
+  );
+}
+
+export function EditorialHome() {
+  const [showreelOpen, setShowreelOpen] = useState(false);
+  const closeShowreel = useCallback(() => setShowreelOpen(false), []);
+  return (
+    <ReferenceLayout hero={<EditorialScrollHero onOpenShowreel={() => setShowreelOpen(true)} />}>
+      <LoadingScreen />
+      {showreelOpen && <Suspense fallback={null}><LazyShowreelDialog open onClose={closeShowreel} /></Suspense>}
+    </ReferenceLayout>
   );
 }
