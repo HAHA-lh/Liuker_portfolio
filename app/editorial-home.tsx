@@ -82,7 +82,9 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
   const reducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: sectionRef,
-    offset: ["start start", "end end"],
+    // The editorial hero can be shorter than the viewport. "end end"
+    // produces a negative scroll range in that layout and freezes seeking.
+    offset: ["start start", "end start"],
   });
   const progressScale = useTransform(scrollYProgress, [0, 1], [0.03, 1]);
 
