@@ -198,6 +198,8 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
   }, [queueSeek]);
 
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
+    const section = sectionRef.current;
+    if (section?.closest(".reference-home")) return;
     scrollProgressRef.current = Math.min(1, Math.max(0, progress));
     if (scrollProgressRef.current > 0.001) requestVideo();
     const video = videoRef.current;
@@ -206,6 +208,34 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
     queueSeek();
     queueSettledSeek();
   });
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    const root = section?.closest<HTMLElement>(".reference-home");
+    if (!root || !section || reducedMotion || !siteReady) return;
+    const sync = () => root.classList.toggle("hero-scrubbing", window.scrollY < 2 && scrollProgressRef.current < 1);
+    const advance = (delta: number, event: Event) => {
+      const video = videoRef.current;
+      const target = event.target as HTMLElement | null;
+      // Never intercept dialogs, navigation, zoom gestures or unavailable media.
+      if (target?.closest('button,a,input,[role="dialog"],.staggered-menu-wrapper') || window.scrollY > 2 || !video || video.readyState < 2 || !durationRef.current) return;
+      if ((delta > 0 && scrollProgressRef.current >= 1) || (delta < 0 && scrollProgressRef.current <= 0)) return;
+      event.preventDefault();
+      scrollProgressRef.current = Math.max(0, Math.min(1, scrollProgressRef.current + delta / Math.max(900, window.innerHeight * 1.6)));
+      targetTimeRef.current = scrollProgressRef.current * Math.max(0, durationRef.current - 0.05);
+      queueSeek(); queueSettledSeek(); sync();
+    };
+    const wheel = (event: WheelEvent) => { if (!event.ctrlKey) advance(event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? innerHeight : 1), event); };
+    let lastY = 0;
+    const touchStart = (event: TouchEvent) => { lastY = event.touches[0]?.clientY ?? 0; };
+    const touchMove = (event: TouchEvent) => { if (event.touches.length !== 1) return; const y = event.touches[0].clientY; advance(lastY-y,event); lastY=y; };
+    window.addEventListener("wheel", wheel, { passive:false });
+    window.addEventListener("touchstart", touchStart, { passive:true });
+    window.addEventListener("touchmove", touchMove, { passive:false });
+    window.addEventListener("scroll", sync, { passive:true });
+    sync();
+    return () => { root.classList.remove("hero-scrubbing"); window.removeEventListener("wheel",wheel); window.removeEventListener("touchstart",touchStart); window.removeEventListener("touchmove",touchMove); window.removeEventListener("scroll",sync); };
+  }, [siteReady, reducedMotion, queueSeek, queueSettledSeek]);
 
   useEffect(() => {
     const video = videoRef.current as ScrubbableVideo | null;

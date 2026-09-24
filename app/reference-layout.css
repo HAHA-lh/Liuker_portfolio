@@ -262,4 +262,14 @@
 .reference-home .reference-hero-micro,.reference-home .editorial-hero-foot{transition:translate .2s ease-out,opacity .2s ease-out}
 .reference-view svg,.reference-archive svg,.reference-footer-title>a svg{transition:transform .25s ease}
 .reference-project:hover .reference-view svg,.reference-archive:hover svg,.reference-footer-title>a:hover svg{transform:translateX(5px)}
-@media(prefers-reduced-motion:reduce){.reference-home *{scroll-behavior:auto!important;transition:none!important}.reference-reveal{opacity:1!important;translate:none!important}.reference-feature-media>img,.reference-feature-media>video,.reference-small-project>img{scale:1!important}}
+/* Keep the next chapter adjacent while wheel input scrubs the opening clip. */
+.reference-home .editorial-scroll-hero{--pinned-hero-height:clamp(530px,40vw,700px);height:var(--pinned-hero-height)!important;overflow:visible}
+.reference-home .editorial-hero{position:relative;height:var(--pinned-hero-height)}
+.hero-scrubbing #selected-work .reference-reveal{opacity:1!important;translate:none!important}
+.hero-scrubbing #selected-work .reference-project{clip-path:none!important}
+.hero-scrubbing #selected-work .reference-side,.hero-scrubbing #selected-work .reference-side-note,.hero-scrubbing #selected-work .reference-project-meta{opacity:1!important;translate:none!important}
+.hero-scrubbing #selected-work .reference-feature-media>img{scale:1!important}
+.hero-scrubbing #selected-work .pen-letter{clip-path:none!important;animation:none!important}
+.hero-scrubbing #selected-work .pen-mark path{stroke-dashoffset:0!important;animation:none!important}
+@media(max-width:640px){.reference-home .editorial-scroll-hero{--pinned-hero-height:620px}}
+@media(prefers-reduced-motion:reduce){.reference-home .editorial-scroll-hero{height:var(--pinned-hero-height)!important}.reference-home .editorial-hero{position:relative}.reference-home *{scroll-behavior:auto!important;transition:none!important}.reference-reveal{opacity:1!important;translate:none!important}.reference-feature-media>img,.reference-feature-media>video,.reference-small-project>img{scale:1!important}}
