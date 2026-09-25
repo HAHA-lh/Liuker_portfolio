@@ -12,6 +12,7 @@ export type MasonryItem<T> = {
   title: string;
   category: string;
   year: string;
+  imageOnly?: boolean;
   value: T;
 };
 
@@ -343,8 +344,8 @@ export default function Masonry<T>({
               <h3>{item.title}</h3>
             </div>
             <div className="masonry-actions">
-              <button type="button" onClick={() => onItemClick(item.value)} aria-label={`${playLabel}: ${item.title}`}>
-                <Play size={15} fill="currentColor" /> {playLabel}
+              <button type="button" onClick={() => onItemClick(item.value)} aria-label={`${item.imageOnly ? "查看图片 / View image" : playLabel}: ${item.title}`}>
+                {item.imageOnly ? <ArrowUpRight size={15}/> : <Play size={15} fill="currentColor" />} {item.imageOnly ? (playLabel === "播放" ? "查看图片" : "View image") : playLabel}
               </button>
               <button type="button" onClick={() => onDetails(item.value)} aria-label={`${detailsLabel}: ${item.title}`}>
                 <ArrowUpRight size={15} />

@@ -76,5 +76,6 @@ export default function LazyVideo({
   }, [playWhenVisible, preloadWhenVisible, rootMargin, src, unloadOnExit]);
 
   // This removes the browser's download affordance, not access to the media.
+  if (/\.(webp|avif|png|jpe?g)(\?|$)/i.test(src)) return <img src={src} alt="作品展示 / Artwork" loading="lazy" style={{width:"100%",maxHeight:"85svh",objectFit:"contain"}}/>;
   return <video ref={videoRef} preload="none" controlsList="nodownload" {...videoProps} data-lazy-video />;
 }

@@ -13,13 +13,16 @@ import { ReferenceMotion } from "./ReferenceMotion";
 import { CinemaPilot } from "./CinemaPilot";
 import { CinemaInteractions, CinemaGuide } from "./CinemaInteractions";
 import { PenNote, PenMark, PenMotion } from "./Handwritten";
+import { BrushFooter } from "./BrushFooter";
 import { CreativeChapters } from "./CreativeChapters";
+import { getPortfolioGroup, getProjectsForPortfolioGroup } from "../portfolio-groups";
 
 const services = [
   ["品牌影片", "BRAND FILM", "从创意概念到成片，以影像呈现品牌故事。", "From the first concept to the final film.", "film-post"],
   ["商业广告", "COMMERCIAL", "围绕产品与传播目标，完成剪辑、后期与视觉表达。", "Editing, post-production and visuals for commercial stories.", "film-post"],
   ["数字内容", "DIGITAL CONTENT", "结合 AI、CGI 与动态设计，探索新的视觉表达。", "Exploring AI, CGI and motion design.", "aigc"],
   ["创意方向", "CREATIVE DIRECTION", "把想法发展为视觉概念、分镜与完整的影像方案。", "Turning ideas into visual concepts and stories.", "aigc"],
+  ["直播商业礼物", "LIVE GIFTS", "以精细的视觉设计与动态表现，放大直播礼物的情绪价值与互动吸引力，创造更高商业价值。", "Refined visuals and motion amplify the emotional appeal and engagement of live-stream gifts, creating greater commercial value.", "live-gifts"],
 ];
 
 export function ReferenceLayout({hero, children}: {hero: ReactNode; children: ReactNode}) {
@@ -32,6 +35,11 @@ export function ReferenceLayout({hero, children}: {hero: ReactNode; children: Re
     const lead = [projects.find(p=>p.slug==="afterglow"), projects.find(p=>p.slug==="orbital-form")].filter((p): p is typeof projects[number]=>Boolean(p));
     return [...lead, ...[...featured,...projects.filter(p=>!p.featured)].filter(p=>!lead.some(l=>l.slug===p.slug))].slice(0,6);
   },[]);
+  const serviceImages = useMemo(() => {
+    const group = getPortfolioGroup("live-gifts");
+    const gift = group ? getProjectsForPortfolioGroup(group)[0] : undefined;
+    return [...selected.slice(0,4), gift ?? selected[0]];
+  }, [selected]);
   return <main id="top" className="editorial-site reference-home">
     <ReferenceMotion />
     <CinemaPilot />
@@ -66,7 +74,7 @@ export function ReferenceLayout({hero, children}: {hero: ReactNode; children: Re
       <Link className="reference-archive" href="/work">{zh?"查看全部作品":"ALL WORK"} <span>{projects.length} PROJECTS</span><ArrowRight size={19}/></Link>
     </section>
     <section id="services" className="reference-services">
-      <div className="cinema-service-stage"><div className="cinema-service-images" aria-hidden="true">{selected.slice(0,4).map((p,i)=><img key={p.slug} className={activeService===i?"is-active":""} src={p.poster} alt="" loading="lazy"/>)}</div><p className="reference-eyebrow">SERVICES</p><h2>{zh?<>用影像与创意<br/>连接更大的世界。</>:<>Creative stories.<br/>A bigger world.</>}</h2><p className="reference-micro">CREATIVE SOLUTIONS<br/>FOR A BRIGHTER TOMORROW.</p><span className="cinema-service-caption">0{activeService+1} / {services[activeService][1]}</span></div>
+      <div className="cinema-service-stage"><div className="cinema-service-images" aria-hidden="true">{serviceImages.map((p,i)=><img key={`${p.slug}-${i}`} className={activeService===i?"is-active":""} src={p.poster} alt="" loading="lazy"/>)}</div><p className="reference-eyebrow">SERVICES</p><h2>{zh?<>用影像与创意<br/>连接更大的世界。</>:<>Creative stories.<br/>A bigger world.</>}</h2><p className="reference-micro">CREATIVE SOLUTIONS<br/>FOR A BRIGHTER TOMORROW.</p><span className="cinema-service-caption">0{activeService+1} / {services[activeService][1]}</span></div>
       <div className="reference-service-list">{services.map(([cn,en,desc,descEn,group],i)=><details key={en} className={activeService===i?"cinema-service-active":""} onPointerEnter={()=>setActiveService(i)} onFocus={()=>setActiveService(i)} onToggle={event=>{if(event.currentTarget.open)setActiveService(i);}}><summary><span>0{i+1}</span><h3>{zh?cn:en}</h3><span className="reference-service-en">{en}</span><Plus size={20}/></summary><div className="reference-service-description"><p>{zh?desc:descEn}</p><Link href={`/portfolio/${group}`}>{zh?"查看相关作品":"VIEW WORK"} ↗</Link></div></details>)}</div>
     </section>
     <CreativeChapters />
@@ -80,7 +88,7 @@ export function ReferenceLayout({hero, children}: {hero: ReactNode; children: Re
       <details id="toolkit"><summary>TOOLS IN MOTION <Plus size={17}/></summary><p>After Effects · DaVinci Resolve · Cinema 4D · Blender · Premiere Pro · Photoshop · Illustrator · Figma</p></details>
     </div>
     <footer id="contact" className="reference-contact">
-      <div className="pen-footer-heading"><p className="reference-footer-kicker">LET’S MAKE</p><div className="pen-footer-note"><PenMark kind="star"/><PenNote text="make it move"/></div></div>
+      <div className="pen-footer-heading"><p className="reference-footer-kicker">LET’S MAKE</p><div className="pen-footer-note"><BrushFooter /></div></div>
       <div className="reference-footer-title"><h2 aria-label="THE NEXT FRAME.">{["THE","NEXT","FRAME."].map((word,i)=><span className="cinema-end-word" aria-hidden="true" key={word} style={{"--word-index":i} as React.CSSProperties}>{word}{i<2?" ":""}</span>)}</h2><a href="#contact-channels">{zh?"联系合作":"LET’S TALK"}<ArrowRight size={27}/></a></div>
       <p className="reference-footer-description">{zh?"期待与你一起，创造下一个值得被看见的画面。":"Let’s create the next frame worth seeing."}</p>
       <div className="reference-footer-social" id="contact-channels"><span>FOR A BRIGHTER TOMORROW.</span><p>WECHAT　 EMAIL　 BEHANCE　 INSTAGRAM</p></div>

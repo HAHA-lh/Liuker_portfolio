@@ -120,7 +120,7 @@ function PortfolioVideoModal({
               >
                 <X size={19} />
               </button>
-              <video src={project.heroVideo} controls playsInline preload="metadata" />
+              {/\.(webp|avif|png|jpe?g)(\?|$)/i.test(project.heroVideo) ? <img src={project.heroVideo} alt={t(project.title,language)} style={{width:"100%",maxHeight:"80svh",objectFit:"contain"}}/> : <video src={project.heroVideo} controls playsInline preload="metadata" />}
             </div>
             <div className="modal-footer">
               <div>
@@ -154,6 +154,7 @@ export function PortfolioFieldPage({ groupId }: { groupId: PortfolioGroupId }) {
     title: t(project.title, language),
     category: t(project.category, language),
     year: project.year,
+    imageOnly: /\.(webp|avif|png|jpe?g)(\?|$)/i.test(project.heroVideo),
     value: project,
   }));
   const closeModal = useCallback(() => setActiveProject(null), []);

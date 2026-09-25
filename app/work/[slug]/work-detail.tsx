@@ -71,7 +71,7 @@ export function WorkDetail({ project, nextProject }: { project: Project; nextPro
       <section className="editorial-final-film">
         <div className="editorial-detail-section-title">
           <span>05</span>
-          <h2>{language === "zh" ? "最终影片" : "Final Film"}</h2>
+          <h2>{/\.(webp|avif|png|jpe?g)(\?|$)/i.test(project.heroVideo) ? (language === "zh" ? "平面作品" : "Artwork") : (language === "zh" ? "最终影片" : "Final Film")}</h2>
         </div>
         <div className="editorial-final-player" style={{ background: project.visual }}>
           <LazyVideo

@@ -319,7 +319,7 @@ export const projects: Project[] = projectRows.map((row) => {
     process: { zh: row.processZh || template.process.zh, en: row.processEn || template.process.en },
     result: { zh: row.resultZh || template.result.zh, en: row.resultEn || template.result.en },
     tools: row.tools.length ? [...row.tools] : template.tools,
-    previewVideo: mediaUrl(row.previewVideo || template.previewVideo, "preview"),
+    previewVideo: /\.(webp|avif|png|jpe?g)(\?|$)/i.test(row.fullVideo) ? "" : mediaUrl(row.previewVideo || template.previewVideo, "preview"),
     heroVideo: mediaUrl(row.fullVideo || template.heroVideo, "full"),
     poster: mediaUrl(row.cover || template.poster, "poster"),
     visual: row.visual || template.visual,
