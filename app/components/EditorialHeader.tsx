@@ -62,7 +62,7 @@ export function EditorialHeader({ stretchMenuButton = false }: { stretchMenuButt
     {
       label: language === "zh" ? "联系" : "Contact",
       ariaLabel: language === "zh" ? "前往联系" : "Go to contact",
-      link: "/#contact",
+      link: "/contact",
     },
   ];
 
