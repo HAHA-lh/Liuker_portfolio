@@ -8,6 +8,8 @@ import { PenNote, PenMark } from "./Handwritten";
 import dynamic from "next/dynamic";
 
 const RiftExperience = dynamic(()=>import("../immersion-lab/sample"),{ssr:false});
+// Temporarily disabled on the homepage; retain the experience for later restoration.
+const SHOW_RIFT_PLAYGROUND = false;
 function LazyRift(){
   const ref=useRef<HTMLDivElement>(null);const [ready,setReady]=useState(false);
   useEffect(()=>{const el=ref.current;if(!el)return;const observer=new IntersectionObserver(([entry])=>{if(entry.isIntersecting){setReady(true);observer.disconnect()}},{rootMargin:"250px"});observer.observe(el);return()=>observer.disconnect()},[]);
@@ -33,10 +35,10 @@ export function CreativeChapters() {
       </div>
       <p className="chapter-footnote">{zh?"创意方向 / 剪辑后期 / 动态设计 / AI & CGI":"CREATIVE DIRECTION / EDITING / MOTION DESIGN / AI & CGI"}<span>EVERY FRAME HAS A REASON.</span></p>
     </section>
-    <section id="rift-playground" className="frame-notes rift-playground" aria-labelledby="rift-title">
+    {SHOW_RIFT_PLAYGROUND && <section id="rift-playground" className="frame-notes rift-playground" aria-labelledby="rift-title">
       <header className="chapter-head"><div><p className="reference-eyebrow">INTERACTIVE PLAYGROUND / THE RIFT</p><h2 id="rift-title">{zh?"穿过这一帧，进入另一世界。":"Cross the frame. Enter another world."}</h2><p className="chapter-description">{zh?"滚动至此，自动进入穿越。用滚轮推进空间隧道，完成后继续下滑；手机上可滑动或拖动进度条，按 Esc 可退出。":"Scroll into view to enter automatically. Scroll through the portal, then continue down after arrival. Swipe or use the slider on mobile; press Esc to exit."}</p></div><PenNote text="step beyond" className="frame-notes-script"/></header>
       <LazyRift />
-    </section>
+    </section>}
     <CompositionGame />
   </>;
 }
