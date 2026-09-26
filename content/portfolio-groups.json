@@ -3,63 +3,109 @@
     "id": "film-post",
     "index": "01",
     "title": {
-      "zh": "传统广告宣传片",
-      "en": "COMMERCIAL FILMS"
+      "zh": "品牌影片",
+      "en": "BRAND FILM"
     },
-    "label": "Commercial / Brand / Post",
+    "label": "BRAND FILM",
     "description": {
-      "zh": "传统品牌广告与宣传片，从创意、剪辑到调色，以完整后期流程构建清晰有力的叙事。",
-      "en": "Commercials and brand films shaped through a complete creative, editing and color workflow."
+      "zh": "从创意概念到成片，以影像呈现品牌故事。",
+      "en": "From the first concept to the final film."
     },
     "projectSlugs": [
       "afterglow",
-      "neon-pulse",
       "quiet-tides",
       "kinetic-type",
       "orbital-form",
-      "nocturne",
-      "echo-cuts",
       "glimmer-sequence",
       "gravity-study",
-      "city-breath",
       "liquid-type",
       "spectrum-memory",
       "outline-of-wind",
       "pixel-tides",
       "night-signal",
-      "loop-garden",
+      "loop-garden"
+    ]
+  },
+  {
+    "id": "commercial",
+    "index": "02",
+    "title": {
+      "zh": "商业广告",
+      "en": "COMMERCIAL"
+    },
+    "label": "COMMERCIAL",
+    "description": {
+      "zh": "围绕产品与传播目标，完成剪辑、后期与视觉表达。",
+      "en": "Editing, post-production and visuals for commercial stories."
+    },
+    "projectSlugs": [
+      "neon-pulse",
+      "nocturne",
+      "echo-cuts",
+      "city-breath",
       "last-frame"
     ]
   },
   {
     "id": "aigc",
-    "index": "02",
+    "index": "03",
     "title": {
-      "zh": "AIGC视频制作",
-      "en": "AIGC VIDEO"
+      "zh": "数字内容",
+      "en": "DIGITAL CONTENT"
     },
-    "label": "AI / CGI / Video Lab",
+    "label": "DIGITAL CONTENT",
     "description": {
-      "zh": "以生成式影像、三维合成与视觉实验完成视频制作，拓展内容生产与画面表达的边界。",
-      "en": "Generative imagery, CGI compositing and visual experiments developed into complete video work."
+      "zh": "结合 AI、CGI 与动态设计，探索新的视觉表达。",
+      "en": "Exploring AI, CGI and motion design."
     },
     "projectSlugs": [
       "1",
       "project-2026-08-31-02",
-      "ancient-time-travel-ghost-stories"
+      "ancient-time-travel-ghost-stories",
+      "morning-haze",
+      "l-03-2",
+      "w-04",
+      "chatgpt-image-2026-8-13-09-29-20",
+      "f2k-20260814142934-00001",
+      "o-02",
+      "project-2026-09-26-11",
+      "a-07",
+      "e-05",
+      "g-01",
+      "p-06",
+      "p-06-2",
+      "l-03",
+      "l-03-3"
+    ]
+  },
+  {
+    "id": "character-design",
+    "index": "04",
+    "title": {
+      "zh": "创意方向",
+      "en": "CREATIVE DIRECTION"
+    },
+    "label": "CREATIVE DIRECTION",
+    "description": {
+      "zh": "把想法发展为视觉概念、分镜与完整的影像方案。",
+      "en": "Turning ideas into visual concepts and stories."
+    },
+    "projectSlugs": [
+      "silent-ad",
+      "project-2026-09-26-14"
     ]
   },
   {
     "id": "live-gifts",
-    "index": "03",
+    "index": "05",
     "title": {
-      "zh": "直播礼物",
+      "zh": "直播商业礼物",
       "en": "LIVE GIFTS"
     },
-    "label": "Motion / Reward / Live",
+    "label": "LIVE GIFTS",
     "description": {
-      "zh": "围绕直播场景打造高识别、强节奏的动态礼物，让互动瞬间更有情绪和记忆点。",
-      "en": "High-impact motion rewards designed for expressive, memorable live interactions."
+      "zh": "以精细的视觉设计与动态表现，放大直播礼物的情绪价值与互动吸引力，创造更高商业价值。",
+      "en": "Refined visuals and motion amplify the emotional appeal and engagement of live-stream gifts, creating greater commercial value."
     },
     "projectSlugs": [
       "project-2026-08-31-01",
@@ -84,38 +130,6 @@
       "project-2026-08-31-39",
       "project-2026-08-31-41",
       "pv"
-    ]
-  },
-  {
-    "id": "event-live",
-    "index": "04",
-    "title": {
-      "zh": "赛事直播",
-      "en": "EVENT LIVE"
-    },
-    "label": "Event / Broadcast / Package",
-    "description": {
-      "zh": "围绕赛事与直播场景制作片头、包装和播出内容，强化现场节奏、信息传达与品牌识别。",
-      "en": "Openers, broadcast packages and live content designed for pace, clarity and event identity."
-    },
-    "projectSlugs": [
-      "morning-haze"
-    ]
-  },
-  {
-    "id": "character-design",
-    "index": "05",
-    "title": {
-      "zh": "角色设计",
-      "en": "CHARACTER DESIGN"
-    },
-    "label": "Character / IP / Motion",
-    "description": {
-      "zh": "从角色造型、视觉设定到动态呈现，建立可用于内容传播与品牌表达的角色形象。",
-      "en": "Character styling, visual development and motion crafted into expressive, reusable identities."
-    },
-    "projectSlugs": [
-      "silent-ad"
     ]
   }
 ]

@@ -1,4 +1,5 @@
 "use client";
+import serviceGroups from "../../content/portfolio-groups.json";
 
 import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -18,13 +19,7 @@ import { FooterBrushWord } from "./FooterBrushWord";
 import { CreativeChapters } from "./CreativeChapters";
 import { getPortfolioGroup, getProjectsForPortfolioGroup } from "../portfolio-groups";
 
-const services = [
-  ["品牌影片", "BRAND FILM", "从创意概念到成片，以影像呈现品牌故事。", "From the first concept to the final film.", "film-post"],
-  ["商业广告", "COMMERCIAL", "围绕产品与传播目标，完成剪辑、后期与视觉表达。", "Editing, post-production and visuals for commercial stories.", "film-post"],
-  ["数字内容", "DIGITAL CONTENT", "结合 AI、CGI 与动态设计，探索新的视觉表达。", "Exploring AI, CGI and motion design.", "aigc"],
-  ["创意方向", "CREATIVE DIRECTION", "把想法发展为视觉概念、分镜与完整的影像方案。", "Turning ideas into visual concepts and stories.", "aigc"],
-  ["直播商业礼物", "LIVE GIFTS", "以精细的视觉设计与动态表现，放大直播礼物的情绪价值与互动吸引力，创造更高商业价值。", "Refined visuals and motion amplify the emotional appeal and engagement of live-stream gifts, creating greater commercial value.", "live-gifts"],
-];
+const services = serviceGroups.map(group => [group.title.zh, group.title.en, group.description.zh, group.description.en, group.id]);
 
 export function ReferenceLayout({hero, children}: {hero: ReactNode; children: ReactNode}) {
   const {language} = useLanguage();

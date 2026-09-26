@@ -6,6 +6,7 @@ export type PortfolioGroupId =
   | "aigc"
   | "live-gifts"
   | "event-live"
+  | "commercial"
   | "character-design";
 
 export type PortfolioGroup = {
@@ -23,7 +24,7 @@ export const portfolioGroups: PortfolioGroup[] = portfolioGroupRows.map((group) 
 }));
 
 export function getPortfolioGroup(id: string) {
-  return portfolioGroups.find((group) => group.id === id);
+  return portfolioGroups.find((group) => group.id === (id === "event-live" ? "aigc" : id));
 }
 
 export function getProjectsForPortfolioGroup(group: PortfolioGroup) {

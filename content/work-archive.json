@@ -1,10 +1,40 @@
 {
   "path": "/work",
   "categories": [
-    { "id": "advertisement", "label": "ADVERTISEMENT", "groupIds": ["film-post"] },
-    { "id": "ai-cgi", "label": "AI / CGI", "groupIds": ["aigc"] },
-    { "id": "live-gifts", "label": "LIVE GIFTS", "groupIds": ["live-gifts"] },
-    { "id": "esports", "label": "ESPORTS", "groupIds": ["event-live"] },
-    { "id": "character-design", "label": "CHARACTER DESIGN", "groupIds": ["character-design"] }
+    {
+      "id": "film-post",
+      "label": "品牌影片",
+      "groupIds": [
+        "film-post"
+      ]
+    },
+    {
+      "id": "commercial",
+      "label": "商业广告",
+      "groupIds": [
+        "commercial"
+      ]
+    },
+    {
+      "id": "aigc",
+      "label": "数字内容",
+      "groupIds": [
+        "aigc"
+      ]
+    },
+    {
+      "id": "character-design",
+      "label": "创意方向",
+      "groupIds": [
+        "character-design"
+      ]
+    },
+    {
+      "id": "live-gifts",
+      "label": "直播商业礼物",
+      "groupIds": [
+        "live-gifts"
+      ]
+    }
   ]
 }
