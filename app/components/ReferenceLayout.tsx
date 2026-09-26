@@ -14,6 +14,7 @@ import { CinemaPilot } from "./CinemaPilot";
 import { CinemaInteractions, CinemaGuide } from "./CinemaInteractions";
 import { PenNote, PenMark, PenMotion } from "./Handwritten";
 import { BrushFooter } from "./BrushFooter";
+import { FooterBrushWord } from "./FooterBrushWord";
 import { CreativeChapters } from "./CreativeChapters";
 import { getPortfolioGroup, getProjectsForPortfolioGroup } from "../portfolio-groups";
 
@@ -89,7 +90,7 @@ export function ReferenceLayout({hero, children}: {hero: ReactNode; children: Re
     </div>
     <footer id="contact" className="reference-contact">
       <div className="pen-footer-heading"><p className="reference-footer-kicker">LET’S MAKE</p><div className="pen-footer-note"><BrushFooter /></div></div>
-      <div className="reference-footer-title"><h2 aria-label="THE NEXT FRAME.">{["THE","NEXT","FRAME."].map((word,i)=><span className="cinema-end-word" aria-hidden="true" key={word} style={{"--word-index":i} as React.CSSProperties}>{word}{i<2?" ":""}</span>)}</h2><a href="#contact-channels">{zh?"联系合作":"LET’S TALK"}<ArrowRight size={27}/></a></div>
+      <div className="reference-footer-title"><h2 aria-label="THE NEXT FRAME.">{["THE","NEXT","FRAME."].map((word,i)=><span className="cinema-end-word" aria-hidden="true" key={word} style={{"--word-index":i} as React.CSSProperties}><FooterBrushWord word={word}/></span>)}</h2><a href="#contact-channels">{zh?"联系合作":"LET’S TALK"}<ArrowRight size={27}/></a></div>
       <p className="reference-footer-description">{zh?"期待与你一起，创造下一个值得被看见的画面。":"Let’s create the next frame worth seeing."}</p>
       <div className="reference-footer-social" id="contact-channels"><span>FOR A BRIGHTER TOMORROW.</span><p>WECHAT　 EMAIL　 BEHANCE　 INSTAGRAM</p></div>
       <div className="reference-footer-bottom"><Link href="/">LIUKER</Link><span>© {new Date().getFullYear()} LIUKER. ALL RIGHTS RESERVED.</span><a href="#top">{zh?"创意，不止于画面。":"BEYOND THE FRAME."} ↑</a></div>

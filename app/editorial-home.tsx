@@ -20,6 +20,7 @@ import LoadingScreen from "./components/LoadingScreen";
 import SiteMotionFlow from "./components/SiteMotionFlow";
 import { ReferenceLayout } from "./components/ReferenceLayout";
 import { HeroSplitText } from "./components/HeroSplitText";
+import { HeroBrushText } from "./components/HeroBrushText";
 import { CinemaViewfinder } from "./components/CinemaPilot";
 import { PenNote, PenMark } from "./components/Handwritten";
 import { CounterMediaReveal, DualLayerHeading, MediaScrollExit, ScrollParallax, SectionTransition, SplitLineReveal, mediaDirections, motionContext, scrubMotion } from "./components/EditorialMotion";
@@ -335,7 +336,7 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
           <h1 id="editorial-hero-title">
             {["BEYOND", "THE FRAME."].map(line => (
               <span className="motion-hero-word" key={line}>
-                <span className="motion-hero-word-inner"><HeroSplitText text={line} ready={siteReady} delay={line === "BEYOND" ? 0 : 0.16} /></span>
+                <span className="motion-hero-word-inner"><HeroBrushText text={line} ready={siteReady} delay={line === "BEYOND" ? 0 : 0.16} /></span>
               </span>
             ))}
           </h1>

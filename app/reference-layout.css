@@ -116,6 +116,7 @@
 .reference-small-project:hover>img{filter:brightness(1.08)}
 .reference-home .reference-hero-micro,.reference-home .editorial-hero-foot{opacity:var(--hero-opening,1);translate:0 var(--hero-opening-y,0px)}
 .hero-split-text{display:inline-block}
+.hero-brush-text{display:inline-block;height:.98em;max-width:88vw;color:#f7f5ed;vertical-align:top;letter-spacing:0}.hero-brush-text svg{display:block;width:100%;height:100%;overflow:visible}.hero-brush-glyph{opacity:0;transform:translateY(22px)}.hero-brush-text.is-ready .hero-brush-glyph{animation:hero-brush-arrive .95s cubic-bezier(.2,.7,.2,1) var(--glyph-delay) both}@keyframes hero-brush-arrive{to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:reduce){.hero-brush-glyph{opacity:1;transform:none;animation:none!important}}
 .frame-game-layout{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:6%}.frame-game-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;perspective:1000px}
 .memory-card{position:relative;aspect-ratio:1.32;min-width:0;background:#0e151a;border:1px solid #ffffff25;padding:0;color:#f3eee3;cursor:pointer;transition:border-color .25s,background .25s}.memory-card:disabled{cursor:default}.memory-card:not(:disabled):hover{border-color:#ff244b}.memory-card:focus-visible,.game-start:focus-visible{outline:2px solid #ff244b;outline-offset:4px}
 .memory-card-back,.memory-card-face{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;backface-visibility:hidden;transition:transform .45s,opacity .3s;pointer-events:none}.memory-card-back{background:repeating-linear-gradient(135deg,transparent 0 14px,#ffffff03 14px 15px);transform:rotateY(0deg)}.memory-card-back>span{font:700 12px Kanit,sans-serif;letter-spacing:.14em}.memory-card-back>b{font-size:38px;font-weight:200;color:#ff244b}.memory-card small{font-size:8px;letter-spacing:.16em}.memory-card-face{opacity:0;transform:rotateY(-180deg);color:#ff4465}.memory-card-face svg{width:80%;height:70%}.memory-card-face small{color:#f2eee7}.memory-card.is-open .memory-card-back{transform:rotateY(180deg);opacity:0}.memory-card.is-open .memory-card-face{transform:rotateY(0);opacity:1}.memory-card.is-matched{background:#24111a;border-color:#ff244b77}.is-won .memory-card{border-color:#ff244b}
@@ -282,3 +283,12 @@
 .hero-scrubbing #selected-work .pen-mark path{stroke-dashoffset:0!important;animation:none!important}
 @media(max-width:640px){.reference-home .editorial-scroll-hero{--pinned-hero-height:620px}}
 @media(prefers-reduced-motion:reduce){.reference-home .editorial-scroll-hero{height:var(--pinned-hero-height)!important}.reference-home .editorial-hero{position:relative}.reference-home *{scroll-behavior:auto!important;transition:none!important}.reference-reveal{opacity:1!important;translate:none!important}.reference-feature-media>img,.reference-feature-media>video,.reference-small-project>img{scale:1!important}}
+
+/* Enlarge the supplied brush artwork, retaining its proportions and two-line layout. */
+.reference-home .editorial-hero h1{font-size:clamp(64px,8.4vw,132px);flex-shrink:0}
+.reference-home .editorial-scroll-hero{--pinned-hero-height:clamp(740px,64vw,1000px)}
+.reference-home .pen-hero-note{top:auto;bottom:55px;left:clamp(230px,23vw,360px)}
+@media(max-width:640px){.reference-home .editorial-hero h1{font-size:8.5vw}.reference-home .editorial-scroll-hero{--pinned-hero-height:620px}}
+.reference-footer-title h2{font-size:clamp(34px,7.3vw,110px);display:flex;gap:0;letter-spacing:0;min-width:0}.footer-brush-word{display:block;height:1em;overflow:hidden}.footer-drybrush .footer-brush-ink{clip-path:inset(0 100% 0 0)}.footer-drybrush.pen-ready .footer-brush-ink{animation:footer-png-write 1.3s ease-out both}@keyframes footer-png-write{to{clip-path:inset(0)}}
+@media(max-width:640px){.reference-footer-title h2{font-size:12.3vw}}
+@media(prefers-reduced-motion:reduce){.footer-drybrush .footer-brush-ink{clip-path:none!important;animation:none!important}}
