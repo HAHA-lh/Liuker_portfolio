@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { MEDIA_PRIORITY, selectShowreelVideoSource, unlockMediaPriority } from "../hero-media";
 import { useLanguage } from "../language";
+import { preparedVideoSource } from "../video-preload";
 
 export function ShowreelDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { language } = useLanguage();
@@ -61,7 +62,7 @@ export function ShowreelDialog({ open, onClose }: { open: boolean; onClose: () =
             </button>
             <video
               ref={videoRef}
-              src={videoSource}
+              src={preparedVideoSource(videoSource)}
               controls
               controlsList="nodownload"
               autoPlay

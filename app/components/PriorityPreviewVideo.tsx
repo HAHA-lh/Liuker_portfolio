@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { preparedVideoSource } from "../video-preload";
 import {
   MEDIA_PRIORITY,
   unlockMediaPriority,
@@ -73,6 +74,7 @@ export function PriorityPreviewVideo({
     };
     const attach = () => {
       if (
+        document.documentElement.dataset.siteLoading === "true" ||
         !priorityReady ||
         !nearViewport ||
         !mediaPolicy.autoPlayPreviews ||
@@ -80,7 +82,7 @@ export function PriorityPreviewVideo({
         video.getAttribute("src")
       ) return;
       video.preload = "metadata";
-      video.src = src;
+      video.src = preparedVideoSource(src);
       video.load();
       if (releaseNextPriority !== undefined) {
         releaseTimer = window.setTimeout(releaseNext, 1400);
@@ -139,6 +141,7 @@ export function PriorityPreviewVideo({
     video.addEventListener("loadeddata", releaseNext, { once: true });
     video.addEventListener("error", onUnavailable, { once: true });
     document.addEventListener("visibilitychange", onVisibilityChange);
+    document.addEventListener("liuker:site-ready", attach);
 
     return () => {
       stopWaiting();
@@ -151,6 +154,7 @@ export function PriorityPreviewVideo({
       video.removeEventListener("loadeddata", releaseNext);
       video.removeEventListener("error", onUnavailable);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      document.removeEventListener("liuker:site-ready", attach);
       window.clearTimeout(releaseTimer);
       release();
     };
@@ -159,6 +163,7 @@ export function PriorityPreviewVideo({
   return (
     <video
       ref={ref}
+      data-preload-src={src}
       className={`priority-preview-video ${className}`}
       poster={poster}
       muted

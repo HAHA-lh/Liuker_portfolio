@@ -253,8 +253,8 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
     // Start the hero request during the short loader rather than waiting for
     // idle time or the visitor's first scroll.
     videoRef.current?.setAttribute("fetchpriority", "high");
-    if (readMediaRuntimePolicy().autoPrimeHero) requestVideo();
-  }, [requestVideo]);
+    if (siteReady && readMediaRuntimePolicy().autoPrimeHero) requestVideo();
+  }, [requestVideo, siteReady]);
 
   useEffect(() => {
     const requestOnScroll = () => requestVideo();
