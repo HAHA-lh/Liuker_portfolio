@@ -55,7 +55,7 @@ export function readMediaRuntimePolicy(): MediaRuntimePolicy {
       mode: "constrained",
       autoPrimeHero: true,
       autoPlayPreviews: false,
-      heroQuality: "1080p",
+      heroQuality: "720p",
       heroSeekIntervalMs: 64,
     };
   }

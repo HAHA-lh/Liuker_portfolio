@@ -21,7 +21,7 @@ export default function DotHorse() {
       document.removeEventListener("visibilitychange", update);
     };
   }, []);
-  return <video ref={ref} className="liuker-dot-horse" src="/media/loading/dot-horse-reference.mp4"
-    poster="/media/loading/dot-horse-reference-poster.png" muted loop playsInline preload="auto"
+  return <video ref={ref} className="liuker-dot-horse" src="/media/loading/dot-horse-reference.mp4?v=reference-1"
+    poster="/media/loading/dot-horse-reference-poster.png?v=reference-1" muted loop playsInline preload="auto"
     disablePictureInPicture aria-hidden="true" tabIndex={-1} />;
 }

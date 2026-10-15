@@ -250,11 +250,11 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
   }, []);
 
   useEffect(() => {
-    // Start the hero request during the short loader rather than waiting for
-    // idle time or the visitor's first scroll.
+    // Prime the real player while the intro is visible. Native range buffering
+    // supplies the first frame without a second full-file Blob download.
     videoRef.current?.setAttribute("fetchpriority", "high");
-    if (siteReady && readMediaRuntimePolicy().autoPrimeHero) requestVideo();
-  }, [requestVideo, siteReady]);
+    if (readMediaRuntimePolicy().autoPrimeHero && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) requestVideo();
+  }, [requestVideo]);
 
   useEffect(() => {
     const requestOnScroll = () => requestVideo();
@@ -310,6 +310,7 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
           </picture>
           <video
             ref={videoRef}
+            data-loading-hero
             src={videoSource ?? undefined}
             muted
             playsInline
@@ -321,7 +322,10 @@ function EditorialScrollHero({ onOpenShowreel }: { onOpenShowreel: () => void })
               notifyFrameReady();
             }}
             onSeeked={notifyFrameReady}
-            onError={() => unlockMediaPriority(MEDIA_PRIORITY.selected)}
+            onError={() => {
+              setFrameReady(false);
+              unlockMediaPriority(MEDIA_PRIORITY.selected);
+            }}
             disablePictureInPicture
             tabIndex={-1}
             aria-label="16 by 9 scroll-controlled showreel"

@@ -17,3 +17,8 @@
 .dot-loader-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:16px}
 .dot-loader-actions button{font:12px sans-serif;color:#1736ba;border:1px solid #1736ba;padding:10px 14px;cursor:pointer;background:transparent}
 .dot-loader-actions button:focus-visible{outline:2px solid #1736ba;outline-offset:4px}
+.dot-loader .liuker-loader-progress-track{overflow:hidden}
+.dot-loader-activity{display:block;width:35%;height:100%;background:#1736ba;animation:dot-loader-wait 1s ease-in-out infinite alternate}
+.dot-loader.phase-exit .dot-loader-activity{width:100%;animation:none}
+@keyframes dot-loader-wait{from{transform:translateX(-100%)}to{transform:translateX(285%)}}
+@media(prefers-reduced-motion:reduce){.dot-loader-activity{animation:none}}
