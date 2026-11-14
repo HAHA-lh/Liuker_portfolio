@@ -74,7 +74,7 @@ const english={
  '百龄坛 / 品牌影片':'Ballantine’s / Brand film',
  '创意，不止于画面。':'Ideas beyond the frame.',
  '影像 · AI / CGI · 动态设计':'Film · AI / CGI · Motion design',
- '探索作品 ↗':'EXPLORE WORK ↗',
+ '播放作品集 ↗':'SHOWREEL ↗',
  '从一个想法开始':'It starts with an idea',
  '同一画面，进入创作流程':'One frame. A creative journey.',
  '01 / LIUKER 人物影像':'01 / LIUKER CHARACTER FILM',
@@ -115,7 +115,7 @@ function intro(t){rect(0,0,W,H,WHITE);
  rect(72,195,38,6,'#e21b24');text('INDEPENDENT VISUAL CREATOR',126,206,17,'#292b27',600);
  homeHeadline('BEYOND',70,352,447);homeHeadline('THE',70,486,232);homeHeadline('FRAME',70,620,426);
  g.save();g.translate(508,598);g.transform(1,0,-.17,1,0,0);rect(0,0,20,22,'#e21b24');g.restore();
- text('创意，不止于画面。',72,686,32,BLACK,600);text('影像 · AI / CGI · 动态设计',74,729,20,'#53554e',400);homePill('探索作品 ↗',72,772,224,58);
+ text('创意，不止于画面。',72,686,32,BLACK,600);text('影像 · AI / CGI · 动态设计',74,729,20,'#53554e',400);homePill('播放作品集 ↗',72,772,224,58);
  g.restore();monitor(x,y,w,1-q);
  if(a>0){g.save();g.globalAlpha=a;g.save();g.translate(1060,197);g.transform(1,0,-.14,1,0,0);text('01 /',0,0,37,'#e21b24',800);text('LIUKER IN MOTION',90,-5,17,'#252824',600);g.restore();line(875,810,954,810,'#5a5d5270');text('从一个想法开始',1120,817,17,'#33372f',500,'right');line(1144,810,1220,810,'#5a5d5270');homePill('ENTER ↵',1290,782,198,58,true);g.restore()}
  if(t<5.6){g.save();g.globalAlpha=1-Q(t,4.8,5.6);text('LIUKER',72,72,42,BLACK,900);text('WORK',671,62,19,BLACK,700);text('STUDIO',802,62,19,BLACK,700);homePill('联系合作 ↗',1325,28,209,54);g.restore()}

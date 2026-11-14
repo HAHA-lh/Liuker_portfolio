@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { projects, siteContent, t } from "../content";
 import { useLanguage } from "../language";
+import { SHOWREEL_VIDEO_SRC } from "../hero-media";
 import "./MotionHomeFallback.css";
 
 const selectedWork = [
@@ -41,7 +42,7 @@ const services = [
   },
 ];
 
-export function MotionHomeFallback() {
+export function MotionHomeFallback({ onOpenShowreel }: { onOpenShowreel: () => void }) {
   const { language, setLanguage } = useLanguage();
   const zh = language === "zh";
 
@@ -83,8 +84,8 @@ export function MotionHomeFallback() {
           </h1>
           <p className="motion-static-tagline">{zh ? "创意，不止于画面。" : "Ideas that reach beyond the frame."}</p>
           <p className="motion-static-intro">{t(siteContent.heroIntro, language)}</p>
-          <a href="#project-field" className="motion-static-button">
-            {zh ? "探索作品" : "Explore the work"}<span aria-hidden="true">↗</span>
+          <a href={SHOWREEL_VIDEO_SRC} className="motion-static-button" aria-haspopup="dialog" aria-label={zh ? "播放 Showreel" : "Play Showreel"} onClick={(event) => { event.preventDefault(); onOpenShowreel(); }}>
+            {zh ? "播放作品集" : "Watch showreel"}<span aria-hidden="true">↗</span>
           </a>
         </div>
 

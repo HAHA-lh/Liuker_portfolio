@@ -147,7 +147,7 @@ export function MotionHome() {
   return (
     <main className="motion-home" data-enhanced={enhanced} data-release="motion-paper-20261114" data-dark={dark}>
       <Link prefetch={false} className="motion-skip" href="/work">{english ? "Skip to all work" : "跳转至全部作品"}</Link>
-      <div hidden={enhanced}><MotionHomeFallback /></div>
+      <div hidden={enhanced}><MotionHomeFallback onOpenShowreel={() => setShowreel(true)} /></div>
       <div className="motion-desktop-journey" ref={journey} aria-label={english ? "LIUKER creative journey" : "LIUKER 创作之旅"} hidden={!enhanced}>
         <div className="motion-desktop-viewport">
           <div className="motion-desktop-stage">
@@ -164,7 +164,7 @@ export function MotionHome() {
               <Link prefetch={false} className="motion-hotspot" style={box(1320, 18, 225, 70)} href="/contact" aria-label={english ? "Work with LIUKER" : "联系合作"} />
             </nav>}
             {time < 3.4 && <>
-              <a className="motion-hotspot" style={box(72, 772, 224, 58)} href="#project-field" onClick={e => { e.preventDefault();goTo(24, "project-field"); }} aria-label={english ? "Explore selected work" : "探索精选作品"} />
+              <button type="button" className="motion-hotspot" style={box(72, 772, 224, 58)} onClick={() => setShowreel(true)} aria-haspopup="dialog" aria-label={english ? "Play Showreel" : "播放 Showreel"} />
               <a className="motion-hotspot" style={box(1290, 782, 198, 58)} href="#the-frame" onClick={e => { e.preventDefault();goTo(9.8, "the-frame"); }} aria-label={english ? "Enter the creative journey" : "进入创作之旅"} />
             </>}
             {time >= 15.8 && time < 18 && <nav aria-label={english ? "Creative services" : "创作方向"}>
