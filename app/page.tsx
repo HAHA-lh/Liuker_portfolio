@@ -1,5 +1,5 @@
-import { EditorialHome } from "./editorial-home";
+import { MotionHome } from "./motion-home";
 
 export default function Home() {
-  return <EditorialHome />;
+  return <MotionHome />;
 }

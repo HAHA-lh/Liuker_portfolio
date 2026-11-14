@@ -1,0 +1,31 @@
+@font-face{font-family:"LIUKER Display";src:url("/motion/fonts/anton-latin-400-normal.woff2") format("woff2");font-style:normal;font-weight:400 900;font-display:swap}
+.motion-home{color:#101112;background:#f4f2ed;font-family:Arial,"Microsoft YaHei",sans-serif;isolation:isolate;color-scheme:light}
+.motion-home [hidden]{display:none!important}
+.motion-desktop-journey{height:1400svh;position:relative}
+.motion-desktop-viewport{position:sticky;top:0;height:100svh;overflow:clip;display:flex;align-items:center;justify-content:center;background:#fafaf8}
+.motion-home[data-dark="true"] .motion-desktop-viewport{background:#101112}
+.motion-desktop-stage{position:relative;width:min(100vw,177.7778svh);height:min(56.25vw,100svh);flex:none}
+.motion-desktop-stage canvas{display:block;width:100%;height:100%;touch-action:pan-y}
+.motion-hotspot{position:absolute;display:block;border:0;margin:0;padding:0;background:transparent;color:inherit;cursor:pointer;border-radius:4px;z-index:2;text-decoration:none;touch-action:pan-y}
+.motion-hotspot:focus-visible{outline:3px solid #e21b24;outline-offset:5px}
+.motion-project-hotspot span{position:absolute;right:8px;bottom:8px;padding:7px 11px;border-radius:2px;background:#fafaf8;color:#101112;font-size:12px;opacity:0;transition:opacity .18s ease}
+.motion-project-hotspot:hover span,.motion-project-hotspot:focus-visible span{opacity:1}
+.motion-all-work{position:absolute;left:4.1%;top:21.8%;color:#bbb;font-size:13px;text-decoration:none}
+.motion-all-work:hover{color:#fff}
+.motion-chapters{position:absolute;right:15px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;z-index:3}
+.motion-chapters a{display:grid;place-items:center;width:24px;height:27px;color:#92928c;text-decoration:none}
+.motion-chapters a::after{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.6}
+.motion-chapters a[aria-current]::after{background:#e21b24;opacity:1;box-shadow:0 0 0 4px #e21b241c}
+.motion-utilities{position:absolute;bottom:8px;left:4.5%;display:flex;align-items:center;gap:18px;z-index:3}
+.motion-utilities button,.motion-static-utilities button{padding:4px 0;border:0;background:none;color:#555951;font:12px Arial,"Microsoft YaHei",sans-serif;cursor:pointer}
+.motion-home[data-dark="true"] .motion-utilities button{color:#c5c5bf}
+.motion-utilities button:hover,.motion-static-utilities button:hover{color:#e21b24}
+.motion-static-utilities{padding:20px 6vw 28px;background:#101112;display:flex;gap:24px}
+.motion-static-utilities button{color:#e7e5dd}
+.motion-scroll-progress{position:absolute;bottom:0;left:0;right:0;height:2px;background:#e21b24;transform-origin:left;pointer-events:none}
+.motion-accessible-copy{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.motion-skip{position:fixed;top:12px;left:16px;z-index:1100;padding:12px 20px;background:#101112;color:#fff;transform:translateY(-180%)}
+.motion-skip:focus{transform:none}
+.motion-notice{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);padding:14px 20px;background:#101112;color:#fff;border:1px solid #ffffff35;border-radius:6px;z-index:1200;font-size:14px;max-width:90vw}
+.motion-home :is(a,button):focus-visible{outline:2px solid #e21b24;outline-offset:5px}
+@media(max-width:959px),(prefers-reduced-motion:reduce){.motion-desktop-journey{display:none!important}}

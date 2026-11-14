@@ -1,5 +1,15 @@
 # LIUKER Portfolio — 项目接手说明
 
+## 当前首页更新（2026-11-14，优先于下方旧首页说明）
+
+- 用户确认的纸张质感与正面金属显示器首页已接入 `app/motion-home.tsx`。桌面使用 `app/components/motion/scene.mjs` 的连续滚动场景；手机、减少动态偏好、无 JS 或初始化失败时使用 `MotionHomeFallback` 的可访问 DOM 页面。
+- 新版人物视频沿用已确认预览的文件，独立存放于 `/media/motion/hero-paper-20261114.mp4`，由 Git LFS 管理；不覆盖旧首页视频。它可静音循环播放，滚轮控制场景镜头，Showreel 仍独立且仅点击加载。
+- 当前风格是暖白纸纹、黑色压缩斜体标题、红色笔触与正面金属电脑。显示器角度、视频裁切和 7.1 秒交接保持不变；18–21 秒使用用户要求恢复的旧胶片到作品墙转场，不采用被撤回的全屏推进方案。
+- 首屏不再以全站视频下载完成为进入条件。静态首页先可读可用；动效只在桌面、资源就绪后接管，媒体错误保留海报。离屏、隐藏、用户暂停、弹窗打开时暂停装饰视频。
+- 58 个项目、`/work`、`/portfolio/[group]`、`/work/[slug]` 与 `/contact` 保留。新桌面热点有真实导航/邮件/电话/复制微信行为，手机用普通链接。
+- 上线前旧源码提交为 `472af4444b799b2e1df1e48b18f69ea2f7092716`，远程标签 `rollback/20261114-before-motion`。旧生产部署 `dpl_2PxoizNakpbvNWsmZ4V4EiUw8J4P`；回撤与发布说明见 `docs/releases/2026-11-14-motion-home.md`。
+- 正式发布使用既有 `liuker/liuker.space` Vercel 项目和 GitHub 集成，不更改 Sites 绑定。不要发布包含预览控制条的独立 `outputs/liuker-motion-v2` 目录。
+
 > 本文件是本项目的长期接手上下文。面向继续开发本项目的同事、Codex 或其他编程代理。
 > 修改代码前先阅读本文件；文档内容与当前 `main` 分支实现对应。
 
